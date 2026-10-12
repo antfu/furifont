@@ -1,4 +1,18 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreDependencies": ["@antfu/utils", "taze", "@antfu/skills"]
+  "ignoreDependencies": [
+    "@antfu/utils",
+    "taze",
+    "@antfu/skills"
+  ],
+  "workspaces": {
+    ".": {},
+    "packages/*": {},
+    "packages/app": {
+      "ignoreDependencies": [
+        "@iconify-json/ph",
+        "vue-tsc"
+      ]
+    }
+  }
 }
