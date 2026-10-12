@@ -16,6 +16,7 @@ describe('compiled dictionary', () => {
     expect(report.ivs.words['今日']![0]).toBe('今日[きょう]')
     expect(report.ivs.words['明日']![0]).toBe('明日[あした]')
     expect(report.ivs.words['市場']![0]).toBe('市[いち]場[ば]')
+    expect(report.ivs.words['出来']![0]).toBe('出[で]来[き]')
   })
 
   it('keeps a few thousand words and leaves ambiguous lone kanji out', () => {
