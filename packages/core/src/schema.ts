@@ -64,8 +64,11 @@ export const PlanSchema = v.object({
   }),
   /** Base characters the rules name; each must be in the base font's cmap. */
   codepoints: v.array(Codepoint),
-  /** Variation selectors to map to empty zero-width glyphs, named like base characters. */
-  selectors: v.array(Codepoint),
+  /**
+   * Base + variation selector sequences to map in `cmap` format 14, each to an
+   * empty glyph named `name`, with the base's advance: the rules replace it.
+   */
+  variants: v.array(v.object({ name: v.pipe(v.string(), v.regex(/^[A-Z_][\w.]{0,62}$/i)), base: Codepoint, selector: Codepoint })),
   glyphs: v.array(v.object({
     name: v.pipe(v.string(), v.regex(/^[A-Z_][\w.]{0,62}$/i)),
     /** The base characters drawn side by side; more than one makes a ligature. */
