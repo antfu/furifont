@@ -1,42 +1,128 @@
-# pkg-placeholder
+# Furifont
 
-[![npm version][npm-version-src]][npm-version-href]
-[![npm downloads][npm-downloads-src]][npm-downloads-href]
-[![bundle][bundle-src]][bundle-href]
-[![JSDocs][jsdocs-src]][jsdocs-href]
-[![License][license-src]][license-href]
+A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji.
 
-_description_
+```html
+<p style="font-family: 'Furifont Sans JP'; line-height: 1.8">今日は日本語の勉強をします。</p>
+```
 
-## Note for Developers
+Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). The tools that build it work with other base fonts and other word lists.
 
-This starter recommands using [npm Trusted Publisher](https://github.com/e18e/ecosystem-issues/issues/201), where the release is done on CI to ensure the security of the packages.
+## Fonts
 
-To do so, you need to run `pnpm publish` manually for the very first time to create the package on npm, and then go to `https://www.npmjs.com/package/<your-package-name>/access` to set the connection to your GitHub repo.
+Each [release](https://github.com/antfu/furigana-font/releases/latest) has six fonts, as OpenType and WOFF2:
 
-Then for the future releases, you can run `pnpm run release` to do the release and the GitHub Actions will take care of the release process.
+| Family | Ruby | Weights |
+| --- | --- | --- |
+| Furifont Sans JP | Hiragana | Regular, Bold |
+| Furifont Sans JP Kata | On'yomi in katakana, kun'yomi in hiragana | Regular, Bold |
+| Furifont Sans JP Romaji | Modified Hepburn, with macrons | Regular, Bold |
 
-## Sponsors
+Each font also comes with a `.ivs.json` file. It lists the readings that the variation selectors pick, as described below.
 
-<p align="center">
-  <a href="https://cdn.jsdelivr.net/gh/antfu/static/sponsors.svg">
-    <img src="https://cdn.jsdelivr.net/gh/antfu/static/sponsors.svg" alt="Sponsors"/>
-  </a>
-</p>
+### Using them
+
+- **Line height.** The ruby sits above the line, inside the font's ascender. A `line-height` below about 1.7 clips it, and `line-height: normal` always fits.
+- **Turning ruby off.** `font-feature-settings: "ss01"` shows the plain kanji, and so does `"rclt" 0`.
+- **Line breaks.** A word broken across two lines is read as two words. In Chromium, `word-break: auto-phrase` keeps phrases together.
+
+### Which words get ruby
+
+Browsers shape Japanese text one script at a time. The font sees a run of kanji, but never the kana next to it. So Furifont works on runs of kanji:
+
+- **Runs of two or more kanji** are matched against a few thousand common words, longest first. 日本語 matches before 日本, and 今日 reads きょう as one word.
+- **Protected words.** Some longer dictionary words would be misread through a shorter match. 大人気 contains 大人, for example. These longer words get their own reading, or stay bare when they can be read more than one way.
+- **A kanji alone in its run** gets ruby only when one reading clearly dominates the common words it stands alone in. 桜 and 駅 get ruby. 書 (書く, 書) and 行 (行く, 行う) stay bare.
+- **Anything not in the dictionary** stays bare, as do kana and Latin text.
+
+### Choosing another reading
+
+To pick another reading, write a variation selector right after the first kanji of a word:
+
+| Selector | Effect |
+| --- | --- |
+| VS225 (`U+E01E0`) | No ruby on this kanji |
+| VS226 (`U+E01E1`) | Reading 1 |
+| VS227 (`U+E01E2`) | Reading 2, and so on to VS240 |
+
+After the first kanji of a word with several readings, the selector picks the word's reading. For example, `市\u{E01E2}場` shows しじょう instead of いちば. After any other kanji, it picks that kanji's own reading.
+
+Selectors are invisible, survive copy and paste, and need no markup. The [reference page](https://antfu.github.io/furigana-font/#/reference) lists every reading and copies a word together with its selector.
+
+## Build your own
+
+You need Node 22.18 or later, and Python 3.10 or later with fontTools:
+
+```sh
+python3 -m pip install fonttools uharfbuzz brotli
+```
+
+From the command line:
+
+```sh
+npx furifont build --base Bold --script hepburn --family "My Furigana"
+```
+
+Or open the studio. It runs in your browser with a live preview, the dictionary, your own words, and a build button:
+
+```sh
+npx furifont dev
+```
+
+Both commands read `furifont.config.json` from the current folder, and the studio writes it for you:
+
+```json
+{
+  "base": "Regular",
+  "family": "Furifont Sans JP",
+  "rubyScript": "hiragana",
+  "nfMax": 10,
+  "selectTags": ["spec1"],
+  "isolatedMinShare": 0.8,
+  "words": {
+    "add": ["推[お]し活[かつ]"],
+    "pin": ["市[し]場[じょう]"],
+    "remove": ["大人"]
+  },
+  "metrics": { "rubyScale": 0.5, "rubyGap": 0.05, "compressionFloor": 0.6, "maxRubyWidth": 1.6 }
+}
+```
+
+These are the settings:
+
+- `base` is a Source Han Sans JP weight, which is downloaded once, or the path to another OpenType font.
+- `nfMax` sets how many words get ruby. Words are ranked in newspaper frequency buckets of about 500 words each.
+- `selectTags` also selects words that have these JMdict priority tags.
+- `isolatedMinShare` sets how strongly one reading must dominate before a kanji alone gets ruby.
+- `words` uses inline notation: `日[に]本[ほん]` gives one reading per kanji, and `今日[きょう]` gives one reading over several kanji.
+
+## Packages
+
+| Package | |
+| --- | --- |
+| [`furifont`](packages/cli) | The CLI and the studio's server |
+| [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary. It reads no fonts. |
+| [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font with fontTools and compiles the rules |
+| [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary and the script that updates it |
+| [`packages/app`](packages/app) | The demo site and the studio (Nuxt) |
+
+[docs/design.md](docs/design.md) explains how it works.
+
+## Development
+
+```sh
+pnpm install
+python3 -m pip install -r packages/compiler/python/requirements.txt
+pnpm build          # every package; the CLI build includes the app
+pnpm test           # unit and font tests
+pnpm test:e2e       # rendering in Chromium, Firefox and WebKit, and the studio
+pnpm fonts          # the six prebuilt fonts, into packages/app/public/fonts
+pnpm dev            # the app, with a live studio
+pnpm dict:update    # download the sources and recompile the dictionary
+```
 
 ## License
 
-[MIT](./LICENSE) License © [Anthony Fu](https://github.com/antfu)
-
-<!-- Badges -->
-
-[npm-version-src]: https://img.shields.io/npm/v/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669
-[npm-version-href]: https://npmx.dev/package/pkg-placeholder
-[npm-downloads-src]: https://img.shields.io/npm/dm/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669
-[npm-downloads-href]: https://npmx.dev/package/pkg-placeholder
-[bundle-src]: https://img.shields.io/bundlephobia/minzip/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669&label=minzip
-[bundle-href]: https://bundlephobia.com/result?p=pkg-placeholder
-[license-src]: https://img.shields.io/github/license/antfu/pkg-placeholder.svg?style=flat&colorA=080f12&colorB=1fa669
-[license-href]: https://github.com/antfu/pkg-placeholder/blob/main/LICENSE
-[jsdocs-src]: https://img.shields.io/badge/jsdocs-reference-080f12?style=flat&colorA=080f12&colorB=1fa669
-[jsdocs-href]: https://www.jsdocs.io/package/pkg-placeholder
+- **Code:** [MIT](LICENSE.md).
+- **Fonts:** [SIL Open Font License 1.1](OFL.txt), as derivatives of Source Han Sans by Adobe. "Source" is a Reserved Font Name and does not appear in Furifont's names.
+- **Dictionary data and the reading rules in the fonts:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict and KANJIDIC2 (EDRDG) and JmdictFurigana.
