@@ -13,3 +13,74 @@ jobs:
     permissions:
       contents: write
       id-token: write
+
+  fonts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r packages/compiler/python/requirements.txt
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/furifont
+          key: source-han-sans-jp
+      - run: pnpm fonts dist/fonts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fonts
+          path: dist/fonts
+
+  attach:
+    needs: [release, fonts]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fonts
+          path: fonts
+      - run: gh release upload "$GITHUB_REF_NAME" fonts/* --clobber --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  pages:
+    needs: fonts
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: fonts
+          path: packages/app/public/fonts
+      # The demo loads WOFF2; the OpenType files are on the release.
+      - run: rm packages/app/public/fonts/*.otf
+      - run: pnpm -F @furifont/app run generate
+        env:
+          NUXT_APP_BASE_URL: /${{ github.event.repository.name }}/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/app/.output/public
+      - id: deploy
+        uses: actions/deploy-pages@v4
