@@ -53,6 +53,12 @@ describe('planner', () => {
     expect(report.stats.isolated).toBe(1)
   })
 
+  it('lets the dictionary\'s curated defaults yield to the user\'s pins', () => {
+    const curated = createFontPlanner({ ...dictionary, defaults: ['今[こん]日[にち]'] })
+    expect(curated(resolveOptions(), coverage).report.ivs.words['今日']![0]).toBe('今[こん]日[にち]')
+    expect(curated(resolveOptions({ words: { pin: ['今日[きょう]'] } }), coverage).report.ivs.words['今日']![0]).toBe('今日[きょう]')
+  })
+
   it('applies pins and removals', () => {
     const pinned = plan({ words: { pin: ['今[こん]日[にち]', '書[か]'] } }).report
     expect(pinned.ivs.words['今日']![0]).toBe('今[こん]日[にち]')

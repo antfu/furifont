@@ -19,6 +19,8 @@ export interface Dictionary {
   onyomi: Record<string, string[]>
   /** Source datasets and the version each was compiled from. */
   sources: Record<string, string>
+  /** Curated default readings in inline notation, for words the data ranks wrong; pins override them. */
+  defaults?: string[]
 }
 
 /** A ruby annotation over characters `[start, end)` of a run. */
