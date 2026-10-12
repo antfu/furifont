@@ -1,9 +1,9 @@
 import type { Dictionary, DictionaryEntry, HanRun, RubySpan } from './dictionary'
-import type { GlyphRegistry, RenderRuby } from './glyphs'
+import type { GlyphRegistry, RenderRuby, SingleLookups } from './glyphs'
 import type { Plan, PlanGlyph, PlanOptions } from './schema'
 import { formatNotation, hanRuns, isHan, parseFurigana, parseNotation } from './dictionary'
 import { emitFea } from './fea'
-import { codepoints, createGlyphRegistry, glyphName, isGrouped } from './glyphs'
+import { codepoints, createGlyphRegistry, createSingleLookups, glyphName, isGrouped } from './glyphs'
 import { isOnyomi, toHepburn, toKatakana } from './kana'
 
 /** VS225: shows the kanji before it without ruby. */
@@ -337,55 +337,90 @@ function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadin
   return protectedRuns
 }
 
+interface Variant {
+  name: string
+  base: number
+  selector: number
+}
+
+interface VariantReading {
+  input: string
+  glyph: PlanGlyph
+  selector: number
+}
+
+/**
+ * A base kanji followed by a variation selector is its own glyph, mapped in
+ * `cmap` format 14 like any registered ideographic variation. Browsers keep a
+ * supported sequence in the run they shape (they split unsupported ones off),
+ * and the rules see the choice as a glyph. The glyph itself is empty: the rules
+ * always replace it, by a ruby glyph or, failing that, by the bare kanji.
+ */
+function createVariants(): { name: (kanji: string, n: number) => string, all: () => Variant[] } {
+  const variants = new Map<string, Variant>()
+  return {
+    /** `kanji` written with VS225 + `n`: n = 0 drops the ruby, n >= 1 picks reading n. */
+    name(kanji: string, n: number): string {
+      const base = kanji.codePointAt(0)!
+      const name = `${glyphName(base)}.vs${n}`
+      variants.set(name, { name, base, selector: SELECTOR_SUPPRESS + n })
+      return name
+    },
+    all: (): Variant[] => [...variants.values()],
+  }
+}
+
 function buildRules(
   patterns: Patterns,
   kanjiReadings: Map<string, string[]>,
   protectedRuns: Map<string, RubySpan[] | null>,
   glyphs: GlyphRegistry,
-): { rules: Rule[], ligatures: Ligature[], ivsWords: Record<string, string[]> } {
+): { rules: Rule[], ligatures: Ligature[], singles: SingleLookups, variants: Variant[], variantReadings: VariantReading[], ivsWords: Record<string, string[]> } {
   const ligatures: Ligature[] = []
-  /** The rule annotating `run`, with `selector` written after its first kanji. */
-  const runRule = (run: HanRun, selector?: number): Rule => {
+  const singles = createSingleLookups()
+  const variants = createVariants()
+
+  /** The rule annotating `run`; with `reading`, written with that reading's selector after its first kanji. */
+  const runRule = (run: HanRun, reading?: number): Rule => {
     const cps = codepoints(run.text)
-    if (selector)
-      cps.splice(1, 0, selector)
     const input = cps.map(glyphName)
+    if (reading) {
+      input[0] = variants.name(run.text, reading)
+      cps.splice(1, 0, SELECTOR_SUPPRESS + reading)
+    }
     const output = glyphs.run(run)
     if (isGrouped(run)) {
       const lookup = `lig_${ligatures.length + 1}`
       ligatures.push({ lookup, glyph: output[0]!.name, components: input })
       return { input, lookups: input.map((_, i) => i === 0 ? lookup : null), codepoints: cps }
     }
-    const lookups: (string | null)[] = output.map(g => `rb_${glyphs.slot(g)}`)
-    if (selector)
-      lookups.splice(1, 0, null)
-    return { input, lookups, codepoints: cps }
+    return { input, lookups: output.map((g, i) => singles.lookupFor(input[i]!, g.name)), codepoints: cps }
   }
 
-  // Only rules starting on the same glyph compete: there, word selectors come
-  // first, then kanji selectors, then words, longest first.
+  // Only rules starting on the same glyph compete: there, longest first.
   const rules: Rule[] = []
   const ivsWords: Record<string, string[]> = {}
   for (const [text, readings] of patterns) {
+    rules.push(runRule({ text, spans: readings[0]!.spans }))
     if (readings.length < 2)
       continue
-    readings.forEach((r, i) => rules.push(runRule({ text, spans: r.spans }, SELECTOR_FIRST_READING + i)))
+    readings.forEach((r, i) => rules.push(runRule({ text, spans: r.spans }, i + 1)))
     ivsWords[text] = readings.map(r => formatNotation(text, r.spans))
   }
-  for (const [kanji, readings] of kanjiReadings) {
-    readings.forEach((ruby, i) => {
-      const cps = [kanji.codePointAt(0)!, SELECTOR_FIRST_READING + i]
-      rules.push({ input: cps.map(glyphName), lookups: [`rb_${glyphs.slot(glyphs.lone(kanji, ruby))}`, null], codepoints: cps })
-    })
-  }
-  const words = [...patterns].map(([text, readings]) => runRule({ text, spans: readings[0]!.spans }))
   for (const [text, spans] of protectedRuns) {
     const cps = codepoints(text)
-    words.push(spans ? runRule({ text, spans }) : { input: cps.map(glyphName), lookups: [], codepoints: cps, ignore: true })
+    rules.push(spans ? runRule({ text, spans }) : { input: cps.map(glyphName), lookups: [], codepoints: cps, ignore: true })
   }
-  words.sort((a, b) => a.input[0]!.localeCompare(b.input[0]!) || b.input.length - a.input.length)
-  rules.push(...words)
-  return { rules, ligatures, ivsWords }
+  // A selector no word claimed picks the kanji's own reading, after the main lookup.
+  const variantReadings: VariantReading[] = []
+  for (const [kanji, readings] of kanjiReadings) {
+    variants.name(kanji, 0)
+    if (readings.length < 2)
+      continue
+    readings.forEach((ruby, i) => variantReadings.push({ input: variants.name(kanji, i + 1), glyph: glyphs.lone(kanji, ruby), selector: SELECTOR_SUPPRESS + i + 1 }))
+  }
+  rules.sort((a, b) => a.input[0]!.localeCompare(b.input[0]!) || b.input.length - a.input.length)
+  return { rules, ligatures, singles, variants: variants.all(), variantReadings, ivsWords }
 }
 
 function smokeChecks(patterns: Patterns, lone: { glyph: PlanGlyph }[], glyphs: GlyphRegistry): Plan['smoke'] {
@@ -394,6 +429,11 @@ function smokeChecks(patterns: Patterns, lone: { glyph: PlanGlyph }[], glyphs: G
   for (const grouped of [false, true]) {
     for (const [text, readings] of byFrequency.filter(([text, r]) => isGrouped({ text, spans: r[0]!.spans }) === grouped).slice(0, 3))
       checks.push({ text, glyphs: glyphs.run({ text, spans: readings[0]!.spans }).map(g => g.name) })
+  }
+  const [word, readings] = byFrequency.find(([, r]) => r.length > 1) ?? []
+  if (word && readings) {
+    const [first = '', ...rest] = [...word]
+    checks.push({ text: first + String.fromCodePoint(SELECTOR_FIRST_READING + 1) + rest.join(''), glyphs: glyphs.run({ text: word, spans: readings[1]!.spans }).map(g => g.name) })
   }
   if (lone[0])
     checks.push({ text: String.fromCodePoint(lone[0].glyph.bases[0]!), glyphs: [lone[0].glyph.name] })
@@ -418,33 +458,39 @@ export function createFontPlanner(dictionary: Dictionary) {
     const { isolated, kanjiReadings } = chooseLoneKanji(index, patterns, lonePins, ctx)
     const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, ctx)
     const glyphs = createGlyphRegistry(ctx.render)
-    const { rules, ligatures, ivsWords } = buildRules(patterns, kanjiReadings, protectedRuns, glyphs)
+    const { rules, ligatures, singles, variants, variantReadings, ivsWords } = buildRules(patterns, kanjiReadings, protectedRuns, glyphs)
     const lone = [...isolated].map(([kanji, ruby]) => ({ base: glyphName(kanji.codePointAt(0)!), glyph: glyphs.lone(kanji, ruby) }))
 
     const sample = previewText === undefined ? undefined : new Set(codepoints(previewText))
     const inSample = (cps: readonly number[]): boolean => !sample || cps.every(cp => sample.has(cp))
     const keptRules = rules.filter(r => inSample(r.codepoints))
     const keptLone = lone.filter(l => inSample(l.glyph.bases))
-    const usedLookups = new Set(keptRules.flatMap(r => r.lookups))
-    const keptLigatures = ligatures.filter(l => usedLookups.has(l.lookup))
-    const usedSingles = new Set(keptRules.flatMap(r => r.lookups.map((lookup, i) => `${r.input[i]}@${lookup}`)))
-    const keptNames = new Set([...keptLigatures.map(l => l.glyph), ...keptLone.map(l => l.glyph.name)])
-    const keptGlyphs = glyphs.all().filter(g => keptNames.has(g.name) || usedSingles.has(`${glyphName(g.bases[0]!)}@rb_${glyphs.slot(g)}`))
+    const keptVariants = variants.filter(v => inSample([v.base, v.selector]))
+    const keptVariantReadings = variantReadings.filter(v => inSample([...v.glyph.bases, v.selector]))
+    const usedLookups = new Set(keptRules.flatMap(r => r.lookups.map((lookup, i) => `${r.input[i]}@${lookup}`)))
+    const keptSingles = singles.all().filter(s => usedLookups.has(`${s.input}@${s.lookup}`))
+    const firstLookups = new Set(keptRules.map(r => r.lookups[0]))
+    const keptLigatures = ligatures.filter(l => firstLookups.has(l.lookup))
+    const keptNames = new Set([
+      ...keptSingles.map(s => s.output),
+      ...keptLigatures.map(l => l.glyph),
+      ...keptLone.map(l => l.glyph.name),
+      ...keptVariantReadings.map(v => v.glyph.name),
+    ])
+    const keptGlyphs = glyphs.all().filter(g => keptNames.has(g.name))
     const han = [...coverage].filter(cp => inSample([cp]) && isHan(String.fromCodePoint(cp))).sort((a, b) => a - b)
-    const selectors = Array.from({ length: MAX_READINGS + 1 }, (_, i) => SELECTOR_SUPPRESS + i).filter(cp => inSample([cp]))
 
     const fea = emitFea({
-      hanClass: [...han.map(glyphName), ...keptGlyphs.map(g => g.name)],
-      suppressSelector: selectors.includes(SELECTOR_SUPPRESS) ? glyphName(SELECTOR_SUPPRESS) : undefined,
-      singles: keptGlyphs.filter(g => g.bases.length === 1).map(g => ({ lookup: `rb_${glyphs.slot(g)}`, base: glyphName(g.bases[0]!), glyph: g.name })),
+      hanClass: [...han.map(glyphName), ...keptVariants.map(v => v.name), ...keptGlyphs.map(g => g.name)],
+      singles: keptSingles,
       ligatures: keptLigatures,
-      isolated: keptLone.map(l => ({ base: l.base, glyph: l.glyph.name })),
+      isolated: keptLone.map(l => ({ input: l.base, output: l.glyph.name })),
       rules: keptRules,
+      variantReadings: keptVariantReadings.map(v => ({ input: v.input, output: v.glyph.name })),
+      variantsOff: keptVariants.map(v => ({ input: v.name, output: glyphName(v.base) })),
       rubyOff: keptGlyphs.map(g => ({ glyph: g.name, bases: g.bases.map(glyphName) })),
     })
-    const named = new Set([...han, ...keptRules.flatMap(r => r.codepoints), ...keptGlyphs.flatMap(g => g.bases)])
-    for (const cp of selectors)
-      named.delete(cp)
+    const named = new Set([...han, ...keptVariants.map(v => v.base), ...keptGlyphs.flatMap(g => g.bases)])
 
     return {
       plan: {
@@ -455,10 +501,10 @@ export function createFontPlanner(dictionary: Dictionary) {
         },
         metrics: options.metrics,
         codepoints: [...named].sort((a, b) => a - b),
-        selectors,
+        variants: keptVariants,
         glyphs: keptGlyphs,
         fea,
-        subset: sample && [...new Set([...sample, ...keptGlyphs.flatMap(g => g.ruby.flatMap(r => codepoints(r.text)))])].sort((a, b) => a - b),
+        subset: sample && [...new Set([...sample, ...keptGlyphs.flatMap(g => g.ruby.flatMap(r => codepoints(r.text)))])].filter(cp => !keptVariants.some(v => v.selector === cp)).sort((a, b) => a - b),
         smoke: sample ? [] : smokeChecks(patterns, lone, glyphs),
       },
       report: {

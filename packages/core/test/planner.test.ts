@@ -46,7 +46,7 @@ describe('planner', () => {
 
   it('annotates a lone kanji only when one reading dominates', () => {
     const { plan: p, report } = plan()
-    expect(p.fea).toMatch(/lookup isolated \{\n {2}sub uni685C by uni685C\.rb\.1;\n\}/)
+    expect(p.fea).toMatch(/lookup isolated useExtension \{\n {2}sub uni685C by uni685C\.rb\.1;\n\}/)
     expect(p.fea).not.toMatch(/sub uni66F8 by .* # isolated/)
     expect(report.ivs.kanji['書']).toEqual(['か', 'しょ'])
     expect(report.ivs.kanji['来']).toHaveLength(3)

@@ -19,21 +19,15 @@ export type RenderRuby = (run: HanRun, index: number) => string
 
 export interface GlyphRegistry {
   all: () => PlanGlyph[]
-  slot: (glyph: PlanGlyph) => number
   /** The glyphs annotating a whole run: one ligature when a reading spans several kanji. */
   run: (run: HanRun) => PlanGlyph[]
   /** A kanji with `ruby` and no run around it, for lone kanji and selectors. */
   lone: (text: string, ruby: string) => PlanGlyph
 }
 
-/**
- * Glyphs keyed by what they draw, so every word sharing a reading shares the
- * glyph. The nth glyph of a base character gets slot n: single-kanji glyphs
- * live in lookup `rb_<slot>`, which maps each kanji to at most one glyph.
- */
+/** Glyphs keyed by what they draw, so every word sharing a reading shares the glyph. */
 export function createGlyphRegistry(render: RenderRuby): GlyphRegistry {
   const glyphs = new Map<string, PlanGlyph>()
-  const slots = new Map<PlanGlyph, number>()
   const counters = new Map<string, number>()
 
   const draw = (text: string, ruby: PlanGlyph['ruby']): PlanGlyph => {
@@ -43,12 +37,11 @@ export function createGlyphRegistry(render: RenderRuby): GlyphRegistry {
       return existing
     const bases = codepoints(text)
     const base = bases.map(glyphName).join('_')
-    const slot = (counters.get(base) ?? 0) + 1
-    counters.set(base, slot)
+    const n = (counters.get(base) ?? 0) + 1
+    counters.set(base, n)
     // Glyph names are capped at 63 characters.
-    const glyph = { name: base.length > 56 ? `run${glyphs.size}.rb.${slot}` : `${base}.rb.${slot}`, bases, ruby }
+    const glyph = { name: base.length > 56 ? `run${glyphs.size}.rb.${n}` : `${base}.rb.${n}`, bases, ruby }
     glyphs.set(key, glyph)
-    slots.set(glyph, slot)
     return glyph
   }
 
@@ -59,10 +52,32 @@ export function createGlyphRegistry(render: RenderRuby): GlyphRegistry {
 
   return {
     all: () => [...glyphs.values()],
-    slot: glyph => slots.get(glyph)!,
     run: run => isGrouped(run)
       ? [draw(run.text, run.spans.map((s, i) => ({ start: s.start, end: s.end, text: render(run, i) })))]
       : run.spans.map((_, i) => kanji(run, i)),
     lone: (text, ruby) => kanji({ text, spans: [{ start: 0, end: 1, ruby }] }, 0),
+  }
+}
+
+export interface SingleLookups {
+  /** The lookup that turns `input` into `output`: the nth distinct output of an input lives in `rb_<n>`. */
+  lookupFor: (input: string, output: string) => string
+  all: () => { lookup: string, input: string, output: string }[]
+}
+
+/** Single substitutions, packed so each lookup maps an input glyph at most once. */
+export function createSingleLookups(): SingleLookups {
+  const byInput = new Map<string, Map<string, number>>()
+  return {
+    lookupFor(input, output) {
+      let outputs = byInput.get(input)
+      if (!outputs)
+        byInput.set(input, outputs = new Map())
+      let slot = outputs.get(output)
+      if (!slot)
+        outputs.set(output, slot = outputs.size + 1)
+      return `rb_${slot}`
+    },
+    all: () => [...byInput].flatMap(([input, outputs]) => [...outputs].map(([output, slot]) => ({ lookup: `rb_${slot}`, input, output }))),
   }
 }

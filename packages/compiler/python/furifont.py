@@ -162,22 +162,21 @@ def draw_glyph(spec, font, glyph_set, cmap, metrics, em):
     return recording, stops[-1]
 
 
-def add_selectors(font, outlines, selectors):
+def add_variants(font, outlines, variants, cmap):
+    """Empty glyphs for base + selector sequences, mapped in cmap format 14; the rules replace them."""
     names = {}
-    for cp in selectors:
-        names[cp] = outlines.add(logical_name(cp), DecomposingRecordingPen(None), 0, None)
-    cmap = font['cmap']
-    full = [t for t in cmap.tables if t.format in (12, 13)]
-    if not full:
-        best = font.getBestCmap()
-        for platform, encoding in ((3, 10), (0, 4)):
-            table = CmapSubtable.newSubtable(12)
-            table.platformID, table.platEncID, table.language = platform, encoding, 0
-            table.cmap = dict(best)
-            cmap.tables.append(table)
-            full.append(table)
-    for table in full:
-        table.cmap.update(names)
+    hmtx = font['hmtx']
+    for v in variants:
+        base = cmap[v['base']]
+        names[v['name']] = outlines.add(v['name'], DecomposingRecordingPen(None), hmtx[base][0], base)
+    table = next((t for t in font['cmap'].tables if t.format == 14), None)
+    if table is None:
+        table = CmapSubtable.newSubtable(14)
+        table.platformID, table.platEncID, table.language = 0, 5, 0xFF
+        table.cmap, table.uvsDict = {}, {}
+        font['cmap'].tables.append(table)
+    for v in variants:
+        table.uvsDict.setdefault(v['selector'], []).append((v['base'], names[v['name']]))
     return names
 
 
@@ -204,9 +203,16 @@ def merge_gsub(font, ours):
     features = base.FeatureList.FeatureRecord
     added = []
     for record in table.FeatureList.FeatureRecord:
-        record.Feature.LookupListIndex = [i + offset for i in record.Feature.LookupListIndex]
-        features.append(record)
-        added.append(record)
+        lookups = [i + offset for i in record.Feature.LookupListIndex]
+        # Shapers use one record per tag in a language system: extend the font's own.
+        existing = [r for r in features if r.FeatureTag == record.FeatureTag]
+        for r in existing:
+            r.Feature.LookupListIndex = sorted(r.Feature.LookupListIndex + lookups)
+            r.Feature.LookupCount = len(r.Feature.LookupListIndex)
+        if not existing:
+            record.Feature.LookupListIndex = lookups
+            features.append(record)
+            added.append(record)
     # Feature records must stay sorted by tag; remap every language system to the new order.
     order = sorted(range(len(features)), key=lambda i: (features[i].FeatureTag, i))
     remap = {old: new for new, old in enumerate(order)}
@@ -303,8 +309,9 @@ def build(plan, base_path, out_path, woff2_path=None, names_path=None):
     font = load_base(base_path, plan)
     cmap = font.getBestCmap()
     glyph_set = font.getGlyphSet()
-    if len(font.getGlyphOrder()) + len(plan['glyphs']) + len(plan['selectors']) > MAX_GLYPHS:
-        raise PlanError(f"{len(font.getGlyphOrder())} base glyphs plus {len(plan['glyphs'])} ruby glyphs exceed {MAX_GLYPHS}: lower nfMax")
+    added = len(plan['glyphs']) + len(plan['variants'])
+    if len(font.getGlyphOrder()) + added > MAX_GLYPHS:
+        raise PlanError(f"{len(font.getGlyphOrder())} base glyphs plus {added} new ones exceed {MAX_GLYPHS}: lower nfMax")
 
     logical = {}
     for cp in plan['codepoints']:
@@ -323,11 +330,10 @@ def build(plan, base_path, out_path, woff2_path=None, names_path=None):
         recording, width = draw_glyph(spec, font, glyph_set, cmap, plan['metrics'], em)
         real[spec['name']] = outlines.add(spec['name'], recording, width, cmap[spec['bases'][0]])
     progress('draw', total, total)
-    selector_names = add_selectors(font, outlines, plan['selectors'])
+    real.update(add_variants(font, outlines, plan['variants'], cmap))
     outlines.finish()
 
     by_real = {v: k for k, v in real.items()}
-    by_real.update({v: logical_name(cp) for cp, v in selector_names.items()})
     logical_order = [by_real.get(g) or logical.get(g) or g for g in font.getGlyphOrder()]
 
     progress('features')
