@@ -169,6 +169,10 @@ def add_variants(font, outlines, variants, cmap):
     for v in variants:
         base = cmap[v['base']]
         names[v['name']] = outlines.add(v['name'], DecomposingRecordingPen(None), hmtx[base][0], base)
+    # Browsers reject an empty format 14 subtable, which subsetting can leave behind.
+    font['cmap'].tables = [t for t in font['cmap'].tables if t.format != 14 or t.uvsDict]
+    if not variants:
+        return names
     table = next((t for t in font['cmap'].tables if t.format == 14), None)
     if table is None:
         table = CmapSubtable.newSubtable(14)
