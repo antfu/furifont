@@ -24,6 +24,7 @@
   "exports": {
     ".": "./dist/index.mjs",
     "./cli": "./dist/cli.mjs",
+    "./devframe": "./dist/devframe.mjs",
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.mts",

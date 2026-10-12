@@ -12,3 +12,8 @@ node_modules
 temp
 .eslintcache
 .agents/skills
+__pycache__
+packages/app/public/fonts
+/fonts
+.nuxt
+.output
