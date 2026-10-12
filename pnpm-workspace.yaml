@@ -4,6 +4,7 @@ catalogMode: prefer
 minimumReleaseAgeExcludePrune: true
 minimumReleaseAgeExclude:
   - '@antfu/skills@0.1.0'
+  - cac@7.1.0
 
 trustPolicy: no-downgrade
 
@@ -42,6 +43,7 @@ catalogs:
   inlined:
     '@antfu/utils': ^9.3.0
   prod:
+    cac: ^7.1.0
     valibot: ^1.5.0
   testing:
     harfbuzzjs: ^1.6.3
