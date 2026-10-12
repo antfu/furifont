@@ -8,6 +8,8 @@ import pkg from '../package.json' with { type: 'json' }
 import { buildFont } from './build'
 import { CONFIG_FILE, FurifontConfigSchema, loadConfig } from './config'
 
+const STUDIO_PAGE = '#/studio'
+
 const cli = cac('furifont')
 
 cli
@@ -37,6 +39,23 @@ cli
     console.log(`\r${stats.patterns} words, ${stats.isolated} lone kanji, ${stats.glyphs} ruby glyphs`)
     for (const file of files)
       console.log(`  ${relative(cwd, file.path)}  ${(file.bytes / 1024 / 1024).toFixed(1)} MB`)
+  })
+
+cli
+  .command('dev', 'Open the studio to customize, preview and build fonts')
+  .option('--port <port>', 'Port to listen on')
+  .option('--host <host>', 'Host to bind, 0.0.0.0 to reach it from another machine', { default: 'localhost' })
+  .option('--open', 'Open the studio in a browser', { default: true })
+  .action(async (flags: { port?: number, host: string, open: boolean }) => {
+    const [{ createDevServer }, { default: devframe }] = await Promise.all([import('devframe/adapters/dev'), import('./devframe')])
+    await createDevServer(devframe, {
+      host: flags.host,
+      port: flags.port ? Number(flags.port) : undefined,
+      openBrowser: flags.open && STUDIO_PAGE,
+      // Off loopback the one-time code printed below still guards the studio.
+      allowedOrigins: flags.host === 'localhost' ? undefined : false,
+      onReady: ({ origin }) => console.log(`Furifont studio: ${origin}/${STUDIO_PAGE}`),
+    })
   })
 
 cli.help()
