@@ -1,0 +1,114 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`planner > writes a stable feature file 1`] = `
+"languagesystem DFLT dflt;
+
+@han = [uni4EBA uni4ECA uni5927 uni5B66 uni65E5 uni66F8 uni672C uni6765 uni6821 uni685C uni6C17 uni4ECA_uni65E5.rb.1 uni4ECA.rb.1 uni65E5.rb.1 uni685C.rb.1 uni66F8.rb.1 uni66F8.rb.2 uni6765.rb.1 uni6765.rb.2 uni6765.rb.3 uni65E5.rb.2 uni672C.rb.1 uni5B66.rb.1 uni5B66.rb.2 uni6821.rb.1 uni5927.rb.1 uni4EBA.rb.1 uni6C17.rb.1 uni5927_uni4EBA.rb.1];
+
+lookup rb_1 {
+  sub uni4ECA by uni4ECA.rb.1;
+  sub uni65E5 by uni65E5.rb.1;
+  sub uni685C by uni685C.rb.1;
+  sub uni66F8 by uni66F8.rb.1;
+  sub uni6765 by uni6765.rb.1;
+  sub uni672C by uni672C.rb.1;
+  sub uni5B66 by uni5B66.rb.1;
+  sub uni6821 by uni6821.rb.1;
+  sub uni5927 by uni5927.rb.1;
+  sub uni4EBA by uni4EBA.rb.1;
+  sub uni6C17 by uni6C17.rb.1;
+} rb_1;
+
+lookup rb_2 {
+  sub uni66F8 by uni66F8.rb.2;
+  sub uni6765 by uni6765.rb.2;
+  sub uni65E5 by uni65E5.rb.2;
+  sub uni5B66 by uni5B66.rb.2;
+} rb_2;
+
+lookup rb_3 {
+  sub uni6765 by uni6765.rb.3;
+} rb_3;
+
+lookup lig_1 {
+  sub uni4ECA uE01E1 uni65E5 by uni4ECA_uni65E5.rb.1;
+} lig_1;
+
+lookup lig_2 {
+  sub uni4ECA uni65E5 by uni4ECA_uni65E5.rb.1;
+} lig_2;
+
+lookup lig_3 {
+  sub uni5927 uni4EBA by uni5927_uni4EBA.rb.1;
+} lig_3;
+
+lookup isolated {
+  sub uni685C by uni685C.rb.1;
+} isolated;
+
+lookup furigana {
+  ignore sub @han' uE01E0;
+  sub uni4ECA' lookup lig_1 uE01E1' uni65E5';
+  sub uni4ECA' lookup rb_1 uE01E2' uni65E5' lookup rb_1;
+  sub uni685C' lookup rb_1 uE01E1';
+  sub uni66F8' lookup rb_1 uE01E1';
+  sub uni66F8' lookup rb_2 uE01E2';
+  sub uni6765' lookup rb_1 uE01E1';
+  sub uni6765' lookup rb_2 uE01E2';
+  sub uni6765' lookup rb_3 uE01E3';
+  sub uni65E5' lookup rb_2 uE01E1';
+  sub uni65E5' lookup rb_1 uE01E2';
+  sub uni672C' lookup rb_1 uE01E1';
+  sub uni4ECA' lookup rb_1 uE01E1';
+  sub uni5B66' lookup rb_1 uE01E1';
+  sub uni5B66' lookup rb_2 uE01E2';
+  sub uni6821' lookup rb_1 uE01E1';
+  sub uni5927' lookup rb_1 uE01E1';
+  sub uni4EBA' lookup rb_1 uE01E1';
+  sub uni6C17' lookup rb_1 uE01E1';
+  sub uni4EBA' lookup rb_1 uni6C17' lookup rb_1;
+  sub uni4ECA' lookup lig_2 uni65E5';
+  sub uni5927' lookup rb_1 uni4EBA' lookup rb_1 uni6C17' lookup rb_1;
+  sub uni5927' lookup rb_1 uni5B66' lookup rb_1;
+  sub uni5927' lookup lig_3 uni4EBA';
+  sub uni5B66' lookup rb_2 uni6821' lookup rb_1;
+  sub uni65E5' lookup rb_2 uni672C' lookup rb_1;
+  ignore sub @han [uni685C]';
+  ignore sub [uni685C]' @han;
+  sub [uni685C]' lookup isolated;
+} furigana;
+
+lookup ruby_off {
+  sub uni4ECA.rb.1 by uni4ECA;
+  sub uni65E5.rb.1 by uni65E5;
+  sub uni685C.rb.1 by uni685C;
+  sub uni66F8.rb.1 by uni66F8;
+  sub uni66F8.rb.2 by uni66F8;
+  sub uni6765.rb.1 by uni6765;
+  sub uni6765.rb.2 by uni6765;
+  sub uni6765.rb.3 by uni6765;
+  sub uni65E5.rb.2 by uni65E5;
+  sub uni672C.rb.1 by uni672C;
+  sub uni5B66.rb.1 by uni5B66;
+  sub uni5B66.rb.2 by uni5B66;
+  sub uni6821.rb.1 by uni6821;
+  sub uni5927.rb.1 by uni5927;
+  sub uni4EBA.rb.1 by uni4EBA;
+  sub uni6C17.rb.1 by uni6C17;
+} ruby_off;
+
+lookup ruby_off_ligatures {
+  sub uni4ECA_uni65E5.rb.1 by uni4ECA uni65E5;
+  sub uni5927_uni4EBA.rb.1 by uni5927 uni4EBA;
+} ruby_off_ligatures;
+
+feature rclt {
+  lookup furigana;
+} rclt;
+
+feature ss01 {
+  lookup ruby_off;
+  lookup ruby_off_ligatures;
+} ss01;
+"
+`;

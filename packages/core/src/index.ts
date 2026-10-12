@@ -1,3 +1,8 @@
 export type { Dictionary, DictionaryEntry, HanRun, RubySpan } from './dictionary'
 export { formatNotation, hanRuns, isHan, parseFurigana, parseNotation } from './dictionary'
+export { glyphName } from './glyphs'
 export { isOnyomi, toHepburn, toHiragana, toKatakana } from './kana'
+export type { PlanReport, PlanResult } from './planner'
+export { createFontPlanner, MAX_READINGS, SELECTOR_FIRST_READING, SELECTOR_SUPPRESS } from './planner'
+export type { Plan, PlanGlyph, PlanOptions, PlanOptionsInput, RubyMetrics, RubyScript } from './schema'
+export { PlanOptionsSchema, PlanSchema, resolveOptions, RUBY_SCRIPTS } from './schema'
