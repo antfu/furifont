@@ -1,6 +1,7 @@
 import type { CompileProgress } from '@furifont/compiler'
 import type { Dictionary, PlanReport, PlanResult } from '@furifont/core'
 import type { FurifontConfig } from './config'
+import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -57,7 +58,8 @@ function fileStem(config: FurifontConfig, style: string): string {
 export async function buildFont(config: FurifontConfig, options: { cwd: string, outDir: string, onProgress?: (p: CompileProgress) => void }): Promise<BuildResult> {
   const { plan, report, base } = await planWithBase(config, options.cwd)
   await mkdir(options.outDir, { recursive: true })
-  const work = join(options.outDir, `.furifont-${process.pid}`)
+  // Unique per build: several may run at once, and the style is only known once compiled.
+  const work = join(options.outDir, `.furifont-${randomUUID()}`)
   const otf = `${work}.otf`
   const woff2 = `${work}.woff2`
   try {
