@@ -27,7 +27,8 @@ interface RunReading {
   nf: number
   /** Priority tags of the entries with this reading. */
   tags: Set<string>
-  pinned?: boolean
+  /** Made the default by the dictionary's curated list (1) or by the user (2). */
+  pinned?: number
 }
 
 interface SingleReading {
@@ -96,7 +97,7 @@ function spanKey(spans: readonly RubySpan[]): string {
 }
 
 function rank(a: RunReading, b: RunReading): number {
-  return Number(!!b.pinned) - Number(!!a.pinned)
+  return (b.pinned ?? 0) - (a.pinned ?? 0)
     || Number(b.tagged) - Number(a.tagged)
     || a.order - b.order
     || b.weight - a.weight
@@ -191,7 +192,7 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
 
 type Patterns = Map<string, RunReading[]>
 
-function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notation: string, pinned: boolean, ctx: PlanContext): void {
+function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notation: string, pinned: number, ctx: PlanContext): void {
   const { form, spans } = parseNotation(notation)
   for (const run of hanRuns(form, spans).filter(ctx.renderable)) {
     if (length(run.text) === 1) {
@@ -202,14 +203,14 @@ function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notati
     const readings = getOrCreate(patterns, run.text, () => [])
     const existing = readings.find(r => spanKey(r.spans) === spanKey(run.spans))
     if (existing)
-      existing.pinned ||= pinned
+      existing.pinned = Math.max(existing.pinned ?? 0, pinned)
     else
       readings.push({ spans: run.spans, weight: 1, tagged: true, order: Number.MAX_SAFE_INTEGER, nf: 1, tags: new Set(), pinned })
   }
 }
 
 /** Runs of common words, plus custom words; pinned readings of lone kanji are returned apart. */
-function selectWords(index: DictionaryIndex, ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string> } {
+function selectWords(index: DictionaryIndex, defaults: readonly string[], ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string> } {
   const patterns: Patterns = new Map()
   for (const [text, readings] of index.runs) {
     const common = [...readings.values()].filter(r => ctx.selected(r) && ctx.renderable({ text, spans: r.spans }))
@@ -218,9 +219,11 @@ function selectWords(index: DictionaryIndex, ctx: PlanContext): { patterns: Patt
   }
   const lonePins = new Map<string, string>()
   for (const notation of ctx.options.words.add)
-    addCustomWord(patterns, lonePins, notation, false, ctx)
+    addCustomWord(patterns, lonePins, notation, 0, ctx)
+  for (const notation of defaults)
+    addCustomWord(patterns, lonePins, notation, 1, ctx)
   for (const notation of ctx.options.words.pin)
-    addCustomWord(patterns, lonePins, notation, true, ctx)
+    addCustomWord(patterns, lonePins, notation, 2, ctx)
   for (const readings of patterns.values())
     readings.sort(rank).splice(MAX_READINGS)
   return { patterns, lonePins }
@@ -454,7 +457,7 @@ export function createFontPlanner(dictionary: Dictionary) {
   /** Plans a font; with `previewText`, keeps only what that text can trigger. */
   return function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
     const ctx = createContext(dictionary, options, coverage)
-    const { patterns, lonePins } = selectWords(index, ctx)
+    const { patterns, lonePins } = selectWords(index, dictionary.defaults ?? [], ctx)
     const { isolated, kanjiReadings } = chooseLoneKanji(index, patterns, lonePins, ctx)
     const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, ctx)
     const glyphs = createGlyphRegistry(ctx.render)
