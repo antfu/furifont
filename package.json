@@ -46,6 +46,7 @@
     "eslint": "catalog:cli",
     "eslint-plugin-slop": "catalog:cli",
     "eslint-plugin-sonarjs": "catalog:cli",
+    "harfbuzzjs": "catalog:testing",
     "knip": "catalog:cli",
     "nano-staged": "catalog:cli",
     "publint": "catalog:cli",
