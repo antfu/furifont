@@ -14,12 +14,10 @@ update:
 shellEmulator: true
 
 packages:
-  - playground
-  - docs
   - packages/*
-  - examples/*
 
 allowBuilds:
+  '@parcel/watcher': true
   esbuild: true
   simple-git-hooks: true
 
@@ -29,7 +27,6 @@ catalogs:
     skills-npm: ^4.0.0
   cli:
     '@antfu/eslint-config': ^9.5.1
-    '@antfu/ni': ^30.6.0
     bumpp: ^12.3.0
     eslint: ^10.11.0
     eslint-plugin-slop: ^0.1.3
@@ -40,14 +37,11 @@ catalogs:
     simple-git-hooks: ^2.14.0
     taze: ^21.2.0
     tsdown: ^0.23.0
-    tsx: ^4.23.15
     typescript: ^6.0.3
     vite: ^8.3.1
   inlined:
     '@antfu/utils': ^9.3.0
   testing:
-    tsdown-stale-guard: ^0.1.3
-    tsnapi: ^1.5.0
     vitest: ^5.0.2
   types:
     '@types/node': ^26.6.3
