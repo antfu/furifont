@@ -1,6 +1,7 @@
 import * as v from 'valibot'
 
 export const RUBY_SCRIPTS = ['hiragana', 'katakanaOn', 'hepburn'] as const
+export const PRIORITY_TAGS = ['ichi1', 'ichi2', 'news1', 'news2', 'spec1', 'spec2', 'gai1', 'gai2'] as const
 export type RubyScript = typeof RUBY_SCRIPTS[number]
 
 /** Sizes in em, relative to the base font. */
@@ -21,6 +22,11 @@ export const PlanOptionsSchema = v.object({
   rubyScript: v.optional(v.picklist(RUBY_SCRIPTS), 'hiragana'),
   /** Words whose newspaper frequency bucket is at most this are annotated. */
   nfMax: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(48)), 10),
+  /**
+   * JMdict priority tags that select a word whatever its frequency bucket:
+   * `spec1` catches words like 日本 that the newspaper ranking misses.
+   */
+  selectTags: v.optional(v.array(v.picklist(PRIORITY_TAGS)), ['spec1']),
   /** A kanji alone in its run is annotated only when one reading has this share of the evidence. */
   isolatedMinShare: v.optional(v.pipe(v.number(), v.minValue(0.5), v.maxValue(1)), 0.8),
   words: v.optional(v.object({

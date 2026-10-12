@@ -23,12 +23,15 @@ interface RunReading {
   order: number
   /** Best newspaper bucket among priority-tagged entries, 0 when none. */
   nf: number
+  /** Priority tags of the entries with this reading. */
+  tags: Set<string>
   pinned?: boolean
 }
 
 interface SingleReading {
   weight: number
   nf: number
+  tags: Set<string>
 }
 
 interface DictionaryIndex {
@@ -79,7 +82,7 @@ interface PlanContext {
   options: PlanOptions
   removed: Set<string>
   covered: (text: string) => boolean
-  selected: (nf: number) => boolean
+  selected: (reading: { nf: number, tags: Set<string> }) => boolean
   render: RenderRuby
   renderable: (run: HanRun) => boolean
 }
@@ -107,10 +110,16 @@ function entryWeight(entry: DictionaryEntry): number {
   return /[a-z]1\b/.test(entry.priority) ? 1 / 24 : 1 / 48
 }
 
-function keepBest<T extends { weight: number, nf: number }>(current: T, value: T): void {
+function keepBest<T extends { weight: number, nf: number, tags: Set<string> }>(current: T, value: T): void {
   current.weight = Math.max(current.weight, value.weight)
   if (value.nf && (!current.nf || value.nf < current.nf))
     current.nf = value.nf
+  for (const tag of value.tags)
+    current.tags.add(tag)
+}
+
+function priorityTags(entry: DictionaryEntry): Set<string> {
+  return new Set(entry.priority.split(' ').filter(Boolean))
 }
 
 function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
@@ -121,7 +130,7 @@ function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
 }
 
 function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
-  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order: entry.order, nf: entry.priority ? entry.nf : 0 }
+  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order: entry.order, nf: entry.priority ? entry.nf : 0, tags: priorityTags(entry) }
   const readings = getOrCreate(index.runs, run.text, () => new Map())
   const current = readings.get(spanKey(run.spans))
   if (!current) {
@@ -138,7 +147,7 @@ function indexSingle(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry
   const readings = getOrCreate(index.singles, run.text, () => new Map())
   // 来る reads く, き or こ as it conjugates: its dictionary form alone is no evidence.
   for (const r of entry.conjugatesReading && ruby === 'く' ? ['く', 'き', 'こ'] : [ruby]) {
-    const value = { weight: entryWeight(entry), nf: entry.nf }
+    const value = { weight: entryWeight(entry), nf: entry.nf, tags: priorityTags(entry) }
     const current = readings.get(r)
     if (current)
       keepBest(current, value)
@@ -171,7 +180,7 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
     options,
     removed: new Set(options.words.remove),
     covered,
-    selected: nf => nf > 0 && nf <= options.nfMax,
+    selected: r => (r.nf > 0 && r.nf <= options.nfMax) || options.selectTags.some(t => r.tags.has(t)),
     render,
     renderable: run => covered(run.text) && run.spans.every((_, i) => covered(render(run, i))),
   }
@@ -192,7 +201,7 @@ function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notati
     if (existing)
       existing.pinned ||= pinned
     else
-      readings.push({ spans: run.spans, weight: 1, tagged: true, order: Number.MAX_SAFE_INTEGER, nf: 1, pinned })
+      readings.push({ spans: run.spans, weight: 1, tagged: true, order: Number.MAX_SAFE_INTEGER, nf: 1, tags: new Set(), pinned })
   }
 }
 
@@ -200,7 +209,7 @@ function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notati
 function selectWords(index: DictionaryIndex, ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string> } {
   const patterns: Patterns = new Map()
   for (const [text, readings] of index.runs) {
-    const common = [...readings.values()].filter(r => ctx.selected(r.nf) && ctx.renderable({ text, spans: r.spans }))
+    const common = [...readings.values()].filter(r => ctx.selected(r) && ctx.renderable({ text, spans: r.spans }))
     if (common.length && !ctx.removed.has(text))
       patterns.set(text, common.map(r => ({ ...r })))
   }
@@ -236,7 +245,7 @@ function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: M
   for (const [kanji, ruby] of lonePins)
     addEvidence(kanji, ruby, 1)
   for (const [kanji, readings] of index.singles) {
-    if (ctx.removed.has(kanji) || ![...readings.values()].some(r => ctx.selected(r.nf)))
+    if (ctx.removed.has(kanji) || ![...readings.values()].some(ctx.selected))
       continue
     const ranked = loneReadings(kanji, readings, ctx).filter(r => r.share >= MIN_ALTERNATE_SHARE)
     if (ranked[0] && ranked[0].share >= ctx.options.isolatedMinShare && !isolated.has(kanji))
