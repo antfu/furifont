@@ -38,6 +38,12 @@ describe('planner', () => {
     expect(longer).toBeLessThan(shorter)
   })
 
+  it('leaves a run bare when it may be another word with another reading', () => {
+    const entries = [...dictionary.entries, { form: '大人気ない', furigana: '0-1:おとな;2:げ', nf: 0, priority: 'ichi1', order: 0 }]
+    const { plan: p } = createFontPlanner({ ...dictionary, entries })(resolveOptions(), coverage)
+    expect(p.fea).toContain('ignore sub uni5927\' uni4EBA\' uni6C17\';')
+  })
+
   it('annotates a lone kanji only when one reading dominates', () => {
     const { plan: p, report } = plan()
     expect(p.fea).toMatch(/lookup isolated \{\n {2}sub uni685C by uni685C\.rb\.1;\n\}/)
