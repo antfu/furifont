@@ -1,8 +1,9 @@
 <script setup lang="ts">
-const { text } = defineProps<{
+const { text, wordDefault = false } = defineProps<{
   text: string
-  /** Readings, the first being what the font shows by default. */
   readings: string[]
+  /** The first reading is what the font shows by default, as it is for words. */
+  wordDefault?: boolean
 }>()
 const { copied, copy } = useCopy()
 </script>
@@ -22,7 +23,7 @@ const { copied, copy } = useCopy()
         >
           <FuriText :text="withReading(text, i)" :size="30" />
           <span class="font-mono text-[11px] color-muted">
-            {{ copied === withReading(text, i) ? 'copied' : `${selectorName(i)} ${reading}${i === 0 ? ' / default' : ''}` }}
+            {{ copied === withReading(text, i) ? 'copied' : `${selectorName(i)} ${reading}${wordDefault && i === 0 ? ' / default' : ''}` }}
           </span>
         </button>
       </li>
