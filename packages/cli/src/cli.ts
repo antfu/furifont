@@ -46,12 +46,14 @@ cli
   .option('--port <port>', 'Port to listen on')
   .option('--host <host>', 'Host to bind, 0.0.0.0 to reach it from another machine', { default: 'localhost' })
   .option('--open', 'Open the studio in a browser', { default: true })
-  .action(async (flags: { port?: number, host: string, open: boolean }) => {
+  .option('--auth', 'Ask for the one-time code printed here; --no-auth only on a machine you trust', { default: true })
+  .action(async (flags: { port?: number, host: string, open: boolean, auth: boolean }) => {
     const [{ createDevServer }, { default: devframe }] = await Promise.all([import('devframe/adapters/dev'), import('./devframe')])
     await createDevServer(devframe, {
       host: flags.host,
       port: flags.port ? Number(flags.port) : undefined,
       openBrowser: flags.open && STUDIO_PAGE,
+      auth: flags.auth ? undefined : false,
       // Off loopback the one-time code printed below still guards the studio.
       allowedOrigins: flags.host === 'localhost' ? undefined : false,
       onReady: ({ origin }) => console.log(`Furifont studio: ${origin}/${STUDIO_PAGE}`),
