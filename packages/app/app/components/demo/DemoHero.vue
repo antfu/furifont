@@ -6,19 +6,18 @@ const emit = defineEmits<{ download: [] }>()
   <div class="grid lg:grid-cols-2">
     <div class="flex flex-col gap-8 border-base px-6 py-16 lg:border-r lg:py-24">
       <span class="label">振り仮名 / furigana</span>
-      <h1 class="text-[clamp(2.75rem,6vw,4.75rem)] font-semibold leading-[0.92] tracking-[-0.045em]">
-        Furigana,<br>set by the font.
+      <h1 class="display hero-title font-semibold">
+        {{ $t('hero.title1') }}<br>{{ $t('hero.title2') }}
       </h1>
       <p class="max-w-[46ch] text-[15px] leading-relaxed color-muted">
-        Furifont looks every word up in its dictionary and draws the reading above the kanji.
-        The text itself stays plain: copy, search and screen readers see exactly what you wrote.
+        {{ $t('hero.body') }}
       </p>
       <div class="flex flex-wrap gap-3">
         <UiButton variant="solid" icon="i-ph-download-simple" @click="emit('download')">
-          Download the fonts
+          {{ $t('hero.download') }}
         </UiButton>
         <UiButton to="/studio" icon="i-ph-sliders-horizontal">
-          Build your own
+          {{ $t('hero.build') }}
         </UiButton>
       </div>
     </div>

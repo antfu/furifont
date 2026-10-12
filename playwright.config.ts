@@ -12,7 +12,7 @@ export default defineConfig({
       testMatch: /rendering\.spec\.ts/,
       use: devices[device],
     })),
-    // The studio is one app, not a rendering matter: one browser is enough.
-    { name: 'studio', testMatch: /studio\.spec\.ts/, use: devices['Desktop Chrome'] },
+    // The app as furifont dev serves it, studio included: not a rendering matter, one browser is enough.
+    { name: 'app', testMatch: /app\.spec\.ts/, use: devices['Desktop Chrome'] },
   ],
 })

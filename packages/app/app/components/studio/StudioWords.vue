@@ -23,9 +23,9 @@ const shown = computed<WordMatch[]>(() => query.value.trim()
 <template>
   <div>
     <div class="flex flex-col gap-2 border-b border-base p-6">
-      <input v-model="query" type="search" lang="ja" placeholder="Search the dictionary: 今日, 生" aria-label="Search the dictionary" class="input max-w-md">
+      <input v-model="query" type="search" lang="ja" :placeholder="$t('studio.dictionary.search')" :aria-label="$t('studio.dictionary.search')" class="input max-w-md">
       <p class="text-xs color-muted">
-        {{ query.trim() ? `${results.length} words` : 'Words with several common readings. Pin one to make it the default.' }}
+        {{ query.trim() ? $t('studio.dictionary.results', { count: results.length }) : $t('studio.dictionary.hint') }}
       </p>
     </div>
     <ul class="max-h-[32rem] overflow-y-auto">
@@ -39,13 +39,13 @@ const shown = computed<WordMatch[]>(() => query.value.trim()
           class="focus-ring border px-2 py-0.5 text-sm transition-colors"
           :class="pinned.has(r.notation) ? 'border-strong bg-inverse color-inverse' : 'border-base hover:border-strong'"
           :aria-pressed="pinned.has(r.notation)"
-          :title="r.priority || 'no priority tag'"
+          :title="r.priority || $t('studio.dictionary.noTag')"
           @click="toggleWord('pin', r.notation)"
         >
           {{ r.notation }}
         </button>
         <button type="button" class="btn-ghost focus-ring ml-auto h-7 px-2 text-xs" @click="toggleWord('remove', word.form)">
-          {{ removed.has(word.form) ? 'Restore' : 'Never annotate' }}
+          {{ removed.has(word.form) ? $t('studio.dictionary.restore') : $t('studio.dictionary.remove') }}
         </button>
       </li>
     </ul>

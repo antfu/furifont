@@ -5,7 +5,7 @@ const { status, state } = provideStudio()
 <template>
   <div>
     <p v-if="status === 'connecting'" class="label px-6 py-24 text-center">
-      Connecting to furifont dev
+      {{ $t('studio.connecting') }}
     </p>
     <StudioUnavailable v-else-if="status === 'unavailable'" />
     <StudioAuth v-else-if="status === 'locked'" />
@@ -13,23 +13,23 @@ const { status, state } = provideStudio()
       <aside class="border-b border-base lg:border-b-0 lg:border-r">
         <div class="flex items-baseline justify-between border-b border-base px-6 py-3">
           <h1 class="label color-base">
-            Studio
+            {{ $t('studio.title') }}
           </h1>
           <span class="font-mono text-[11px] color-muted">{{ state?.sources.JMdict }}</span>
         </div>
         <StudioOptions />
       </aside>
       <div class="min-w-0">
-        <UiSection index="01" title="Preview" class="border-t-0">
+        <UiSection index="01" :title="$t('studio.sections.preview')" class="border-t-0">
           <StudioPreview />
         </UiSection>
-        <UiSection index="02" title="Build">
+        <UiSection index="02" :title="$t('studio.sections.build')">
           <StudioBuild />
         </UiSection>
-        <UiSection index="03" title="Dictionary">
+        <UiSection index="03" :title="$t('studio.sections.dictionary')">
           <StudioWords />
         </UiSection>
-        <UiSection index="04" title="Your words">
+        <UiSection index="04" :title="$t('studio.sections.words')">
           <StudioCustomWords />
         </UiSection>
       </div>

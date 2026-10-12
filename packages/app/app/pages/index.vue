@@ -7,16 +7,16 @@ function scrollToDownloads(): void {
 <template>
   <div>
     <DemoHero @download="scrollToDownloads" />
-    <UiSection index="01" title="Try it">
+    <UiSection index="01" :title="$t('sections.try')">
       <DemoPlayground />
     </UiSection>
-    <UiSection index="02" title="How it works">
+    <UiSection index="02" :title="$t('sections.how')">
       <DemoHowItWorks />
     </UiSection>
-    <UiSection index="03" title="Choosing a reading">
+    <UiSection index="03" :title="$t('sections.selectors')">
       <DemoSelectors />
     </UiSection>
-    <UiSection id="downloads" index="04" title="Download">
+    <UiSection id="downloads" index="04" :title="$t('sections.download')">
       <DemoDownloads />
     </UiSection>
   </div>

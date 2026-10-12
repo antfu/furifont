@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const text = ref('今日は日本語の勉強をします。\n明日は東京の大学へ行きます。\n私は毎朝新聞を読みます。桜が咲きました。')
 const family = ref(FAMILIES[0]!.family)
 const weight = ref<number>(400)
@@ -6,26 +9,26 @@ const ruby = ref(true)
 const size = ref(30)
 const { copied, copy } = useCopy()
 
-const families = FAMILIES.map(f => ({ value: f.family, label: f.script }))
+const families = computed(() => FAMILIES.map(f => ({ value: f.family, label: t(`scripts.${f.script}`) })))
 const weights = WEIGHTS.map(w => ({ value: w.weight, label: w.style }))
 </script>
 
 <template>
   <div class="grid lg:grid-cols-[340px_1fr]">
     <div class="flex flex-col gap-5 border-b border-base p-6 lg:border-b-0 lg:border-r">
-      <UiField label="Ruby script">
-        <UiSegmented v-model="family" label="Ruby script" :options="families" />
+      <UiField :label="$t('playground.script')">
+        <UiSegmented v-model="family" :label="$t('playground.script')" :options="families" />
       </UiField>
-      <UiField label="Weight">
-        <UiSegmented v-model="weight" label="Weight" :options="weights" />
+      <UiField :label="$t('playground.weight')">
+        <UiSegmented v-model="weight" :label="$t('playground.weight')" :options="weights" />
       </UiField>
-      <UiField :label="`Size / ${size}px`">
+      <UiField :label="$t('playground.size', { size })">
         <input v-model.number="size" type="range" min="16" max="64" class="accent-[var(--ff-fg)]">
       </UiField>
       <UiToggle v-model="ruby">
-        Ruby <span class="font-mono text-xs color-muted">(ss01 when off)</span>
+        {{ $t('playground.ruby') }} <span class="font-mono text-xs color-muted">{{ $t('playground.rubyNote') }}</span>
       </UiToggle>
-      <UiField label="Text" hint="Type any Japanese. Ruby comes from the font alone.">
+      <UiField :label="$t('playground.text')" :hint="$t('playground.textHint')">
         <textarea v-model="text" rows="6" lang="ja" class="input resize-y font-sans" />
       </UiField>
     </div>
@@ -35,9 +38,9 @@ const weights = WEIGHTS.map(w => ({ value: w.weight, label: w.style }))
       </div>
       <div class="flex items-center gap-3 border-t border-base px-6 py-3">
         <UiButton variant="ghost" :icon="copied ? 'i-ph-check' : 'i-ph-copy'" @click="copy(text)">
-          {{ copied ? 'Copied' : 'Copy the text' }}
+          {{ copied ? $t('copied') : $t('playground.copy') }}
         </UiButton>
-        <span class="text-xs color-muted">Paste it anywhere: no ruby characters come along.</span>
+        <span class="text-xs color-muted">{{ $t('playground.pasteNote') }}</span>
       </div>
     </div>
   </div>

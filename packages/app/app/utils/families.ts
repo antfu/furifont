@@ -2,14 +2,14 @@ export interface Family {
   family: string
   /** File name stem: `<stem>-Regular.woff2`. */
   stem: string
-  script: string
+  script: 'hiragana' | 'katakanaOn' | 'hepburn'
 }
 
 /** The prebuilt fonts, one family per ruby script. */
 export const FAMILIES: Family[] = [
-  { family: 'Furifont Sans JP', stem: 'FurifontSansJP', script: 'Hiragana' },
-  { family: 'Furifont Sans JP Kata', stem: 'FurifontSansJPKata', script: 'Katakana on\'yomi' },
-  { family: 'Furifont Sans JP Romaji', stem: 'FurifontSansJPRomaji', script: 'Romaji' },
+  { family: 'Furifont Sans JP', stem: 'FurifontSansJP', script: 'hiragana' },
+  { family: 'Furifont Sans JP Kata', stem: 'FurifontSansJPKata', script: 'katakanaOn' },
+  { family: 'Furifont Sans JP Romaji', stem: 'FurifontSansJPRomaji', script: 'hepburn' },
 ]
 
 export const WEIGHTS = [
