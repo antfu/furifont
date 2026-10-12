@@ -44,6 +44,20 @@ export interface WordMatch {
   readings: { notation: string, nf: number, priority: string }[]
 }
 
+/** The wire contract of the functions below, as the studio page calls them. */
+export interface StudioFunctions {
+  'furifont:state': () => Promise<StudioState>
+  'furifont:report': (config: FurifontConfigInput) => Promise<PlanReport>
+  'furifont:preview': (config: FurifontConfigInput, text: string) => Promise<PreviewResult>
+  'furifont:build': (config: FurifontConfigInput) => { streamId: string }
+  'furifont:save': (config: FurifontConfigInput) => Promise<string>
+  'furifont:search': (query: string) => Promise<WordMatch[]>
+}
+
+declare module 'devframe' {
+  interface DevframeRpcServerFunctions extends StudioFunctions {}
+}
+
 const SEARCH_LIMIT = 40
 
 async function searchWords(query: string): Promise<WordMatch[]> {
