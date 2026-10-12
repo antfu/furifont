@@ -77,7 +77,10 @@ class Outlines:
             self.top = self.cff.topDictIndex[0]
             self.cid = hasattr(self.top, 'ROS')
             if self.cid:
-                self.next_cid = max(int(n[3:]) for n in self.order if n.startswith('cid')) + 1
+                # Subset CID fonts keep their original CIDs: reuse the gaps, CIDs are 16-bit.
+                used = {int(n[3:]) for n in self.order if n.startswith('cid')}
+                self.free_cids = (cid for cid in range(1, 65536) if cid not in used)
+                self.max_cid = max(used)
         elif 'glyf' in font:
             self.cff = None
         else:
@@ -85,9 +88,9 @@ class Outlines:
 
     def new_name(self, logical):
         if self.cff and self.cid:
-            name = f'cid{self.next_cid:05d}'
-            self.next_cid += 1
-            return name
+            cid = next(self.free_cids)
+            self.max_cid = max(self.max_cid, cid)
+            return f'cid{cid:05d}'
         if logical in self.order:
             raise PlanError(f'the base font already has a glyph named {logical}')
         return logical
@@ -126,7 +129,7 @@ class Outlines:
     def finish(self):
         self.font.setGlyphOrder(self.order)
         if self.cff and self.cid:
-            self.top.CIDCount = max(self.top.CIDCount, self.next_cid)
+            self.top.CIDCount = max(self.top.CIDCount, self.max_cid + 1)
 
 
 def draw_glyph(spec, font, glyph_set, cmap, metrics, em):
@@ -331,7 +334,8 @@ def build(plan, base_path, out_path, woff2_path=None, names_path=None):
     fea = plan['fea']
     if aliases:
         import re
-        fea = re.sub(r'\bu(?:ni)?[0-9A-F]{4,6}\b', lambda m: aliases.get(m.group(0), m.group(0)), fea)
+        # Whole base names only: ruby glyph names like uni5DE5.rb.1 keep theirs.
+        fea = re.sub(r'(?<![\w.])u(?:ni)?[0-9A-F]{4,6}(?![\w.])', lambda m: aliases.get(m.group(0), m.group(0)), fea)
     compile_features(font, fea, logical_order)
 
     set_names(font, plan['names']['family'], plan['names']['description'])
