@@ -3,12 +3,21 @@
     "target": "ESNext",
     "lib": ["ESNext"],
     "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@furifont/core": ["./packages/core/src/index.ts"]
+    },
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
     "strict": true,
-    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
-  }
+  },
+  "include": ["packages/*/src", "packages/*/test", "packages/*/scripts", "packages/*/*.ts", "scripts", "test", "*.ts"],
+  "exclude": ["packages/app"]
 }
