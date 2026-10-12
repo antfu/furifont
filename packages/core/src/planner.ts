@@ -14,6 +14,8 @@ export const SELECTOR_FIRST_READING = 0xE01E1
 export const MAX_READINGS = 15
 /** A lone kanji's reading needs this share of the evidence to be offered through a selector. */
 const MIN_ALTERNATE_SHARE = 0.1
+/** JMdict orders readings within a form; a run read inside a longer form ranks after the form's own readings. */
+const OTHER_FORM_ORDER = 1000
 
 interface RunReading {
   spans: RubySpan[]
@@ -130,7 +132,8 @@ function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
 }
 
 function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
-  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order: entry.order, nf: entry.priority ? entry.nf : 0, tags: priorityTags(entry) }
+  const order = run.text === entry.form ? entry.order : OTHER_FORM_ORDER + entry.order
+  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, tags: priorityTags(entry) }
   const readings = getOrCreate(index.runs, run.text, () => new Map())
   const current = readings.get(spanKey(run.spans))
   if (!current) {
@@ -232,8 +235,9 @@ function loneReadings(kanji: string, readings: Map<string, SingleReading>, ctx: 
 
 /**
  * A kanji alone in its run gets ruby only when one reading clearly dominates
- * the words it stands alone in. Every kanji also gets an ordered list of its
- * readings, which the variation selectors index into.
+ * the common words it stands alone in, whatever the word list's size: verbs
+ * like 書く rank low in newspapers yet decide how 書 reads. Every kanji also
+ * gets an ordered list of its readings, which the variation selectors index into.
  */
 function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: Map<string, string>, ctx: PlanContext): { isolated: Map<string, string>, kanjiReadings: Map<string, string[]> } {
   const isolated = new Map(lonePins)
@@ -245,7 +249,7 @@ function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: M
   for (const [kanji, ruby] of lonePins)
     addEvidence(kanji, ruby, 1)
   for (const [kanji, readings] of index.singles) {
-    if (ctx.removed.has(kanji) || ![...readings.values()].some(ctx.selected))
+    if (ctx.removed.has(kanji))
       continue
     const ranked = loneReadings(kanji, readings, ctx).filter(r => r.share >= MIN_ALTERNATE_SHARE)
     if (ranked[0] && ranked[0].share >= ctx.options.isolatedMinShare && !isolated.has(kanji))
