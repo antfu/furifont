@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@furifont/core': source('core'),
       '@furifont/compiler': source('compiler'),
+      '@furifont/dictionary': source('dictionary'),
     },
   },
   test: {

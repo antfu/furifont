@@ -6,7 +6,8 @@
     "moduleResolution": "Bundler",
     "paths": {
       "@furifont/core": ["./packages/core/src/index.ts"],
-      "@furifont/compiler": ["./packages/compiler/src/index.ts"]
+      "@furifont/compiler": ["./packages/compiler/src/index.ts"],
+      "@furifont/dictionary": ["./packages/dictionary/src/index.ts"]
     },
     "resolveJsonModule": true,
     "types": ["node"],
