@@ -5,8 +5,71 @@ minimumReleaseAgeExcludePrune: true
 minimumReleaseAgeExclude:
   - '@antfu/skills@0.1.0'
   - cac@7.1.0
+  - '@unocss/autocomplete@66.11.0'
+  - '@unocss/cli@66.11.0'
+  - '@unocss/config@66.11.0'
+  - '@unocss/core@66.11.0'
+  - '@unocss/extractor-arbitrary-variants@66.11.0'
+  - '@unocss/inspector@66.11.0'
+  - '@unocss/language-server@66.11.0'
+  - '@unocss/nuxt@66.11.0'
+  - '@unocss/preset-attributify@66.11.0'
+  - '@unocss/preset-icons@66.11.0'
+  - '@unocss/preset-mini@66.11.0'
+  - '@unocss/preset-tagify@66.11.0'
+  - '@unocss/preset-typography@66.11.0'
+  - '@unocss/preset-uno@66.11.0'
+  - '@unocss/preset-web-fonts@66.11.0'
+  - '@unocss/preset-wind3@66.11.0'
+  - '@unocss/preset-wind4@66.11.0'
+  - '@unocss/preset-wind@66.11.0'
+  - '@unocss/reset@66.11.0'
+  - '@unocss/rollup@66.11.0'
+  - '@unocss/rule-utils@66.11.0'
+  - '@unocss/transformer-attributify-jsx@66.11.0'
+  - '@unocss/transformer-compile-class@66.11.0'
+  - '@unocss/transformer-directives@66.11.0'
+  - '@unocss/transformer-variant-group@66.11.0'
+  - '@unocss/vite@66.11.0'
+  - '@unocss/webpack@66.11.0'
+  - unocss@66.11.0
 
 trustPolicy: no-downgrade
+# Releases older than 180 days may predate provenance (Nuxt's toolchain still needs semver 6).
+trustPolicyIgnoreAfter: 259200
+# pnpm flags these as downgrades although each one's SLSA provenance names the same
+# repository and publish workflow as its previous release (checked one by one).
+trustPolicyExclude:
+  - stylehacks@9.0.8
+  - postcss-unique-selectors@9.0.6
+  - postcss-svgo@9.0.6
+  - postcss-reduce-transforms@9.0.6
+  - postcss-reduce-initial@9.0.7
+  - postcss-ordered-values@9.0.9
+  - postcss-normalize-whitespace@9.0.8
+  - postcss-normalize-url@9.0.7
+  - postcss-normalize-unicode@9.1.1
+  - postcss-normalize-timing-functions@9.0.7
+  - postcss-normalize-string@9.0.7
+  - postcss-normalize-repeat-style@9.0.7
+  - postcss-normalize-positions@9.0.8
+  - postcss-normalize-display-values@9.0.7
+  - postcss-normalize-charset@9.0.6
+  - postcss-minify-selectors@9.0.8
+  - postcss-minify-params@9.0.8
+  - postcss-minify-gradients@9.0.8
+  - postcss-minify-font-values@9.0.9
+  - postcss-merge-rules@9.1.4
+  - postcss-merge-longhand@9.4.0
+  - postcss-discard-overridden@9.0.6
+  - postcss-discard-empty@9.0.8
+  - postcss-discard-duplicates@9.0.7
+  - postcss-discard-comments@9.0.8
+  - postcss-convert-values@9.0.9
+  - postcss-colormin@9.0.8
+  - cssnano-utils@9.0.0
+  - cssnano-preset-default@9.6.0
+  - cssnano@9.6.0
 
 update:
   ignoreDeps:
@@ -16,6 +79,10 @@ shellEmulator: true
 
 packages:
   - packages/*
+
+overrides:
+  # One jiti for ESLint and Nuxt, so both resolve the same Vite instance (and types).
+  jiti: ^2.7.0
 
 allowBuilds:
   '@parcel/watcher': true
@@ -39,7 +106,19 @@ catalogs:
     taze: ^21.2.0
     tsdown: ^0.23.0
     typescript: ^6.0.3
-    vite: ^8.3.1
+    vite: ^8.3.4
+  frontend:
+    '@devframes/vite': ^1.2.3
+    '@fontsource-variable/geist': ^5.3.0
+    '@fontsource-variable/geist-mono': ^5.3.0
+    '@iconify-json/ph': ^1.2.2
+    '@nuxt/kit': ^4.6.1
+    '@unocss/nuxt': ^66.11.0
+    '@unocss/reset': ^66.11.0
+    nuxt: ^4.6.1
+    unocss: ^66.11.0
+    vue: ^3.5.43
+    vue-tsc: ^3.3.13
   inlined:
     '@antfu/utils': ^9.3.0
   prod:
