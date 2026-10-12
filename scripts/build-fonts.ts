@@ -3,6 +3,8 @@
  *
  *   node scripts/build-fonts.ts [outDir]   (default: packages/app/public/fonts)
  */
+import { copyFile, mkdir } from 'node:fs/promises'
+import { join } from 'node:path'
 import { argv, cwd } from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { buildFont, FurifontConfigSchema } from 'furifont'
@@ -14,6 +16,11 @@ const families = [
   { family: 'Furifont Sans JP Kata', rubyScript: 'katakanaOn' },
   { family: 'Furifont Sans JP Romaji', rubyScript: 'hepburn' },
 ] as const
+
+// The fonts are Source Han Sans derivatives under the OFL; their rules come from CC BY-SA data.
+await mkdir(outDir, { recursive: true })
+await copyFile(new URL('../OFL.txt', import.meta.url), join(outDir, 'OFL.txt'))
+await copyFile(new URL('../packages/dictionary/LICENSE.md', import.meta.url), join(outDir, 'DATA-LICENSE.md'))
 
 for (const base of ['Regular', 'Bold']) {
   await Promise.all(families.map(async (family) => {
