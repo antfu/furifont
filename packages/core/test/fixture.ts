@@ -9,6 +9,7 @@ export const dictionary: Dictionary = {
     { form: '今日', furigana: '0-1:きょう', nf: 2, priority: 'ichi1', order: 0 },
     { form: '今日', furigana: '0:こん;1:にち', nf: 2, priority: 'ichi1 news1 nf02', order: 1 },
     { form: '今日', furigana: '0:こん;1:じつ', nf: 2, priority: '', order: 3 },
+    { form: '今日は', furigana: '0:こん;1:にち', nf: 0, priority: 'ichi1', order: 0 },
     { form: '学校', furigana: '0:がっ;1:こう', nf: 1, priority: 'ichi1 news1 nf01', order: 0 },
     { form: '大学', furigana: '0:だい;1:がく', nf: 1, priority: 'ichi1 news1 nf01', order: 0 },
     { form: '人気', furigana: '0:にん;1:き', nf: 1, priority: 'ichi1 news1 nf01', order: 0 },
