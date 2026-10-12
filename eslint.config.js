@@ -4,6 +4,7 @@ import antfu from '@antfu/eslint-config'
 export default antfu(
   {
     type: 'lib',
+    vue: true,
     pnpm: true,
     antislop: true,
     ignores: [
@@ -12,5 +13,12 @@ export default antfu(
       '**/.nuxt/**',
       '**/.output/**',
     ],
+  },
+  {
+    // The app is not a library: its composables' return types are inferred.
+    files: ['packages/app/**'],
+    rules: {
+      'ts/explicit-function-return-type': 'off',
+    },
   },
 )

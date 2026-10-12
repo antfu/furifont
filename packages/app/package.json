@@ -1,0 +1,29 @@
+{
+  "name": "@furifont/app",
+  "type": "module",
+  "private": true,
+  "description": "The Furifont demo site and studio",
+  "scripts": {
+    "dev": "nuxi dev",
+    "generate": "nuxi generate",
+    "typecheck": "nuxi typecheck"
+  },
+  "dependencies": {
+    "devframe": "catalog:prod"
+  },
+  "devDependencies": {
+    "@devframes/vite": "catalog:frontend",
+    "@fontsource-variable/geist": "catalog:frontend",
+    "@fontsource-variable/geist-mono": "catalog:frontend",
+    "@iconify-json/ph": "catalog:frontend",
+    "@nuxt/kit": "catalog:frontend",
+    "@unocss/nuxt": "catalog:frontend",
+    "@unocss/reset": "catalog:frontend",
+    "furifont": "workspace:*",
+    "nuxt": "catalog:frontend",
+    "typescript": "catalog:cli",
+    "unocss": "catalog:frontend",
+    "vue": "catalog:frontend",
+    "vue-tsc": "catalog:frontend"
+  }
+}
