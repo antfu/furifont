@@ -18,7 +18,6 @@
     "@iconify-json/ph": "catalog:frontend",
     "@nuxt/kit": "catalog:frontend",
     "@unocss/nuxt": "catalog:frontend",
-    "@unocss/reset": "catalog:frontend",
     "furifont": "workspace:*",
     "nuxt": "catalog:frontend",
     "typescript": "catalog:cli",

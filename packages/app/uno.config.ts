@@ -14,7 +14,7 @@ body { font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; -web
  */
 export default defineConfig({
   presets: [
-    presetWind4({ preflights: { reset: false } }),
+    presetWind4(),
     presetIcons({ scale: 1.15 }),
   ],
   theme: {
