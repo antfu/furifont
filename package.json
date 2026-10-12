@@ -1,0 +1,82 @@
+{
+  "name": "pkg-placeholder",
+  "type": "module",
+  "version": "0.0.0",
+  "packageManager": "pnpm@12.8.1",
+  "description": "_description_",
+  "author": "Anthony Fu <anthonyfu117@hotmail.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/antfu",
+  "homepage": "https://github.com/antfu/pkg-placeholder#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antfu/pkg-placeholder.git"
+  },
+  "bugs": "https://github.com/antfu/pkg-placeholder/issues",
+  "keywords": [],
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "knip": "knip",
+    "lint": "eslint --cache",
+    "prepack": "nr build",
+    "release": "bumpp",
+    "start": "tsx src/index.ts",
+    "test": "pnpm run build && vitest",
+    "typecheck": "tsc",
+    "ci": "pnpm run lint && pnpm run typecheck && pnpm run knip && pnpm run test --run",
+    "prepare": "git config core.hooksPath .githooks && simple-git-hooks && skills-npm"
+  },
+  "scripts-info": {
+    "build": "Build the library for publishing",
+    "dev": "Rebuild on change during development",
+    "knip": "Find unused files, exports and dependencies",
+    "lint": "Check for code style issues",
+    "prepack": "Build before publishing",
+    "release": "Bump version and publish a release",
+    "start": "Run the entry file",
+    "test": "Run the test suite",
+    "typecheck": "Check types",
+    "ci": "Run the full continuous integration pipeline",
+    "prepare": "Set up git hooks and skills"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:cli",
+    "@antfu/ni": "catalog:cli",
+    "@antfu/skills": "catalog:agentic",
+    "@antfu/utils": "catalog:inlined",
+    "@types/node": "catalog:types",
+    "bumpp": "catalog:cli",
+    "eslint": "catalog:cli",
+    "eslint-plugin-slop": "catalog:cli",
+    "eslint-plugin-sonarjs": "catalog:cli",
+    "knip": "catalog:cli",
+    "nano-staged": "catalog:cli",
+    "publint": "catalog:cli",
+    "simple-git-hooks": "catalog:cli",
+    "skills-npm": "catalog:agentic",
+    "taze": "catalog:cli",
+    "tsdown": "catalog:cli",
+    "tsdown-stale-guard": "catalog:testing",
+    "tsnapi": "catalog:testing",
+    "tsx": "catalog:cli",
+    "typescript": "catalog:cli",
+    "vite": "catalog:cli",
+    "vitest": "catalog:testing"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm i --frozen-lockfile --ignore-scripts --offline && pnpm run ci && pnpx nano-staged"
+  },
+  "nano-staged": {
+    "*.{js,ts,tsx,json,css,md,yaml,vue}": "eslint --fix --no-warn-ignored"
+  }
+}
