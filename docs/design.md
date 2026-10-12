@@ -1,363 +1,332 @@
 # Furifont design
 
 A Japanese font that shows furigana (ruby) above kanji without changing the
-underlying text. The reading is chosen by OpenType contextual rules compiled
-from a dictionary, so plain text stays plain: copy, paste, search and
-selection all see the original characters.
+text. OpenType rules compiled from a dictionary choose each reading, so plain
+text stays plain: copy, paste, search and selection all see the original
+characters.
 
 Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-font)
-proves the approach for pinyin. We borrow its glyph model (one composite glyph
-per character-reading pair, placed above the em box, selected by `rclt` chain
-rules) and avoid its toolchain limits (otfcc corrupting large tables, wiping
-the base GSUB, 65k glyph ceiling).
+proved the approach for pinyin. Furifont keeps its glyph model: one glyph per
+character and reading, the annotation above the em box, chosen by `rclt` chain
+rules. It differs in three ways:
+
+- The toolchain is fontTools, which keeps the base font's own features.
+- The selectors are real variation sequences.
+- The rules follow what browsers actually show a font. That last point changed
+  most of the original plan; see [What the prototype changed](#what-the-prototype-changed).
 
 ## Goals
 
-- Prebuilt fonts for download: **Furifont Sans JP** Regular and Bold, built
-  from Source Han Sans JP, in three ruby scripts (hiragana, katakana for
-  on'yomi, Hepburn romaji).
-- A build pipeline anyone can run against a different base font or
-  dictionary.
-- A local dashboard (Devframe) to customise the dictionary and ruby options,
-  preview, and build.
+- Prebuilt fonts: **Furifont Sans JP** Regular and Bold, from Source Han Sans
+  JP, in three ruby scripts (hiragana, katakana for on'yomi, Hepburn romaji).
+- A build anyone can run with another base font, word list or options.
+- A local studio, served by Devframe, to tune, preview and build.
 - A static demo site that loads the prebuilt fonts.
 - Conservative annotation: a wrong reading is worse than no reading.
 
-## Out of scope for v1
+## Out of scope
 
 - Proper nouns (JMnedict).
-- Ruby on kana words; only kanji are annotated.
+- Ruby on kana. Only kanji are annotated.
 - Vertical writing. The base font's `vert` feature is kept, but ruby glyphs
-  are designed for horizontal text only.
-- Kanji not in the selected dictionary. No "most common reading of this
-  character" fallback except the single-reading rule below.
-- Latin, digits, Chinese and Korean text are untouched.
+  are drawn for horizontal text only.
+- Latin, digits, Chinese and Korean text, which are left as they are.
 
 ## Architecture
 
-pnpm monorepo. Packages and their one job each:
+The repository is a pnpm monorepo. Each package has one job:
 
-| Package                 | Language | Job                                                                                          |
-| ----------------------- | -------- | -------------------------------------------------------------------------------------------- |
-| `@furifont/dictionary`  | TS       | `dict:update` pipeline from JMdict + JmdictFurigana + KANJIDIC2 to a committed compact JSON. |
-| `@furifont/core`        | TS       | Pure: dictionary + options -> **build plan** (JSON) + `.fea` text. No font parsing.          |
-| `@furifont/compiler`    | TS + Py  | Node wrapper that runs `compile.py` (fontTools): plan + base font -> font file.              |
-| `@furifont/dashboard`   | TS/Vue   | Devframe definition (RPC functions) + client SPA (Vue 3, UnoCSS).                            |
-| `furifont`              | TS       | CLI: `furifont build`, `furifont dev` (opens the dashboard).                                 |
-| `playground`            | TS/Vue   | Static demo site deployed to GitHub Pages.                                                   |
-
-Data flow:
+| Package | Language | Job |
+| --- | --- | --- |
+| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JmdictFurigana and KANJIDIC2 into committed JSON. It also holds a short list of curated default readings. |
+| `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
+| `@furifont/compiler` | TS + Python | A Node wrapper around `furifont.py` (fontTools). It draws the plan into the base font, compiles the rules and checks the output with HarfBuzz. |
+| `furifont` | TS | The CLI (`furifont build`, `furifont dev`) and the studio's Devframe definition and RPC functions. |
+| `packages/app` | Nuxt | The demo site and the studio, as one static SPA. The CLI ships it as its Devframe client. |
 
 ```
 JMdict + JmdictFurigana + KANJIDIC2
-        | dict:update (network, run by maintainers)
+        | dict:update (maintainers, network)
         v
-packages/dictionary/data/*.json  (committed)
+packages/dictionary/data/dictionary.json (committed, one entry per line)
         |
         v
-core.plan(dictionary, options)  ->  plan.json + rules.fea
-        |
+createFontPlanner(dictionary)(options, coverage[, previewText]) -> { plan, report }
+        |                                     ^ codepoints of the base font (readFontInfo)
         v
-compiler (python3 compile.py --plan plan.json --base SourceHanSansJP-Regular.otf --out Furifont-Regular.otf)
-        |
-        v
-font file  ->  harfbuzzjs tests, Playwright tests, release assets, demo
+compileFont({ plan, base, output })  ->  font  ->  HarfBuzz smoke checks
 ```
 
-### Layer boundary (invariant)
+### Layer boundary
 
-`core` MUST NOT read font files. `compiler` MUST NOT make semantic decisions
-(which reading, which words, rule order). Everything the compiler needs is in
-the plan. The plan is the contract between the two and is validated with a
-schema on the TS side before it is written.
+`core` MUST NOT read font files. It receives the base font's coverage as a set
+of codepoints. `compiler` MUST NOT make semantic decisions, such as which
+reading to use, which words to annotate, or in what order the rules go.
 
-This keeps `core` unit-testable without fonts, and lets the compiler be
-replaced (a TS or Pyodide compiler later) without touching the planner. It is
-also why the dashboard preview and the full build are guaranteed to agree:
-both call the same `plan()`.
+The plan carries everything the compiler needs, and `PlanSchema` (valibot)
+validates it before it is written. The compiler assigns real glyph names
+itself: CID-keyed fonts get free CIDs. In the feature file, base characters are
+named `uniXXXX`/`uXXXXX` after their codepoint.
 
-## Glyph model
+The live preview and the full build both go through the same planner. The
+preview keeps only the rules its sample text can trigger, and tells the
+compiler to subset the base font first.
 
-### Pair glyphs
+## What the prototype changed
 
-For each kanji `K` and reading `r` the planner emits one composite glyph,
-named `uniXXXX.rb.N` where `N` is the reading's index in that kanji's ordered
-reading list (index 1 = default). The compiler builds it from the unchanged
-kanji outline plus the ruby outlines (kana or Latin, taken from the base font)
-scaled and positioned above the em box.
+The first prototype, a hand-built font with a dozen words shaped in Chromium,
+Firefox and WebKit, overturned three assumptions. The real data overturned a
+fourth.
 
-### Word ligature glyphs
-
-Readings that cannot be split per character (jukujikun: 今日 -> きょう,
-大人 -> おとな) become one ligature glyph spanning the whole word, named
-`uniXXXX_uniYYYY.rb.N`, with the ruby distributed across the word's width.
-Ligatures break per-character caret placement inside that word in some
-renderers; this is accepted for the few hundred such words.
-
-### Budget
-
-Source Han Sans JP has about 20k glyphs. The nf01..nf10 preset yields on the
-order of 3-6k pair glyphs and a few hundred ligatures. The compiler MUST fail
-with a clear message if the total would exceed 65,535.
-
-## Metrics and layout
-
-Defaults, all overridable in `options.metrics`:
-
-| Option             | Default | Meaning                                                                                      |
-| ------------------ | ------- | -------------------------------------------------------------------------------------------- |
-| `rubyScale`        | 0.5     | Ruby glyphs are scaled to 50% of the base em, print convention.                              |
-| `rubyGap`          | 0.05 em | Gap between the kanji's top (em box top) and the ruby baseline area.                         |
-| `ascenderRaise`    | 0.5 em  | `hhea.ascender`, `OS/2.sTypoAscender`, `usWinAscent` and `head.yMax` are raised by this.     |
-| `compressionFloor` | 0.6     | Ruby is squeezed horizontally down to this x-scale to fit the base advance.                  |
-| `maxRubyWidth`     | 1.6 em  | Past the floor, ruby overhangs symmetrically beyond the advance width, up to this total.     |
-
-The base kanji is never shrunk and advance widths are unchanged, so line
-breaking and justification are identical to the base font. Default line height
-grows to about 1.6x the font size; a CSS `line-height` below ~1.5 clips the
-ruby. This is documented, not worked around.
-
-No collision avoidance between two adjacent overhanging rubies in v1. Both
-neighbours must have 4+ mora readings for this to happen.
+1. **Fonts never see okurigana.** Browsers itemize text by Unicode script
+   before shaping, and 漢字 (Han) and かな (Hiragana) are different scripts.
+   A rule such as "食 followed by べ" never matches in any browser, although
+   HarfBuzz matches it when given the whole string. The planned stems derived
+   from parts of speech (書 + [かきくけこ]) were dropped. Rules work on **Han
+   runs** instead: maximal sequences of kanji, which is all a font is ever shown.
+2. **`rclt` can be turned off.** `font-feature-settings: "rclt" 0` disables it
+   in all three browsers. `ss01` stays as the documented switch, because apps
+   such as Word expose stylistic sets.
+3. **Selectors must be variation sequences.** A kanji followed by a variation
+   selector is split off its run unless the font maps that sequence in `cmap`
+   format 14. A rule matching 市 + VS227 + 場 then never sees 場. Each sequence
+   now maps to its own glyph (see [Selectors](#selectors)).
+4. **The newspaper ranking misleads.** JMdict's `nf` buckets belong to a
+   written form. Ranking by them gives 今日 こんにち and 昨日 さくじつ, the
+   newspaper readings. JMdict's own order gives きょう and きのう. The ranking
+   in [Defaults](#defaults) follows from this.
 
 ## Rule planning
 
-Input: the compiled dictionary and `options`. Output: the plan.
+### Words
 
-### 1. Select words
+Every dictionary entry is split into Han runs with their aligned readings. A
+run whose kanji are not all annotated is dropped, and so is one whose
+annotation crosses a kana. Runs of two or more kanji become **patterns** when
+their entry is selected:
 
-Entries containing at least one kanji whose best priority bucket is within
-`options.nfMax` (default 10, i.e. nf01..nf10), plus single-kanji entries tagged
-`ichi1` that have exactly one reading. Custom words (`options.words.add`,
-`options.words.remove`, `options.words.pin`) are applied last. Custom readings
-are written with inline alignment: `日[に]本[ほん]`.
+- its form has a newspaper bucket of at most `nfMax` (default 10), or
+- it has a priority tag in `selectTags` (default `spec1`).
 
-### 2. Expand inflections
+`spec1` is needed because 日本 ranks `nf25`.
 
-From JMdict part-of-speech tags:
+The default preset gives about 4,800 patterns from about 6,400 forms.
 
-| POS         | Pattern emitted                                                   |
-| ----------- | ----------------------------------------------------------------- |
-| `v1`        | stem without final る, followed by any kana                       |
-| `v5k`..`v5u`| stem, followed by one kana from the row class (書 + [かきくけこい]) |
-| `adj-i`     | stem, followed by one of [いくかけさ]                              |
-| `vs` nouns  | the noun only                                                     |
-| others      | dictionary form verbatim                                          |
+Custom words (`words.add`) and pins (`words.pin`) use inline notation:
+`日[に]本[ほん]` for one reading per kanji, `今日[きょう]` for one reading over
+several kanji. `words.remove` keeps a form bare.
 
-Only kanji are substituted; okurigana stay as they are and act as context.
+### Defaults
 
-### 3. Resolve ambiguity
+The readings of a pattern are ranked:
 
-Group patterns by their kanji sequence. If a sequence has one reading, use it.
-If it has several, the default is the one with the best nf bucket, then the
-best priority tag, then the order JMdict lists them. All other readings become
-alternates reachable through IVS (below). `options.words.pin` overrides the
-default for a word.
+1. pinned by the user;
+2. curated in the dictionary;
+3. carrying a priority tag;
+4. JMdict order within the word itself (a run read inside a longer form ranks
+   after the word's own readings);
+5. corpus weight.
 
-### 4. Order and protect
+The curated list is short and commented. It covers words where the data
+cannot tell readings apart (出来 でき, not しゅったい) and forms that drop
+okurigana that running text adds back (支払 しはら, for 支払い).
 
-Rules are sorted longest kanji sequence first. Then every selected pattern is
-checked against the **full** dictionary, not just the selected subset: if a
-longer dictionary word contains the pattern and reads those kanji differently
-(一日 inside 一日中, 生 inside 生活 vs 生きる), a protective rule for the longer
-sequence is emitted before it, either annotating it (if its reading is
-unambiguous) or leaving it bare (an empty-substitution "ignore" rule).
+### Lone kanji
 
-### 5. Emit
+A kanji alone in its run has no context at all, so it is annotated only when
+one reading has at least `isolatedMinShare` (default 0.8) of the evidence. The
+evidence is the best weight of any priority-tagged word in which the kanji
+stands alone. 来る counts as く, き and こ equally, because its reading changes
+as it conjugates. About 1,500 kanji pass, such as 桜, 駅, 私 and 見. Common verb
+kanji such as 書, 行, 生 and 出 stay bare.
 
-The planner writes:
+The rule is class-based: no lone-kanji reading applies when a Han glyph comes
+right before or after it. That includes ruby and variant glyphs.
 
-- the glyph list (pair glyphs, ligature glyphs, with ruby text already
-  converted to the target script);
-- `rules.fea`: glyph classes, one `rclt` chain-context lookup whose rules
-  dispatch to single-substitution lookups (one per kanji) and ligature lookups;
-  a `ss01` lookup mapping every ruby glyph back to its bare glyph;
-- the IVS table;
-- the metrics options.
+### Protection
 
-Because a chain rule substitutes every kanji in the word in one step and the
-shaper then advances past the whole match, a kanji already substituted cannot
-be re-matched by a shorter rule.
+Every multi-kanji run in the full dictionary is read through the longest-match
+rules. A run is **protected** when the result conflicts with any of its own
+readings, as 大人気 does through 大人.
 
-## OpenType features
+- It is annotated with its own reading when that reading is unambiguous and
+  needs only readings the font already has.
+- Otherwise it gets an `ignore` rule and stays bare. 大人気 is だいにんき, or
+  おとなげ in 大人気ない.
 
-- Rules live under **`rclt`** (required contextual alternates) for `DFLT`,
-  `kana` and `hani` scripts. Applications cannot turn `rclt` off, which is the
-  point: the font annotates by default.
-- The base font's GSUB and GPOS are kept intact; our lookups are appended with
-  fontTools `feaLib` (`addOpenTypeFeatures` with the existing tables merged).
-- **`ss01` = ruby off.** One lookup, placed after ours, maps all ruby glyphs to
-  the bare glyph, so `font-feature-settings: "ss01"` shows the plain font.
-- Large lookups are compiled with fontTools' automatic overflow handling
-  (Extension lookups). The compiler MUST run `fontTools.ttLib` round-trip
-  validation and a HarfBuzz smoke shape before writing the output.
+Protected runs become rules themselves, so the check repeats until nothing
+changes. With the default preset, about 650 runs are annotated and 1,300
+left bare.
 
-## IVS overrides
+### Glyphs
 
-Users who need a different reading, or no ruby, insert a Unicode variation
-selector after a kanji. Plain text stays plain; the selector is invisible and
-survives copy and paste.
+Each glyph is keyed by what it draws: one or more base characters plus ruby
+spans. Every word sharing a reading therefore shares the glyph. A run whose
+reading spans several kanji (今日 きょう) becomes one ligature glyph for the
+whole run. Single substitutions are packed into `rb_<n>` lookups, so that each
+lookup maps an input glyph only once.
 
-Source Han Sans already uses U+E0100.. for registered IVD glyph variants, so we
-use the tail of the range, where the IVD has no registrations:
+### Feature file
 
-| Selector            | Meaning                                                              |
-| ------------------- | -------------------------------------------------------------------- |
-| U+E01E0 (VS225)     | Suppress ruby on this character.                                     |
-| U+E01E1 (VS226)     | Reading 1 of this character (the default; useful to force it).       |
-| U+E01E2.. (VS227..) | Alternate readings 2.. in the character's ordered list.              |
+| Lookup | Feature | Role |
+| --- | --- | --- |
+| `rb_*`, `lig_*`, `isolated` | (nested) | Base or variant glyph to ruby glyph |
+| `furigana` | `rclt` | Chain rules, longest first per first glyph; then the lone-kanji class rules in their own subtable |
+| `variant_readings` | `rclt` | A selector no word claimed picks the kanji's own reading |
+| `variants_off` | `ccmp` | Variant glyphs left over go back to plain kanji, for example when `rclt` is off |
+| `ruby_off`, `ruby_off_ligatures` | `ss01` | Ruby glyphs back to their bases |
 
-When the selector follows the **first kanji of an ambiguous dictionary word**
-(市 U+E01E2 場), the rule matches the word with the selector and applies that
-word's reading N to the whole word (いちば). Otherwise the selector applies to
-the single character.
+The order of these lookups matters more than their features. Shapers apply
+lookups in lookup-list order, so the fallbacks only see what `furigana` left.
 
-Implementation: the selector code points are mapped to real zero-width glyphs
-in `cmap` (not `cmap` format 14 UVS, because UVS cannot drive contextual
-rules), the chain rules include them as context, and a final lookup deletes
-them. The build emits `ivs.json` (kanji -> ordered readings) and the demo
-renders it as a reference page.
+The main lookup has a `subtable;` break every 600 rules, plus one before the
+class rules. That lets fontTools pack it into a dozen glyph-keyed format 1
+subtables, instead of thousands of format 3 ones that overflow 16-bit offsets.
+All lookups are Extension lookups.
 
-## Dictionary pipeline
+## Selectors
 
-Sources, all CC BY-SA 4.0 (EDRDG / Doublevil):
+Each sequence of kanji + variation selector in VS225..VS240 is mapped in
+`cmap` format 14 to an **empty placeholder glyph** with the kanji's advance.
+These selectors sit at the end of the IVD range, where nothing is registered,
+and Source Han Sans' own sequences use VS17 and up.
 
-- **JMdict** (words, readings, part of speech, priority tags, nf buckets).
-- **JmdictFurigana** (per-kanji alignment of each JMdict word's reading).
-- **KANJIDIC2** (on/kun reading lists per kanji, for the katakana variant).
+| Selector | Meaning |
+| --- | --- |
+| VS225 (U+E01E0) | No ruby on this kanji |
+| VS226 + n (U+E01E1 + n) | Reading n + 1 |
 
-`pnpm --filter @furifont/dictionary dict:update` downloads the three, merges
-them, and writes `packages/dictionary/data/words.json` plus
-`kanji.json`. The output records source versions and dates. The JSON is
-committed and published, so builds and the dashboard work offline and
-dictionary changes show up as reviewable diffs.
+After the first kanji of a pattern with several readings, a selector picks the
+word's reading: 市 + VS227 + 場 is しじょう. After any other kanji, the
+selector picks that kanji's own reading. Each kanji's readings are ordered by
+evidence.
 
-Compact record per word:
+The rules always replace a placeholder: with a ruby glyph, or with the plain
+kanji through `variants_off`. Placeholders therefore cost nothing in outlines.
+The reading lists ship as `<font>.ivs.json` and on the demo's reference page.
 
-```json
-{ "k": "日本", "r": ["に", "ほん"], "on": [true, true], "pos": ["n"], "nf": 1, "pri": ["ichi1", "news1"] }
-```
+## Metrics
 
-A word-level reading that cannot be aligned (`r` spanning the whole kanji
-sequence) is a ligature candidate.
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `rubyScale` | 0.5 | Ruby size relative to the base characters |
+| `rubyGap` | 0.05 em | Space between the top of the ideographic em box and the ruby |
+| `compressionFloor` | 0.6 | Ruby is squeezed horizontally down to this scale, then overhangs |
+| `maxRubyWidth` | 1.6 em | The widest a ruby may get, overhanging both sides equally |
+
+The em box comes from the BASE table's `ideo` baseline, and falls back to the
+typographic ascender. `hhea.ascent` and `usWinAscent` are raised to cover the
+ruby: from 1160 to 1430 for Source Han Sans JP.
+
+Advance widths do not change, so line breaking and justification match the base
+font. The default line height grows to about 1.7. A smaller `line-height`
+clips the ruby. This is documented, not worked around.
+
+Kana ruby uses the base font's own kana. Romaji uses its Latin glyphs. Source
+Han Sans' `ruby` feature only covers five glyphs, so it is not used.
 
 ## Ruby scripts
 
-`options.rubyScript`:
-
-| Value        | Ruby text                                                                                                |
-| ------------ | -------------------------------------------------------------------------------------------------------- |
-| `hiragana`   | Reading as aligned (default).                                                                            |
-| `katakanaOn` | Readings flagged on'yomi (matched against KANJIDIC2 on list, allowing rendaku and sokuon) in katakana.   |
-| `hepburn`    | Modified Hepburn: macrons for long vowels (きょう -> kyō), ん before b/m/p stays n (shinbun), っ doubles. |
-
-Latin ruby uses the base font's own Latin glyphs so style and license match.
-
-Prebuilt families: `Furifont Sans JP`, `Furifont Sans JP Kata`,
-`Furifont Sans JP Romaji`, each Regular and Bold. Source Han Sans is OFL with
-the reserved name "Source", so none of our names contain it.
+| `rubyScript` | Ruby text |
+| --- | --- |
+| `hiragana` | The aligned reading |
+| `katakanaOn` | Readings that match one of the kanji's on'yomi in KANJIDIC2, allowing rendaku and sokuon (学 がっ in 学校), in katakana; kun'yomi in hiragana |
+| `hepburn` | Modified Hepburn with macrons (kyō, tōkyō), n before b/m/p (shinbun). A trailing っ doubles the next segment's consonant, so 学校 is gak + kō. |
 
 ## Compiler
 
-`packages/compiler/compile.py`, Python 3.11+, fontTools only. Steps:
+`packages/compiler/python/furifont.py` needs Python 3.10 or later with
+fontTools, uharfbuzz and brotli. For a build, it does this:
 
-1. Load plan, validate glyph count against the base font.
-2. For each pair/ligature glyph: measure the ruby glyphs' advances, scale by
-   `rubyScale`, compress to fit (down to the floor), centre over the base
-   advance, allow overhang up to `maxRubyWidth`, draw with a transform pen into
-   a new CFF charstring (or glyf composite for TrueType bases).
-3. Add `cmap` entries for the selector glyphs.
-4. Compile `rules.fea` against the existing GSUB with feaLib.
-5. Raise vertical metrics; set family, style and version names from the plan.
-6. Save, reload, shape a smoke string with uharfbuzz, exit non-zero on
-   mismatch.
+1. **Load.** It loads the base font, subsetting it first for previews.
+2. **Check the budget.** It fails if the glyphs would pass 65,535.
+3. **Draw.** Each planned glyph is drawn, with bases side by side and each ruby
+   centered over its span. Drawing works for CID-keyed CFF (new glyphs reuse
+   free CIDs), name-keyed CFF and TrueType outlines.
+4. **Map the variants** in `cmap` format 14. Empty format 14 subtables are
+   dropped, because browsers reject them.
+5. **Compile the features.** feaLib compiles them against a stub glyph order
+   made of logical names, then decompiles the result against the real font. A
+   kanji glyph shared by two codepoints, such as Kangxi radicals, gets its
+   name rewritten throughout the feature file.
+6. **Merge.** The result is merged into the base font's GSUB. Lookups are
+   appended. A feature the base font already has (such as `ccmp`) is
+   extended, since a language system uses one record per tag. New features
+   are registered in every language system.
+7. **Finish.** The ascender is raised and names are set. Source's Reserved
+   Font Name must not appear in them. The font is shaped against the plan's
+   smoke checks, then written, with an optional WOFF2.
 
-The Node wrapper locates `python3`, checks `import fontTools`, and prints
-`pip install fonttools uharfbuzz` if missing. It does not install anything.
+A full Source Han Sans JP build takes about 35 s and gives about 6.4 MB as
+OpenType and 3.6 MB as WOFF2.
 
-## CLI and dashboard
+## Studio
 
-`furifont build --base <font> [--dictionary <json>] [--preset nf10] [--ruby-script hiragana] [--out dir]`
-runs plan + compile. `furifont dev` starts the Devframe dev server with the
-dashboard.
+`furifont dev` serves the app's static build together with the studio's RPC
+(`furifont:state`, `report`, `preview`, `build`, `save`, `search`) through
+Devframe's dev server.
 
-Dashboard (Devframe `defineDevframe` + `defineRpcFunction`, Vue 3 + UnoCSS
-client):
+- **Authentication.** It is gated by Devframe's one-time code. `--no-auth` is
+  for trusted machines.
+- **Preview.** Fonts are subsets, sent as base64 and loaded with `FontFace`.
+- **Builds.** They stream progress and land in `./fonts`, which the studio
+  serves for download.
+- **Typed calls.** The wire contract (`StudioFunctions`) lives with the
+  implementation, and the app imports it as types only.
 
-- Base font: pick a local file or download a Source Han Sans JP weight.
-- Dictionary: nf cutoff slider, ichi1/news1 toggles, search, add/remove/pin
-  words with aligned readings, see which words are ambiguous and what default
-  was chosen.
-- Ruby: script, scale, compression floor, max width, ascender raise.
-- Preview: a textarea; on change the server plans and compiles a font
-  containing only the glyphs needed for that text (seconds), streams it back,
-  and the client loads it with `FontFace`.
-- Build: full build with streamed progress and download link.
-
-Preview and full build share `plan()`; the preview only filters the glyph list
-and rules to the sample text.
-
-## Demo and release
-
-- `playground` is a static Vite + Vue site on GitHub Pages: type text, switch
-  family and script, toggle `ss01`, view the IVS reference table.
-- CI (`release.yml`) on tag: set up Node and Python, `pip install fonttools
-  uharfbuzz`, download Source Han Sans JP Regular/Bold OTFs from Adobe's
-  release, build all six fonts, run the test suites, attach the fonts to the
-  GitHub Release, publish the npm packages, deploy the demo with the fonts
-  built in that run.
-- Releases are triggered by a human. No agent releases autonomously.
+On the static demo site the studio page finds no server and explains how to
+start one. Under `nuxt dev`, Devframe's Vite bridge serves the same RPC on its
+own mount.
 
 ## Testing
 
-- `core`: vitest unit tests on selection, inflection expansion, ambiguity
-  resolution, ordering and conflict protection; snapshot of generated `.fea`
-  for a fixed fixture dictionary.
-- `compiler`: harfbuzzjs (HarfBuzz as wasm, no system dependency) shapes
-  strings with the built font and asserts glyph names: 日本 -> `uni65E5.rb.1
-  uni672C.rb.1`, 市場 defaults, 市 U+E01E2 場 selects the alternate, `ss01`
-  restores bare glyphs, longer words win.
-- Browser: Playwright on Chromium, Firefox and WebKit: screenshot comparison,
-  line-height clipping, wrapping inside annotated words, selection highlight
-  covers the whole glyph, copy/paste returns the original text.
-- Gates before every PR: `pnpm lint && pnpm knip && pnpm test && pnpm typecheck && pnpm build`.
+- **core** (vitest): kana and romaji conversion, runs, notation, selection,
+  defaults, pins, lone kanji, protection, preview filtering, and a snapshot of
+  the feature file.
+- **dictionary**: the compiled data plans sensible defaults (今日 きょう,
+  明日 あした, 出来 でき).
+- **compiler**: compiles against a committed Source Han Sans JP subset. It
+  shapes with harfbuzzjs and checks words, protection, lone kanji, selectors,
+  `ss01` and metrics.
+- **cli**: config loading, and a real `buildFont`.
+- **e2e** (Playwright, on Chromium, Firefox and WebKit):
+  - ruby differs from `ss01`;
+  - VS227 differs from the default, and VS225 matches plain text;
+  - selection returns the source text;
+  - ruby is not clipped at `line-height: normal`;
+  - wrapped lines do not overlap.
+
+  In Chromium, the studio previews, plans and builds a font.
+
+## Release
+
+Tags run `release.yml`:
+
+- npm publishing and the changelog, through `sxzz/workflows`;
+- the six fonts, built from Source Han Sans JP Regular and Bold, are attached
+  to the GitHub Release with the OFL and the data license;
+- the demo, with the WOFF2 fonts, is deployed to GitHub Pages under
+  `/<repo>/`.
+
+A human pushes the tag.
 
 ## Licensing
 
-- Tooling (all TS and Python code): MIT.
-- Dictionary data and generated rule data: CC BY-SA 4.0, with attribution to
-  EDRDG (JMdict, KANJIDIC2) and JmdictFurigana. Source versions are recorded in
-  the compiled JSON and in the font's `name` table description.
-- Font outlines: SIL OFL 1.1, as Source Han Sans. The released fonts carry the
-  OFL, a note that the embedded reading rules derive from CC BY-SA data, and no
-  reserved name.
+- **Code:** MIT.
+- **Dictionary data and the rules compiled from it:** CC BY-SA 4.0 (EDRDG,
+  JmdictFurigana). Each font's name table records the source versions.
+- **Fonts:** SIL OFL 1.1, as derivatives of Source Han Sans. They carry
+  Adobe's copyright, and none of their names contains the Reserved Font Name
+  "Source".
 
-## Milestones
+## Known limits
 
-Each milestone is one PR.
-
-- **M0 Scaffold**: packages above, workspace gates, CI with Python set up,
-  README.
-- **M1 Prototype**: ~30 hand-listed words, pair glyphs + one ligature, `rclt`
-  rules and `ss01`, on Source Han Sans JP Regular; harfbuzzjs assertions and
-  Playwright screenshots in three browsers. Answers the rendering questions
-  before any dictionary work.
-- **M2 Dictionary**: `dict:update`, compiled JSON, presets, POS stems, on/kun
-  flags.
-- **M3 Planner and compiler**: longest-match ordering, full-dictionary
-  conflict check, IVS, kata/romaji scripts, overflow handling, glyph budget.
-- **M4 CLI and dashboard**: `furifont build`, `furifont dev`, subset preview,
-  full build, custom words.
-- **M5 Release**: demo site, release workflow, prebuilt fonts, docs.
-
-## Risks
-
-| Risk                                                                 | Mitigation                                                                                            |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Thousands of chain-context subtables overflow 16-bit offsets.        | fontTools Extension lookups; group rules by kanji class; M1 measures real sizes early.                |
-| Wrong default reading for an ambiguous word.                         | nf-based choice, dashboard shows every ambiguous word, IVS override, `pin`.                           |
-| Pattern matches inside an unlisted longer compound.                  | Full-dictionary protection rules; unknown compounds remain a known limitation, documented.            |
-| Ruby overhang collides with a neighbour.                             | Rare by construction (two adjacent 4+ mora readings); option to lower `maxRubyWidth`.                 |
-| Word or an app ignores `rclt`.                                       | Documented; Word applies features once any OpenType option is enabled, as Mengshen found.             |
-| Shapers treat variation selectors as default-ignorable and skip them in context matching. | M1 verifies the selector-as-glyph approach in HarfBuzz, CoreText and DirectWrite before M3 builds on it; fallback is `cmap` format 14 for per-character selection only. |
-| CC BY-SA data inside an OFL font confuses users.                     | Clear LICENSE split in release assets and README.                                                     |
+- A word broken across lines is shaped as two runs, and may lose or change its
+  ruby. In Chromium, `word-break: auto-phrase` keeps phrases together.
+- Inflected forms of verbs with ambiguous kanji (書く, 行く) stay bare.
+  Selectors can add their ruby.
+- A compound missing from the dictionary is read through the words it
+  contains, longest first.
+- CoreText and DirectWrite are untested. Both support `cmap` format 14 and
+  `rclt`, but their script itemization may differ from the browsers tested
+  here.
