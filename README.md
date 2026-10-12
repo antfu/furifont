@@ -111,15 +111,13 @@ These are the settings:
 ## Development
 
 ```sh
-pnpm install
-python3 -m pip install -r packages/compiler/python/requirements.txt
-pnpm build          # every package; the CLI build includes the app
+pnpm run setup      # dependencies, Python's font libraries, test browsers, first build
 pnpm test           # unit and font tests
 pnpm test:e2e       # rendering in Chromium, Firefox and WebKit, and the studio
-pnpm fonts          # the six prebuilt fonts, into packages/app/public/fonts
 pnpm dev            # the app, with a live studio
-pnpm dict:update    # download the sources and recompile the dictionary
 ```
+
+[CONTRIBUTING.md](CONTRIBUTING.md) explains the setup and the rules a change must keep.
 
 ## License
 

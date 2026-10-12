@@ -1,1 +1,62 @@
-Please refer to https://github.com/antfu/contribute
+# Contributing
+
+Thanks for helping. For the general conventions, see [antfu/contribute](https://github.com/antfu/contribute). This page covers what is specific to Furifont.
+
+## Setup
+
+You need:
+
+- Node 22.18 or later.
+- pnpm, through `corepack enable`.
+- Python 3.10 or later. On Debian and Ubuntu, also install `python3-venv`.
+
+Then run:
+
+```sh
+pnpm run setup
+```
+
+`pnpm setup` is pnpm's own command, so type `run`. The script does five things:
+
+1. It checks your Node and Python versions.
+2. It installs fontTools, uharfbuzz and brotli from `packages/compiler/python/requirements.txt`. If your system Python refuses a global install, as Homebrew's and recent Debian's do, the script puts the libraries in `.venv`. In that case, run `source .venv/bin/activate` before you work, or set `FURIFONT_PYTHON=.venv/bin/python`.
+3. It runs `pnpm install`.
+4. It installs Chromium, Firefox and WebKit for the browser tests. Add `--no-browsers` to skip about 500 MB of downloads. On Linux, the browsers can also need system libraries: `pnpm exec playwright install-deps`.
+5. It builds every package. `pnpm dev` and the browser tests need that build.
+
+The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
+
+## Everyday commands
+
+| Command | |
+| --- | --- |
+| `pnpm dev` | The app on `localhost:3000`, with the studio on live RPC. Run `pnpm build` again after you change a package. |
+| `pnpm test` | Unit and font tests. The compiler tests skip themselves when Python's font libraries are missing. |
+| `pnpm test:e2e` | Rendering in Chromium, Firefox and WebKit, and the studio. Run `pnpm build` first. |
+| `pnpm fonts` | The six prebuilt fonts, into `packages/app/public/fonts`, where the demo reads them. |
+| `node packages/cli/bin.mjs dev` | The studio as users get it, built from your checkout. |
+| `pnpm dict:update` | Downloads JMdict, JmdictFurigana and KANJIDIC2 and recompiles the dictionary. |
+
+## How it fits together
+
+[docs/design.md](docs/design.md) explains the design. Three rules matter for most changes:
+
+- **`@furifont/core` reads no fonts, and `@furifont/compiler` decides no readings.** The plan (`PlanSchema`) is the only thing passed between them. A change to which words get ruby, or how, belongs in core. A change to how glyphs are drawn or compiled belongs in the compiler.
+- **Browsers shape one script at a time.** A rule can only see a run of kanji, never the kana around it. HarfBuzz on a whole string matches rules that no browser does. So check any change to rendering with `pnpm test:e2e`, not with HarfBuzz alone.
+- **Never edit `packages/dictionary/data/dictionary.json` by hand.** Regenerate it with `pnpm dict:update`. To fix a wrong default reading, add the word to `packages/dictionary/src/defaults.ts`, with a comment that says why.
+
+The app uses Nuxt and UnoCSS. Colors come only from the `--ff-*` tokens in `packages/app/uno.config.ts`. Corners are square, and SFCs have no `<style>` blocks.
+
+## Pull requests
+
+- Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org).
+- The pre-commit hook runs the full check: `pnpm lint && pnpm typecheck && pnpm knip && pnpm build && pnpm test`. Run `pnpm test:e2e` as well when you change rendering, the compiler or the studio.
+- Test behaviour: what a text shapes to, or what a page shows. Don't test which function was called.
+
+## Releases
+
+Maintainers release by pushing a `v*` tag. CI then does three things:
+
+- publishes the npm packages;
+- builds the six fonts and attaches them to the GitHub Release;
+- deploys the demo to GitHub Pages.
