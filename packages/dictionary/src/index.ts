@@ -1,6 +1,7 @@
 import type { Dictionary } from '@furifont/core'
 import { readFile } from 'node:fs/promises'
 import * as v from 'valibot'
+import { DEFAULT_READINGS } from './defaults'
 
 const DATA = new URL('../data/dictionary.json', import.meta.url)
 
@@ -19,6 +20,7 @@ export async function loadDictionary(): Promise<Dictionary> {
   return {
     sources: data.sources,
     onyomi: data.onyomi,
+    defaults: DEFAULT_READINGS,
     entries: data.entries.map(([form, furigana, nf, priority, order, conjugates]) => ({
       form,
       furigana,
