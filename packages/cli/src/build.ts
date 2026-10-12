@@ -1,5 +1,5 @@
 import type { CompileProgress } from '@furifont/compiler'
-import type { PlanReport, PlanResult } from '@furifont/core'
+import type { Dictionary, PlanReport, PlanResult } from '@furifont/core'
 import type { FurifontConfig } from './config'
 import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
@@ -30,12 +30,18 @@ function resolveBase(base: string, cwd: string): Promise<string> {
   return weight ? fetchBaseFont(weight, cacheDir()) : Promise.resolve(resolve(cwd, base))
 }
 
+let dictionary: Promise<Dictionary> | undefined
 let planner: Promise<ReturnType<typeof createFontPlanner>> | undefined
 const coverages = new Map<string, Promise<Set<number>>>()
 
+/** The bundled dictionary, loaded once. */
+export function getDictionary(): Promise<Dictionary> {
+  return dictionary ??= loadDictionary()
+}
+
 /** Plans a font for `config`; with `previewText`, only what that text needs. */
-async function planWithBase(config: FurifontConfig, cwd: string, previewText?: string): Promise<PlanResult & { base: string }> {
-  planner ??= loadDictionary().then(createFontPlanner)
+export async function planWithBase(config: FurifontConfig, cwd: string, previewText?: string): Promise<PlanResult & { base: string }> {
+  planner ??= getDictionary().then(createFontPlanner)
   const base = await resolveBase(config.base, cwd)
   let coverage = coverages.get(base)
   if (!coverage)

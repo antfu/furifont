@@ -42,6 +42,7 @@
     "@furifont/core": "workspace:*",
     "@furifont/dictionary": "workspace:*",
     "cac": "catalog:prod",
+    "devframe": "catalog:prod",
     "valibot": "catalog:prod"
   }
 }
