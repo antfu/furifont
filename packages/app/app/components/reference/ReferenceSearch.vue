@@ -36,7 +36,7 @@ const kanji = computed(() => {
         <h2 class="label border-b border-base px-6 py-3">
           Words with several readings / {{ words.length }}
         </h2>
-        <ReferenceEntry v-for="[word, readings] in words" :key="word" :text="word" :readings />
+        <ReferenceEntry v-for="[word, readings] in words" :key="word" :text="word" :readings word-default />
       </section>
       <section>
         <h2 class="label border-b border-base px-6 py-3">
