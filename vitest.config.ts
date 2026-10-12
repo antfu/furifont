@@ -9,6 +9,7 @@ export default defineConfig({
       '@furifont/core': source('core'),
       '@furifont/compiler': source('compiler'),
       '@furifont/dictionary': source('dictionary'),
+      'furifont': source('cli'),
     },
   },
   test: {
