@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import '@unocss/reset/tailwind.css'
 import '@fontsource-variable/geist'
 import '@fontsource-variable/geist-mono'
 </script>

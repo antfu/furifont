@@ -114,7 +114,6 @@ catalogs:
     '@iconify-json/ph': ^1.2.2
     '@nuxt/kit': ^4.6.1
     '@unocss/nuxt': ^66.11.0
-    '@unocss/reset': ^66.11.0
     nuxt: ^4.6.1
     unocss: ^66.11.0
     vue: ^3.5.43
