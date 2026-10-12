@@ -274,6 +274,11 @@ Devframe's dev server.
 - **Typed calls.** The wire contract (`StudioFunctions`) lives with the
   implementation, and the app imports it as types only.
 
+The app's interface is in English, Japanese, Simplified Chinese and
+Traditional Chinese. It follows the browser's languages (zh-TW, zh-HK and Hant
+give Traditional Chinese) until the visitor picks one, which is remembered. The
+fonts and the dictionary are Japanese only.
+
 On the static demo site the studio page finds no server and explains how to
 start one. Under `nuxt dev`, Devframe's Vite bridge serves the same RPC on its
 own mount.

@@ -47,6 +47,8 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 
 The app uses Nuxt and UnoCSS. Colors come only from the `--ff-*` tokens in `packages/app/uno.config.ts`. Corners are square, and SFCs have no `<style>` blocks.
 
+The interface is in English, Japanese, Simplified Chinese and Traditional Chinese. The fonts themselves target Japanese only. Messages live in `packages/app/app/locales/`. `en.ts` is the source, and the other locales are typed against it, so a missing or extra key fails `pnpm typecheck`. Japanese sample text keeps `lang="ja"` in every interface language.
+
 ## Pull requests
 
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org).
