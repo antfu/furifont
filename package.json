@@ -18,6 +18,7 @@
     "node": ">=22.18"
   },
   "scripts": {
+    "setup": "node scripts/setup.ts",
     "build": "pnpm -r --filter=./packages/* run build",
     "dev": "pnpm -F @furifont/app run dev",
     "fonts": "node scripts/build-fonts.ts",
@@ -32,6 +33,7 @@
     "prepare": "git config core.hooksPath .githooks && simple-git-hooks && skills-npm"
   },
   "scripts-info": {
+    "setup": "Install dependencies, the font libraries and the test browsers, then build; run it as `pnpm run setup`",
     "build": "Build every package",
     "dev": "Run the app with a live studio (build the packages first)",
     "fonts": "Build the prebuilt fonts into packages/app/public/fonts",
