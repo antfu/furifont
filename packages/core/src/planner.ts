@@ -313,14 +313,16 @@ function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadin
   }
   const protect = (text: string, readings: Map<string, RunReading>, longest: number): boolean => {
     const chars = [...text]
-    const truth = [...readings.values()].sort(rank)[0]!
-    const expected = assignment(truth.spans, chars.length)
-    if (!misreads(chars, expected, known, longest))
+    // Without kana context a run may be any of its words: 大人気 is だいにんき, or おとなげ in 大人気ない.
+    const candidates = [...new Set([...readings.values()].map(r => assignment(r.spans, chars.length).join('|')))]
+    const expected = [...readings.values()].map(r => assignment(r.spans, chars.length))
+    if (!expected.some(e => misreads(chars, e, known, longest)))
       return false
+    const truth = [...readings.values()].sort(rank)[0]!
     const run = { text, spans: truth.spans }
-    const reusable = !isGrouped(run) && ctx.renderable(run) && truth.spans.every(s => kanjiReadings.get(chars[s.start]!)?.includes(s.ruby))
+    const reusable = candidates.length === 1 && !isGrouped(run) && ctx.renderable(run) && truth.spans.every(s => kanjiReadings.get(chars[s.start]!)?.includes(s.ruby))
     protectedRuns.set(text, reusable ? truth.spans : null)
-    known.set(text, reusable ? expected : null)
+    known.set(text, reusable ? expected[0]! : null)
     return true
   }
   // Each protected run is a new rule that can misread others in turn.
