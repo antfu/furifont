@@ -44,6 +44,7 @@ catalogs:
     '@antfu/utils': ^9.3.0
   prod:
     cac: ^7.1.0
+    devframe: ^1.2.3
     valibot: ^1.5.0
   testing:
     harfbuzzjs: ^1.6.3
