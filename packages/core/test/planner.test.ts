@@ -23,6 +23,12 @@ describe('planner', () => {
     expect(report.ivs.words['今日']).toEqual(['今日[きょう]', '今[こん]日[にち]'])
   })
 
+  it('selects words by frequency bucket or priority tag', () => {
+    expect(drawn(plan().plan)).toContain('京:きょう')
+    expect(drawn(plan({ selectTags: [] }).plan)).not.toContain('京:きょう')
+    expect(drawn(plan({ nfMax: 2 }).plan)).not.toContain('大人:おとな')
+  })
+
   it('protects a longer word from a shorter match that would misread it', () => {
     const { plan: p, report } = plan()
     expect(report.stats.protectedAnnotated).toBe(1)
