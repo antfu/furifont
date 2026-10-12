@@ -20,3 +20,4 @@ packages/app/public/fonts
 test/e2e/.cache
 test-results
 playwright-report
+.venv
