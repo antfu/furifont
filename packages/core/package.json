@@ -23,5 +23,8 @@
   ],
   "scripts": {
     "build": "tsdown"
+  },
+  "dependencies": {
+    "valibot": "catalog:prod"
   }
 }
