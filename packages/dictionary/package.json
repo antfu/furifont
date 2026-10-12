@@ -1,0 +1,35 @@
+{
+  "name": "@furifont/dictionary",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "JMdict words aligned with per-kanji readings, compiled for Furifont",
+  "author": "Anthony Fu <anthonyfu117@hotmail.com>",
+  "license": "CC-BY-SA-4.0",
+  "homepage": "https://github.com/antfu/furigana-font#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antfu/furigana-font.git",
+    "directory": "packages/dictionary"
+  },
+  "bugs": "https://github.com/antfu/furigana-font/issues",
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./data/dictionary.json": "./data/dictionary.json",
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.mts",
+  "files": [
+    "LICENSE.md",
+    "data",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "update": "node scripts/update.ts"
+  },
+  "dependencies": {
+    "@furifont/core": "workspace:*",
+    "valibot": "catalog:prod"
+  }
+}
