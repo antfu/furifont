@@ -117,6 +117,7 @@ catalogs:
     nuxt: ^4.6.1
     unocss: ^66.11.0
     vue: ^3.5.43
+    vue-i18n: ^11.4.14
     vue-tsc: ^3.3.13
   inlined:
     '@antfu/utils': ^9.3.0

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const commands = [
-  { command: 'npx furifont build --base Bold', note: 'a font from the command line' },
-  { command: 'npx furifont dev', note: 'the studio: tune, preview, build' },
-]
+  { command: 'npx furifont build --base Bold', note: 'downloads.cliBuild' },
+  { command: 'npx furifont dev', note: 'downloads.cliDev' },
+] as const
 const { copied, copy } = useCopy()
 </script>
 
@@ -12,10 +12,10 @@ const { copied, copy } = useCopy()
       <thead>
         <tr class="border-b border-base text-left">
           <th class="label px-6 py-3 font-normal">
-            Family
+            {{ $t('downloads.family') }}
           </th>
           <th class="label px-3 py-3 font-normal">
-            Ruby
+            {{ $t('downloads.ruby') }}
           </th>
           <th v-for="w in WEIGHTS" :key="w.style" class="label px-3 py-3 font-normal">
             {{ w.style }}
@@ -28,7 +28,7 @@ const { copied, copy } = useCopy()
             {{ f.family }}
           </td>
           <td class="px-3 py-3 color-muted">
-            {{ f.script }}
+            {{ $t(`scripts.${f.script}`) }}
           </td>
           <td v-for="w in WEIGHTS" :key="w.style" class="px-3 py-3">
             <span class="flex gap-3 font-mono text-xs">
@@ -40,7 +40,7 @@ const { copied, copy } = useCopy()
     </table>
     <div class="flex flex-col gap-4 p-6">
       <p class="text-sm color-muted">
-        Or build one: another base font, dictionary size, ruby script or metrics. Needs Python 3.10+ with fontTools.
+        {{ $t('downloads.buildOwn') }}
       </p>
       <button
         v-for="c in commands"
@@ -49,8 +49,8 @@ const { copied, copy } = useCopy()
         class="focus-ring flex flex-col items-start gap-1 border border-base px-3 py-2 text-left transition-colors hover:border-strong"
         @click="copy(c.command)"
       >
-        <code class="font-mono text-xs">{{ copied === c.command ? 'copied' : `$ ${c.command}` }}</code>
-        <span class="text-xs color-muted">{{ c.note }}</span>
+        <code class="font-mono text-xs">{{ copied === c.command ? $t('copied') : `$ ${c.command}` }}</code>
+        <span class="text-xs color-muted">{{ $t(c.note) }}</span>
       </button>
     </div>
   </div>

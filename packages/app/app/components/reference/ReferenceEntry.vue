@@ -18,12 +18,12 @@ const { copied, copy } = useCopy()
         <button
           type="button"
           class="focus-ring flex flex-col items-start gap-1 px-6 py-3 text-left transition-colors hover:bg-hover"
-          :title="`Copy ${text} with ${selectorName(i)}`"
+          :title="$t('reference.copyWith', { text, selector: selectorName(i) })"
           @click="copy(withReading(text, i))"
         >
           <FuriText :text="withReading(text, i)" :size="30" />
           <span class="font-mono text-[11px] color-muted">
-            {{ copied === withReading(text, i) ? 'copied' : `${selectorName(i)} ${reading}${wordDefault && i === 0 ? ' / default' : ''}` }}
+            {{ copied === withReading(text, i) ? $t('copied') : `${selectorName(i)} ${reading}${wordDefault && i === 0 ? ` / ${$t('reference.default')}` : ''}` }}
           </span>
         </button>
       </li>

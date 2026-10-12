@@ -13,19 +13,21 @@ async function submit(): Promise<void> {
 
 <template>
   <form class="mx-auto flex max-w-sm flex-col gap-4 px-6 py-24" @submit.prevent="submit">
-    <span class="label">Studio / locked</span>
+    <span class="label">{{ $t('studio.auth.eyebrow') }}</span>
     <h1 class="text-2xl font-semibold tracking-tight">
-      Enter the code from your terminal
+      {{ $t('studio.auth.title') }}
     </h1>
-    <p class="text-sm color-muted">
-      <code class="font-mono">furifont dev</code> printed a six-digit code in its terminal.
-    </p>
-    <input v-model="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Code" class="input text-center font-mono text-xl tracking-[0.5em]">
+    <i18n-t keypath="studio.auth.body" tag="p" class="text-sm color-muted">
+      <template #command>
+        <code class="font-mono">furifont dev</code>
+      </template>
+    </i18n-t>
+    <input v-model="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" :aria-label="$t('studio.auth.code')" class="input text-center font-mono text-xl tracking-[0.5em]">
     <p v-if="failed" class="text-sm">
-      That code did not work. Check the terminal and try again.
+      {{ $t('studio.auth.failed') }}
     </p>
     <button type="submit" class="btn-solid focus-ring" :disabled="busy || code.trim().length !== 6">
-      Unlock
+      {{ $t('studio.auth.unlock') }}
     </button>
   </form>
 </template>
