@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const { report, build, state, savedTo, runBuild, save } = useStudio()
 
 const stats = computed(() => {
   const s = report.value?.stats
   return s
     ? [
-        { label: 'Words', value: s.patterns },
-        { label: 'Several readings', value: s.ambiguous },
-        { label: 'Lone kanji', value: s.isolated },
-        { label: 'Protected', value: s.protectedAnnotated + s.protectedBare },
-        { label: 'Ruby glyphs', value: s.glyphs },
-        { label: 'Rules', value: s.rules },
+        { label: t('studio.build.words'), value: s.patterns },
+        { label: t('studio.build.ambiguous'), value: s.ambiguous },
+        { label: t('studio.build.lone'), value: s.isolated },
+        { label: t('studio.build.protected'), value: s.protectedAnnotated + s.protectedBare },
+        { label: t('studio.build.glyphs'), value: s.glyphs },
+        { label: t('studio.build.rules'), value: s.rules },
       ]
     : []
 })
@@ -21,16 +24,16 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
   <div>
     <div class="grid grid-cols-3 border-b border-base lg:grid-cols-6">
       <UiStat v-for="s in stats" :key="s.label" v-bind="s" class="border-r border-base last:border-r-0" />
-      <span v-if="!stats.length" class="label col-span-full px-6 py-4">Planning</span>
+      <span v-if="!stats.length" class="label col-span-full px-6 py-4">{{ $t('studio.build.planning') }}</span>
     </div>
     <div class="flex flex-wrap items-center gap-3 px-6 py-4">
       <button type="button" class="btn-solid focus-ring" :disabled="build.running || !state?.python.ok" @click="runBuild">
         <span :class="build.running ? 'i-ph-circle-notch animate-spin' : 'i-ph-hammer'" />
-        {{ build.running ? progress : 'Build font' }}
+        {{ build.running ? progress : $t('studio.build.run') }}
       </button>
       <button type="button" class="btn-outline focus-ring" @click="save">
         <span class="i-ph-floppy-disk" />
-        Save config
+        {{ $t('studio.build.save') }}
       </button>
       <span v-if="savedTo" class="font-mono text-xs color-muted">{{ savedTo }}</span>
     </div>

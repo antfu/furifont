@@ -45,6 +45,20 @@ test.afterAll(async () => {
   await rm(cwd, { recursive: true, force: true })
 })
 
+test('speaks the browser\'s language and remembers the one chosen', async ({ browser }) => {
+  const context = await browser.newContext({ locale: 'zh-TW' })
+  const page = await context.newPage()
+  await page.goto(new URL('/#/', url).href)
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('交給字型')
+
+  await page.getByLabel('語言').selectOption('ja')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('フォントが振る')
+  await context.close()
+})
+
 test('previews, plans and builds a font', async ({ page }) => {
   await page.goto(url)
   await expect(page.getByText(/\d+ glyphs \/ \d+ ms/)).toBeVisible({ timeout: 60_000 })

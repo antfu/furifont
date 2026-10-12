@@ -9,7 +9,8 @@
     "typecheck": "nuxi typecheck"
   },
   "dependencies": {
-    "devframe": "catalog:prod"
+    "devframe": "catalog:prod",
+    "vue-i18n": "catalog:frontend"
   },
   "devDependencies": {
     "@devframes/vite": "catalog:frontend",

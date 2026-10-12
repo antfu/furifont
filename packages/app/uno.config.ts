@@ -6,6 +6,10 @@ html.dark { --ff-bg: #0a0a0a; --ff-fg: #fafafa; --ff-muted: #fafafa9e; --ff-line
 html, body { background: var(--ff-bg); color: var(--ff-fg); }
 body { font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 ::selection { background: var(--ff-fg); color: var(--ff-bg); }
+.display { letter-spacing: -0.045em; line-height: 0.95; text-wrap: balance; }
+:lang(ja) .display, :lang(zh) .display { letter-spacing: 0; line-height: 1.2; word-break: auto-phrase; }
+.hero-title { font-size: clamp(2.75rem, 6vw, 4.75rem); }
+:lang(ja) .hero-title, :lang(zh) .hero-title { font-size: clamp(2.25rem, 4.4vw, 3.5rem); }
 `
 
 /**

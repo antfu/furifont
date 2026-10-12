@@ -43,6 +43,14 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: { devStudioBase: DEV_STUDIO_BASE },
   },
+  vite: {
+    // vue-i18n's bundler build: Composition API only, no legacy mode.
+    define: {
+      __VUE_I18N_FULL_INSTALL__: true,
+      __VUE_I18N_LEGACY_API__: false,
+      __INTLIFY_PROD_DEVTOOLS__: false,
+    },
+  },
   devtools: { enabled: false },
   compatibilityDate: '2026-10-01',
 })
