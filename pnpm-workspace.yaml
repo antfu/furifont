@@ -126,6 +126,7 @@ catalogs:
     devframe: ^1.2.3
     valibot: ^1.5.0
   testing:
+    '@playwright/test': 1.63.0
     harfbuzzjs: ^1.6.3
     vitest: ^5.0.2
   types:

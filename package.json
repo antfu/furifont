@@ -26,6 +26,7 @@
     "lint": "eslint --cache",
     "release": "bumpp -r",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "typecheck": "tsc && pnpm -F @furifont/app run typecheck",
     "ci": "pnpm run lint && pnpm run typecheck && pnpm run knip && pnpm run build && pnpm run test",
     "prepare": "git config core.hooksPath .githooks && simple-git-hooks && skills-npm"
@@ -39,6 +40,7 @@
     "lint": "Check for code style issues",
     "release": "Bump versions of every package",
     "test": "Run the unit and font tests",
+    "test:e2e": "Run the browser rendering tests (needs Python and Playwright browsers)",
     "typecheck": "Check types",
     "ci": "Run the full continuous integration pipeline",
     "prepare": "Set up git hooks and skills"
@@ -47,6 +49,7 @@
     "@antfu/eslint-config": "catalog:cli",
     "@antfu/skills": "catalog:agentic",
     "@antfu/utils": "catalog:inlined",
+    "@playwright/test": "catalog:testing",
     "@types/node": "catalog:types",
     "bumpp": "catalog:cli",
     "eslint": "catalog:cli",

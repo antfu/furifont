@@ -17,3 +17,6 @@ packages/app/public/fonts
 /fonts
 .nuxt
 .output
+test/e2e/.cache
+test-results
+playwright-report
