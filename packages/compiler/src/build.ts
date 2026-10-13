@@ -3,7 +3,7 @@ import type { Metric } from './metrics'
 import type { FontNames } from './names'
 import type { Outline } from './outline'
 import type { Sfnt } from './sfnt'
-import { setImmediate as nextTick } from 'node:timers/promises'
+import type { SubsetWasm } from './subset'
 import * as hb from 'harfbuzzjs'
 import { tagAt, view } from './binary'
 import { Cff } from './cff'
@@ -27,7 +27,17 @@ export interface CompileProgress {
   total: number | null
 }
 
+export interface CompileOptions {
+  plan: Plan
+  /** The base font, OpenType or TrueType. */
+  base: Uint8Array
+  /** Loads hb-subset, which a preview's plan (one with `subset`) needs. */
+  subsetWasm: SubsetWasm
+  onProgress?: (progress: CompileProgress) => void
+}
+
 export interface BuiltFont {
+  /** The OpenType font. */
   font: Uint8Array
   /** The glyph order, named as the plan names glyphs. */
   glyphNames: string[]
@@ -61,8 +71,8 @@ function emBox(tables: Map<string, Uint8Array>, upm: number): [number, number] {
 }
 
 /** The base font, opened once it is known to be one Furifont can build on. */
-async function openBase(plan: Plan, baseFont: Uint8Array): Promise<{ sfnt: Sfnt, font: hb.Font, upm: number, baseCount: number }> {
-  const data = plan.subset ? await subsetFont(baseFont, [...plan.subset, ...plan.codepoints]) : baseFont
+async function openBase({ plan, base, subsetWasm }: CompileOptions): Promise<{ sfnt: Sfnt, font: hb.Font, upm: number, baseCount: number }> {
+  const data = plan.subset ? await subsetFont(base, [...plan.subset, ...plan.codepoints], subsetWasm) : base
   const sfnt = readSfnt(data)
   if (sfnt.tables.has('fvar') || sfnt.tables.has('CFF2'))
     throw new Error('variable fonts are not supported: use a static instance')
@@ -208,14 +218,15 @@ function raiseAscender(tables: Map<string, Uint8Array>, top: number): void {
 }
 
 /** Draws the plan's glyphs into the base font, compiles its rules, and checks the result with HarfBuzz. */
-export async function buildFont(plan: Plan, baseFont: Uint8Array, onProgress?: (progress: CompileProgress) => void): Promise<BuiltFont> {
-  // Yielding between steps lets a server send the progress while a big font builds.
+export async function buildFont(options: CompileOptions): Promise<BuiltFont> {
+  const { plan, onProgress } = options
+  // Yielding between steps lets a server send the progress, or a page show it, while a big font builds.
   const progress = async (step: CompileProgress['step'], done: number | null = null, total: number | null = null): Promise<void> => {
     onProgress?.({ step, done, total })
-    await nextTick()
+    await new Promise(resolve => setTimeout(resolve))
   }
   await progress('load')
-  const { sfnt, font, upm, baseCount } = await openBase(plan, baseFont)
+  const { sfnt, font, upm, baseCount } = await openBase(options)
   const { tables } = sfnt
   const glyphs = new NewGlyphs(tables, baseCount, upm)
   const { names, resolve } = nameGlyphs(plan, font, baseCount, glyphs.takenNames())

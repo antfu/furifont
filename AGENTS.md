@@ -11,6 +11,10 @@
 
 - `@furifont/core` MUST NOT read font files and `@furifont/compiler` MUST NOT
   decide readings: the plan (`PlanSchema`) is the contract between them.
+- Core, compiler and dictionary MUST stay browser-safe: bytes in and out, no
+  Node APIs (globals such as `Buffer` and `setImmediate` included). The Node
+  side lives in the CLI, and in `@furifont/compiler/node`, which the CLI
+  passes in.
 - Browsers shape one script run at a time, so rules only ever see kanji. Check
   rendering changes with `pnpm test:e2e` (three browsers), not HarfBuzz alone.
 - `packages/dictionary/data/dictionary.json`, `places.json`, `okurigana.json`

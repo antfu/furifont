@@ -1,16 +1,14 @@
 import type { Dictionary, Plan } from '@furifont/core'
 import { Buffer } from 'node:buffer'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { readFile } from 'node:fs/promises'
 import { brotliDecompressSync } from 'node:zlib'
 import { createFontPlanner, resolveOptions } from '@furifont/core'
 import * as hb from 'harfbuzzjs'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { compileFont, readFontInfo } from '../src'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { compileFont, readFontInfo, toWoff2 } from '../src'
+import { brotli, subsetWasm } from '../src/node'
 
-const fixture = (name: string): string => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url))
+const fixture = (name: string): Promise<Buffer> => readFile(new URL(`./fixtures/${name}`, import.meta.url))
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
 
 const dictionary: Dictionary = {
@@ -33,18 +31,15 @@ const planFont = createFontPlanner(dictionary)
 interface Built {
   plan: Plan
   names: string[]
+  otf: Uint8Array
   font: hb.Font
-  dir: string
 }
 
-async function build(base: string, previewText?: string): Promise<Built> {
-  const info = await readFontInfo(base)
-  const plan = planFont(resolveOptions(), new Set(info.codepoints), previewText).plan
-  const dir = await mkdtemp(join(tmpdir(), 'furifont-test-'))
-  await compileFont({ plan, base, output: join(dir, 'out.otf'), woff2: join(dir, 'out.woff2'), glyphNames: join(dir, 'names.json') })
-  const names = JSON.parse(await readFile(join(dir, 'names.json'), 'utf8'))
-  const font = new hb.Font(new hb.Face(new hb.Blob(await readFile(join(dir, 'out.otf')))))
-  return { plan, names, font, dir }
+async function build(file: string, previewText?: string): Promise<Built> {
+  const base = await fixture(file)
+  const plan = planFont(resolveOptions(), new Set(readFontInfo(base).codepoints), previewText).plan
+  const { font, glyphNames } = await compileFont({ plan, base, subsetWasm })
+  return { plan, names: glyphNames, otf: font, font: new hb.Font(new hb.Face(new hb.Blob(font))) }
 }
 
 /**
@@ -89,10 +84,8 @@ describe.each([
   let built: Built
 
   beforeAll(async () => {
-    built = await build(fixture(file))
+    built = await build(file)
   })
-
-  afterAll(() => rm(built.dir, { recursive: true, force: true }))
 
   it('annotates words, longest match first', () => {
     expect(read(built, '日本')).toEqual(['日:に', '本:ほん'])
@@ -134,15 +127,15 @@ describe.each([
     expect(font.hExtents().ascender).toBeGreaterThanOrEqual(sakura.yBearing)
   })
 
-  it('names the font after the plan', async () => {
-    const info = await readFontInfo(join(built.dir, 'out.otf'))
+  it('names the font after the plan', () => {
+    const info = readFontInfo(built.otf)
     expect(info).toMatchObject({ family: 'Furifont Sans', style: 'Regular', glyphCount: built.names.length })
     expect(info.codepoints).toContain('桜'.codePointAt(0))
   })
 
   it('wraps the same tables as WOFF2', async () => {
-    const otf = await readFile(join(built.dir, 'out.otf'))
-    const woff2 = await readFile(join(built.dir, 'out.woff2'))
+    const otf = Buffer.from(built.otf)
+    const woff2 = Buffer.from(await toWoff2(built.otf, brotli))
     const tables = Array.from({ length: otf.readUInt16BE(4) }, (_, i) => {
       const offset = otf.readUInt32BE(12 + i * 16 + 8)
       return otf.subarray(offset, offset + otf.readUInt32BE(12 + i * 16 + 12))
@@ -150,17 +143,17 @@ describe.each([
     expect(woff2.subarray(0, 4).toString()).toBe('wOF2')
     expect(woff2Stream(woff2).equals(Buffer.concat(tables))).toBe(true)
   })
+
+  it('leaves the base font it was given as it was, even as a Buffer', async () => {
+    const base = await fixture(file)
+    const original = Buffer.from(base)
+    await compileFont({ plan: built.plan, base, subsetWasm })
+    expect(base.equals(original)).toBe(true)
+  })
 })
 
 describe('a live preview', () => {
-  const dirs: string[] = []
-  async function preview(text: string): Promise<Built> {
-    const built = await build(fixture('SourceHanSansJP-Subset.otf'), text)
-    dirs.push(built.dir)
-    return built
-  }
-
-  afterAll(() => Promise.all(dirs.map(dir => rm(dir, { recursive: true, force: true }))))
+  const preview = (text: string): Promise<Built> => build('SourceHanSansJP-Subset.otf', text)
 
   it('subsets the base font to what the text needs', async () => {
     const built = await preview('今日は桜')

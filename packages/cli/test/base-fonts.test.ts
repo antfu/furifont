@@ -1,8 +1,9 @@
 import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { BASE_FONTS } from '@furifont/compiler'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { BASE_FONTS, fetchBaseFont } from '../src'
+import { fetchBaseFont } from '../src/base-fonts'
 
 const font = (name: string) => BASE_FONTS.find(f => f.name === name)!
 
@@ -35,5 +36,5 @@ it('downloads a font once when several builds ask for it at the same time', asyn
 it('reuses a downloaded font', async () => {
   await fetchBaseFont(font('Source Han Serif JP Regular'), cacheDir)
   await fetchBaseFont(font('Source Han Serif JP Regular'), cacheDir)
-  expect(downloads).toEqual(['https://github.com/adobe-fonts/source-han-serif/raw/release/SubsetOTF/JP/SourceHanSerifJP-Regular.otf'])
+  expect(downloads).toEqual(['https://raw.githubusercontent.com/adobe-fonts/source-han-serif/release/SubsetOTF/JP/SourceHanSerifJP-Regular.otf'])
 })
