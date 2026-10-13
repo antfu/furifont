@@ -27,6 +27,8 @@ export const PlanOptionsSchema = v.object({
    * `spec1` catches words like 日本 that the newspaper ranking misses.
    */
   selectTags: v.optional(v.array(v.picklist(PRIORITY_TAGS)), ['spec1']),
+  /** Annotate place names from the dictionary where no common word claims the run. */
+  places: v.optional(v.boolean(), true),
   /** A kanji alone in its run is annotated only when one reading has this share of the evidence. */
   isolatedMinShare: v.optional(v.pipe(v.number(), v.minValue(0.5), v.maxValue(1)), 0.8),
   words: v.optional(v.object({
