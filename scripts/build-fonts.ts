@@ -1,31 +1,40 @@
 /**
- * Builds the prebuilt fonts: three ruby scripts, two weights of Source Han Sans JP.
+ * Builds the prebuilt fonts: hiragana and romaji ruby on Source Han Sans JP and
+ * Source Han Serif JP.
  *
- *   node scripts/build-fonts.ts [outDir]   (default: packages/app/public/fonts)
+ *   node scripts/build-fonts.ts [outDir]   every weight, OpenType and WOFF2, for the release (default: dist/fonts)
+ *   node scripts/build-fonts.ts --site     the Regular WOFF2s the site serves, into fonts/, which git keeps
  */
-import { copyFile, mkdir } from 'node:fs/promises'
+import { copyFile, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { argv, cwd } from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { buildFont, FurifontConfigSchema } from 'furifont'
 import * as v from 'valibot'
 
-const outDir = argv[2] ?? fileURLToPath(new URL('../packages/app/public/fonts', import.meta.url))
+const site = argv[2] === '--site'
+const outDir = site ? fileURLToPath(new URL('../fonts', import.meta.url)) : argv[2] ?? fileURLToPath(new URL('../dist/fonts', import.meta.url))
 const families = [
-  { family: 'Furifont Sans JP', rubyScript: 'hiragana' },
-  { family: 'Furifont Sans JP Kata', rubyScript: 'katakanaOn' },
-  { family: 'Furifont Sans JP Romaji', rubyScript: 'hepburn' },
+  { family: 'Furifont Sans JP', rubyScript: 'hiragana', base: 'Source Han Sans JP' },
+  { family: 'Furifont Sans JP Romaji', rubyScript: 'hepburn', base: 'Source Han Sans JP' },
+  { family: 'Furifont Serif JP', rubyScript: 'hiragana', base: 'Source Han Serif JP' },
+  { family: 'Furifont Serif JP Romaji', rubyScript: 'hepburn', base: 'Source Han Serif JP' },
 ] as const
 
-// The fonts are Source Han Sans derivatives under the OFL; their rules come from CC BY-SA data.
+// Fonts of families since dropped must not linger.
+await rm(outDir, { recursive: true, force: true })
 await mkdir(outDir, { recursive: true })
+// The fonts are Source Han derivatives under the OFL; their rules come from CC BY-SA data.
 await copyFile(new URL('../OFL.txt', import.meta.url), join(outDir, 'OFL.txt'))
 await copyFile(new URL('../packages/dictionary/LICENSE.md', import.meta.url), join(outDir, 'DATA-LICENSE.md'))
 
-for (const base of ['Regular', 'Bold']) {
-  await Promise.all(families.map(async (family) => {
-    const config = v.parse(FurifontConfigSchema, { ...family, base: `Source Han Sans JP ${base}` })
+for (const weight of site ? ['Regular'] : ['Regular', 'Bold']) {
+  await Promise.all(families.map(async ({ base, ...family }) => {
+    const config = v.parse(FurifontConfigSchema, { ...family, base: `${base} ${weight}` })
     const { files } = await buildFont(config, { cwd: cwd(), outDir })
+    // The site loads WOFF2; git keeps no OpenType, which the release carries.
+    if (site)
+      await Promise.all(files.filter(f => f.name.endsWith('.otf')).map(f => rm(f.path)))
     console.log(files.map(f => f.name).join('  '))
   }))
 }
