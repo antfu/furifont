@@ -62,7 +62,7 @@ function toggleTag(tag: typeof tags[number]): void {
     <div class="h-px bg-[var(--ff-line)]" />
     <div class="grid grid-cols-2 gap-4">
       <UiField :label="$t('studio.options.rubyScale')">
-        <input v-model.number="metrics.rubyScale" type="number" min="0.2" max="0.8" step="0.05" class="input font-mono" placeholder="0.5">
+        <input v-model.number="metrics.rubyScale" type="number" min="0.2" max="0.8" step="0.05" class="input font-mono" placeholder="0.4">
       </UiField>
       <UiField :label="$t('studio.options.rubyGap')">
         <input v-model.number="metrics.rubyGap" type="number" min="0" max="0.5" step="0.01" class="input font-mono" placeholder="0.05">

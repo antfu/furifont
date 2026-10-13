@@ -72,6 +72,6 @@ test('wraps annotated text into lines that do not overlap', async ({ page }) => 
   })
   expect(lines.length).toBeGreaterThan(2)
   for (let i = 1; i < lines.length; i++)
-    expect(lines[i]! - lines[i - 1]!).toBeGreaterThanOrEqual(40 * 1.6)
+    expect(lines[i]! - lines[i - 1]!).toBeGreaterThanOrEqual(40 * 1.55)
   expect(await page.locator('#p').textContent()).toBe(text)
 })

@@ -3,7 +3,7 @@
 A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji.
 
 ```html
-<p style="font-family: 'Furifont Sans JP'; line-height: 1.8">今日は日本語の勉強をします。</p>
+<p style="font-family: 'Furifont Sans JP'; line-height: 1.7">今日は日本語の勉強をします。</p>
 ```
 
 Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). The tools that build it work with other base fonts and other word lists.
@@ -22,7 +22,7 @@ Each font also comes with a `.ivs.json` file. It lists the readings that the var
 
 ### Using them
 
-- **Line height.** The ruby sits above the line, inside the font's ascender. A `line-height` below about 1.7 clips it, and `line-height: normal` always fits.
+- **Line height.** The ruby sits above the line, inside the font's ascender. A `line-height` below about 1.6 clips it, and `line-height: normal` always fits.
 - **Turning ruby off.** `font-feature-settings: "ss01"` shows the plain kanji, and so does `"rclt" 0`.
 - **Line breaks.** A word broken across two lines is read as two words. In Chromium, `word-break: auto-phrase` keeps phrases together.
 
@@ -84,7 +84,7 @@ Both commands read `furifont.config.json` from the current folder, and the studi
     "pin": ["市[し]場[じょう]"],
     "remove": ["大人"]
   },
-  "metrics": { "rubyScale": 0.5, "rubyGap": 0.05, "compressionFloor": 0.6, "maxRubyWidth": 1.6 }
+  "metrics": { "rubyScale": 0.4, "rubyGap": 0.05, "compressionFloor": 0.6, "maxRubyWidth": 1.6 }
 }
 ```
 
