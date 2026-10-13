@@ -1,4 +1,15 @@
 import { version } from '../../../../package.json'
+import en from '../../app/locales/en.json'
+import ja from '../../app/locales/ja.json'
+import zhHans from '../../app/locales/zh-Hans.json'
+import zhHant from '../../app/locales/zh-Hant.json'
+
+const TOASTS = {
+  'en': en.anyPage.toast,
+  'ja': ja.anyPage.toast,
+  'zh-Hans': zhHans.anyPage.toast,
+  'zh-Hant': zhHant.anyPage.toast,
+} satisfies Record<Locale, Toast>
 
 /** The userscript manager's functions, handed in so {@link start} can ship as source. */
 interface Manager {
@@ -14,19 +25,26 @@ interface Manager {
 }
 
 /** Shipped as source text, like `toggleFurifont`: it MUST NOT use anything from outside its own body. */
-function start(manager: Manager, toggle: typeof toggleFurifont, fonts: { family: Family, url: string }[]): void {
+function start(
+  manager: Manager,
+  toggle: typeof toggleFurifont,
+  fonts: { family: Family, url: string }[],
+  toasts: Record<Locale, Toast>,
+  detect: typeof detectLocale,
+): void {
+  const toast = toasts[detect(navigator.languages)]
   // The manager fetches the font, so the page's CSP cannot block it.
   const fetchFont = (url: string): Promise<ArrayBuffer> => new Promise((resolve, reject) =>
     manager.xmlHttpRequest({ url, responseType: 'arraybuffer', onload: r => resolve(r.response), onerror: reject }))
   for (const { family, url } of fonts) {
     manager.registerMenuCommand(family.family, () => {
       manager.setValue('family', family.family)
-      toggle(family, url, fetchFont)
+      toggle(family, url, toast, fetchFont)
     })
   }
   const saved = fonts.find(f => f.family.family === manager.getValue('family', '')) ?? fonts[0]!
   if (/^ja(?:-|$)/i.test(document.documentElement.lang))
-    toggle(saved.family, saved.url, fetchFont)
+    toggle(saved.family, saved.url, toast, fetchFont)
 }
 
 export default defineEventHandler((event) => {
@@ -49,6 +67,6 @@ export default defineEventHandler((event) => {
 // @connect      ${new URL(SITE).host}
 // ==/UserScript==
 
-(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, ${toggleFurifont}, ${JSON.stringify(fonts)})
+(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, ${toggleFurifont}, ${JSON.stringify(fonts)}, ${JSON.stringify(TOASTS)}, ${detectLocale})
 `
 })
