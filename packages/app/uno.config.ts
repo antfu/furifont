@@ -1,5 +1,7 @@
 import { defineConfig, presetIcons, presetWind4 } from 'unocss'
 
+// TODO: use a separate CSS file for the tokens
+// TODO: have stable scroll gutters
 const tokens = `
 :root { --ff-bg: #fff; --ff-fg: #0a0a0a; --ff-muted: #0a0a0a9e; --ff-line: #0a0a0a1f; --ff-hover: #0a0a0a0d; color-scheme: light; }
 html.dark { --ff-bg: #0a0a0a; --ff-fg: #fafafa; --ff-muted: #fafafa9e; --ff-line: #fafafa2b; --ff-hover: #fafafa12; color-scheme: dark; }
@@ -22,6 +24,7 @@ export default defineConfig({
     presetIcons({ scale: 1.15 }),
   ],
   theme: {
+    // TODO: remove Geist-specific fonts and use the default.
     font: {
       sans: '"Geist Variable", ui-sans-serif, system-ui, sans-serif',
       mono: '"Geist Mono Variable", ui-monospace, monospace',
