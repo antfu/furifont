@@ -13,7 +13,7 @@ export const SELECTOR_FIRST_READING = 0xE01E1
 /** The IVD leaves VS225..VS240 unregistered: one to suppress, fifteen readings. */
 export const MAX_READINGS = 15
 /** A lone kanji's reading needs this share of the evidence to be offered through a selector. */
-const MIN_ALTERNATE_SHARE = 0.1
+const MIN_ALTERNATE_SHARE = 0.02
 /** JMdict orders readings within a form; a run read inside a longer form ranks after the form's own readings. */
 const OTHER_FORM_ORDER = 1000
 
