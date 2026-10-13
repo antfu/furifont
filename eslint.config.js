@@ -12,6 +12,7 @@ export default antfu(
       '**/test/fixtures/**',
       '**/.nuxt/**',
       '**/.output/**',
+      '**/*.css',
     ],
   },
   {

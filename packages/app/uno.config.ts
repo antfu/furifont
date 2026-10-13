@@ -1,19 +1,5 @@
 import { defineConfig, presetIcons, presetWind4 } from 'unocss'
 
-// TODO: use a separate CSS file for the tokens
-// TODO: have stable scroll gutters
-const tokens = `
-:root { --ff-bg: #fff; --ff-fg: #0a0a0a; --ff-muted: #0a0a0a9e; --ff-line: #0a0a0a1f; --ff-hover: #0a0a0a0d; color-scheme: light; }
-html.dark { --ff-bg: #0a0a0a; --ff-fg: #fafafa; --ff-muted: #fafafa9e; --ff-line: #fafafa2b; --ff-hover: #fafafa12; color-scheme: dark; }
-html, body { background: var(--ff-bg); color: var(--ff-fg); }
-body { font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-::selection { background: var(--ff-fg); color: var(--ff-bg); }
-.display { letter-spacing: -0.045em; line-height: 0.95; text-wrap: balance; }
-:lang(ja) .display, :lang(zh) .display { letter-spacing: 0; line-height: 1.2; word-break: auto-phrase; }
-.hero-title { font-size: clamp(2.75rem, 6vw, 4.75rem); }
-:lang(ja) .hero-title, :lang(zh) .hero-title { font-size: clamp(2.25rem, 4.4vw, 3.5rem); }
-`
-
 /**
  * Black and white, square corners, 1px guide lines. Every color is one of
  * five tokens, so light and dark stay in step.
@@ -24,14 +10,10 @@ export default defineConfig({
     presetIcons({ scale: 1.15 }),
   ],
   theme: {
-    // TODO: remove Geist-specific fonts and use the default.
     font: {
-      sans: '"Geist Variable", ui-sans-serif, system-ui, sans-serif',
-      mono: '"Geist Mono Variable", ui-monospace, monospace',
-      furi: '"Furifont Sans JP", "Geist Variable", sans-serif',
+      furi: '"Furifont Sans JP", ui-sans-serif, system-ui, sans-serif',
     },
   },
-  preflights: [{ getCSS: () => tokens }],
   rules: [
     ['bg-grid', {
       'background-image': 'linear-gradient(var(--ff-line) 1px, transparent 1px), linear-gradient(90deg, var(--ff-line) 1px, transparent 1px)',

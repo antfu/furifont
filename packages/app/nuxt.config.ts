@@ -28,6 +28,7 @@ const studioBridge: NonNullable<NuxtConfig['modules']>[number] = async (_, nuxt)
 
 export default defineNuxtConfig({
   ssr: false,
+  css: ['~/assets/css/tokens.css'],
   modules: ['@unocss/nuxt', studioBridge],
   alias: {
     // Types only: the studio's wire contract lives with its implementation.
