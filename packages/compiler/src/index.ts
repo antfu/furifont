@@ -10,8 +10,8 @@ import { fileURLToPath } from 'node:url'
 import { PlanSchema } from '@furifont/core'
 import * as v from 'valibot'
 
-export { fetchBaseFont, SOURCE_HAN_SANS_JP_WEIGHTS } from './base-fonts'
-export type { SourceHanSansWeight } from './base-fonts'
+export { BASE_FONTS, fetchBaseFont } from './base-fonts'
+export type { BaseFont } from './base-fonts'
 
 const SCRIPT = fileURLToPath(new URL('../python/furifont.py', import.meta.url))
 

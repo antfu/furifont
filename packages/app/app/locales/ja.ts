@@ -125,7 +125,7 @@ export default {
     options: {
       family: 'ファミリー名',
       base: 'ベースフォント',
-      baseHint: '源ノ角ゴシック JP のウェイト名、または別のフォントのパス。',
+      baseHint: 'ダウンロードするフォント（例: Source Han Serif JP Bold）、または別のフォントのパス。',
       script: 'ルビの文字',
       hiragana: 'ひらがな',
       katakanaOn: 'カタカナ',

@@ -125,7 +125,7 @@ export default {
     options: {
       family: '字型家族名稱',
       base: '基礎字型',
-      baseHint: '思源黑體 JP 的字重名稱，或其他字型檔的路徑。',
+      baseHint: '要下載的字型（如 Source Han Serif JP Bold），或其他字型檔的路徑。',
       script: '振假名樣式',
       hiragana: '平假名',
       katakanaOn: '片假名',

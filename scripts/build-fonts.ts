@@ -24,7 +24,7 @@ await copyFile(new URL('../packages/dictionary/LICENSE.md', import.meta.url), jo
 
 for (const base of ['Regular', 'Bold']) {
   await Promise.all(families.map(async (family) => {
-    const config = v.parse(FurifontConfigSchema, { ...family, base })
+    const config = v.parse(FurifontConfigSchema, { ...family, base: `Source Han Sans JP ${base}` })
     const { files } = await buildFont(config, { cwd: cwd(), outDir })
     console.log(files.map(f => f.name).join('  '))
   }))
