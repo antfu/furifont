@@ -16,7 +16,7 @@ export default {
   },
   footer: {
     fonts: '字型衍生自 Adobe 思源黑體（Source Han Sans），採用 {license}。',
-    data: '讀音資料來自 JMdict、KANJIDIC2（EDRDG）與 JmdictFurigana，採用 CC BY-SA 4.0。',
+    data: '讀音資料來自 JMdict、JMnedict、KANJIDIC2（EDRDG）與 JmdictFurigana，採用 CC BY-SA 4.0。',
     code: '工具採用 MIT 授權。{source}。',
     source: 'GitHub 上的原始碼',
   },
