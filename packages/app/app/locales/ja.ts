@@ -17,8 +17,11 @@ export default {
   footer: {
     fonts: 'フォントは Adobe の源ノ角ゴシック（Source Han Sans）と源ノ明朝（Source Han Serif）の派生物で、{license} で提供しています。',
     data: '読みは JMdict・JMnedict・KANJIDIC2（EDRDG）と JmdictFurigana に基づき、CC BY-SA 4.0 で提供しています。',
-    code: 'ツールは MIT ライセンスです。{source}。',
+    code: 'ツールは MIT ライセンスです。',
     source: 'GitHub のソースコード',
+    made: '制作：{author}',
+    supported: '{vercel} と{sponsors}の支援を受けています',
+    sponsors: 'スポンサー',
   },
   copied: 'コピーしました',
   editable: '編集できるサンプルテキスト',
