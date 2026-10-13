@@ -46,6 +46,7 @@ export default {
     how: '原理',
     selectors: '选择读音',
     download: '下载',
+    anyPage: '用于任意网页',
   },
   playground: {
     script: '振假名样式',
@@ -91,6 +92,14 @@ export default {
     buildOwn: '也可以自己构建：更换基础字体、词典规模、振假名样式或尺寸。需要 Python 3.10 及以上版本和 fontTools。',
     cliBuild: '用命令行构建字体',
     cliDev: '工作室：调整、预览、构建',
+  },
+  anyPage: {
+    body: '把任意网站换成 Furifont 显示。含汉字的行会加大行距，留出振假名的位置。字体从本站加载，首次约 5 MB。',
+    bookmarklet: '书签小工具',
+    bookmarkletHint: '把它拖到书签栏。在任意网页上点击即可开启 Furifont，再点一次关闭。X、GitHub 等禁止加载外部字体的网站上无法使用。',
+    userscript: '用户脚本',
+    install: '安装用户脚本',
+    userscriptHint: '适用于 Tampermonkey 或 Violentmonkey。在日文网页上自动开启，在书签小工具无法使用的网站上也能用。可在菜单中切换字体家族或关闭。',
   },
   reference: {
     eyebrow: '参考',
