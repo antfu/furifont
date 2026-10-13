@@ -9,8 +9,6 @@
     "typecheck": "nuxi typecheck"
   },
   "dependencies": {
-    "@furifont/annotate": "workspace:*",
-    "@furifont/dictionary": "workspace:*",
     "devframe": "catalog:prod",
     "vue-i18n": "catalog:frontend"
   },

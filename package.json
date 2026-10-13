@@ -58,7 +58,6 @@
     "eslint-plugin-slop": "catalog:cli",
     "eslint-plugin-sonarjs": "catalog:cli",
     "furifont": "workspace:*",
-    "harfbuzzjs": "catalog:prod",
     "knip": "catalog:cli",
     "nano-staged": "catalog:cli",
     "publint": "catalog:cli",

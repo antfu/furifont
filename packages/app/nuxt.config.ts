@@ -9,8 +9,8 @@ import { addVitePlugin } from '@nuxt/kit'
  */
 const DEV_STUDIO_BASE = '/__furifont/'
 
-function source(pkg: string, entry = 'index'): string {
-  return fileURLToPath(new URL(`../${pkg}/src/${entry}.ts`, import.meta.url))
+function source(pkg: string): string {
+  return fileURLToPath(new URL(`../${pkg}/src/index.ts`, import.meta.url))
 }
 
 const studioBridge: NonNullable<NuxtConfig['modules']>[number] = async (_, nuxt) => {
@@ -31,10 +31,8 @@ export default defineNuxtConfig({
   alias: {
     // Types only: the studio's wire contract lives with its implementation.
     'furifont': source('cli'),
-    // Bundled from source: the playground writes selectors in the browser.
-    '@furifont/annotate': source('annotate'),
+    // Bundled from source: the demo's grid follows the default metrics.
     '@furifont/core': source('core'),
-    '@furifont/dictionary/okurigana': source('dictionary', 'okurigana'),
   },
   nitro: {
     // Always plain static files in .output/public: on Vercel, Nitro would otherwise write its own output format elsewhere.

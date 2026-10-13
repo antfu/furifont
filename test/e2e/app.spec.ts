@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test'
 import type { Buffer } from 'node:buffer'
 import type { ChildProcess } from 'node:child_process'
 import { spawn } from 'node:child_process'
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -30,9 +30,6 @@ let url: string
 test.beforeAll(async () => {
   cwd = await mkdtemp(join(tmpdir(), 'furifont-studio-'))
   await writeFile(join(cwd, 'furifont.config.json'), JSON.stringify({ base: FIXTURE_FONT }))
-  // The reading lists of a font already built, which the playground's selectors index into.
-  await mkdir(join(cwd, 'fonts'))
-  await writeFile(join(cwd, 'fonts', 'FurifontSans-Regular.ivs.json'), JSON.stringify({ kanji: { 来: ['き', 'こ'] }, words: {}, lone: {} }))
   const port = await freePort()
   studio = spawn(process.execPath, [CLI, 'dev', '--no-open', '--no-auth', '--port', String(port)], { cwd })
   url = await new Promise((resolve, reject) => {
@@ -70,14 +67,6 @@ test('shows another sample on shuffle', async ({ page }) => {
   const before = await sample.textContent()
   await page.getByRole('button', { name: 'Show another sample' }).first().click()
   await expect(sample).not.toHaveText(before!)
-})
-
-test('writes the selectors for verbs from the playground', async ({ page }) => {
-  await page.goto(new URL('/', url).href)
-  const playground = page.locator('section', { has: page.getByRole('heading', { name: 'Try it' }) })
-  await playground.getByRole('textbox').fill('来ない。来ます。')
-  await playground.getByRole('button', { name: 'Add selectors for verbs' }).click()
-  await expect(playground.getByRole('textbox')).toHaveText('来\u{E01E2}ない。来\u{E01E1}ます。', { timeout: 30_000 })
 })
 
 test('previews, plans and builds a font', async ({ page }) => {
