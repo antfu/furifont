@@ -47,6 +47,12 @@ describe.skipIf(!python.ok)('compileFont', () => {
 
   afterAll(() => rm(dir, { recursive: true, force: true }))
 
+  it('compiles a preview whose text has only lone kanji', async () => {
+    const { codepoints } = await readFontInfo(BASE)
+    const preview = createFontPlanner(dictionary)(resolveOptions(), new Set(codepoints), '桜').plan
+    await expect(compileFont({ plan: preview, base: BASE, output: join(dir, 'lone.otf') })).resolves.toMatchObject({ family: 'Furifont Sans JP' })
+  })
+
   /**
    * Shapes `text` and describes each glyph as `bases:ruby`, or the bare character.
    * Selectors are left out: HarfBuzz hides them as zero-width glyphs once shaping is done.
