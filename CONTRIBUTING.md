@@ -33,7 +33,7 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 | `pnpm dev` | The app on `localhost:3000`, with the studio on live RPC. Run `pnpm build` again after you change a package. |
 | `pnpm test` | Unit and font tests. The compiler tests skip themselves when Python's font libraries are missing. |
 | `pnpm test:e2e` | Rendering in Chromium, Firefox and WebKit, and the studio. Run `pnpm build` first. |
-| `pnpm fonts` | The six prebuilt fonts, into `packages/app/public/fonts`, where the demo reads them. It takes about 7 minutes. |
+| `pnpm fonts` | All eight prebuilt fonts, OpenType and WOFF2, into `dist/fonts`, as the release builds them. It takes about 10 minutes. |
 | `node packages/cli/bin.mjs dev` | The studio as users get it, built from your checkout. |
 | `pnpm dict:update` | Downloads JMdict, JMnedict, JmdictFurigana and KANJIDIC2 and recompiles the dictionary, the place names and the okurigana pairs. |
 
@@ -57,8 +57,11 @@ The interface is in English, Japanese, Simplified Chinese and Traditional Chines
 
 ## Releases
 
-Maintainers release by pushing a `v*` tag. CI then does three things:
+Maintainers release with `pnpm release`, which needs Python's font libraries. It builds the packages, asks for the new version, and rebuilds the site's fonts into `fonts/` (the four Regular WOFF2s and their `.ivs.json`, about 5 minutes). The bump and the fonts go into one commit and tag, which it pushes. `fonts/` changes only this way: don't commit fonts you built yourself.
 
-- publishes the npm packages;
-- builds the six fonts and attaches them to the GitHub Release;
-- deploys the demo to GitHub Pages.
+The tag then makes CI:
+
+- publish the npm packages;
+- build all eight fonts and attach them to the GitHub Release.
+
+Vercel deploys the site from `main` on every push, with the fonts in `fonts/`.
