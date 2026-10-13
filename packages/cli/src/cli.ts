@@ -1,11 +1,15 @@
 import type { FurifontConfigInput } from './config'
+import { Buffer } from 'node:buffer'
+import { readFile } from 'node:fs/promises'
 import { relative } from 'node:path'
 import process from 'node:process'
+import { createAnnotator } from '@furifont/annotate'
+import { loadTokenizer } from '@furifont/annotate/node'
 import { RUBY_SCRIPTS } from '@furifont/core'
 import { cac } from 'cac'
 import * as v from 'valibot'
 import pkg from '../package.json' with { type: 'json' }
-import { buildFont } from './build'
+import { buildFont, planWithBase } from './build'
 import { CONFIG_FILE, FurifontConfigSchema, loadConfig } from './config'
 
 const STUDIO_PAGE = '#/studio'
@@ -39,6 +43,33 @@ cli
     console.log(`\r${stats.patterns} words, ${stats.isolated} lone kanji, ${stats.glyphs} ruby glyphs`)
     for (const file of files)
       console.log(`  ${relative(cwd, file.path)}  ${(file.bytes / 1024 / 1024).toFixed(1)} MB`)
+  })
+
+const ReferenceSchema = v.object({
+  kanji: v.record(v.string(), v.array(v.string())),
+  words: v.record(v.string(), v.array(v.string())),
+})
+
+async function readInput(file: string | undefined): Promise<string> {
+  if (file)
+    return readFile(file, 'utf8')
+  const chunks: Buffer[] = []
+  for await (const chunk of process.stdin)
+    chunks.push(chunk as Buffer)
+  return Buffer.concat(chunks).toString('utf8')
+}
+
+cli
+  .command('annotate [file]', 'Write the selectors that give verbs their reading, and print the text')
+  .option('--reference <file>', 'The .ivs.json of the font the text is for (default: planned from the config)')
+  .option('--config <file>', 'Config file', { default: CONFIG_FILE })
+  .action(async (file: string | undefined, flags: { reference?: string, config: string }) => {
+    const cwd = process.cwd()
+    const reference = flags.reference
+      ? v.parse(ReferenceSchema, JSON.parse(await readFile(flags.reference, 'utf8')))
+      : (await planWithBase(await loadConfig(cwd, flags.config), cwd)).report.ivs
+    const annotate = createAnnotator(await loadTokenizer(), reference)
+    process.stdout.write(annotate(await readInput(file)))
   })
 
 cli
