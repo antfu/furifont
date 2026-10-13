@@ -6,19 +6,18 @@ import { fileURLToPath } from 'node:url'
 import { checkPython, compileFont, readFontInfo } from '@furifont/compiler'
 import { createFontPlanner, resolveOptions, SELECTOR_FIRST_READING, SELECTOR_SUPPRESS } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
+import { OKURIGANA } from '@furifont/dictionary/okurigana'
 import * as hb from 'harfbuzzjs'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createAnnotator } from '../src'
-import { loadTokenizer } from '../src/node'
 
 const BASE = fileURLToPath(new URL('../../compiler/test/fixtures/SourceHanSansJP-Subset.otf', import.meta.url))
 const SELECTORS = /[\u{E01E0}-\u{E01EF}]/gu
 
 const dictionary = await loadDictionary()
-const tokenizer = await loadTokenizer()
 const planFont = createFontPlanner(dictionary)
 
-/** The reading the selector written after `kanji` picks: `bare` for VS225, undefined for none. */
+/** What the selector written after `kanji` does: its reading, `bare` for VS225, undefined for none. */
 function readingAfter(text: string, kanji: string, reference: PlanReport['ivs']): string | undefined {
   const chars = [...text]
   const cp = chars[chars.indexOf(kanji) + 1]?.codePointAt(0) ?? 0
@@ -30,7 +29,7 @@ function readingAfter(text: string, kanji: string, reference: PlanReport['ivs'])
 describe('createAnnotator', () => {
   const coverage = new Set(dictionary.entries.flatMap(e => [...e.form, ...e.furigana]).map(c => c.codePointAt(0)!))
   const { ivs } = planFont(resolveOptions(), coverage).report
-  const annotate = createAnnotator(tokenizer, ivs)
+  const annotate = createAnnotator(OKURIGANA, ivs)
 
   it.each([
     ['来る', '来', 'く'],
@@ -39,15 +38,22 @@ describe('createAnnotator', () => {
     ['奉り', '奉', 'たてまつ'],
     ['行かない', '行', 'い'],
     ['行います', '行', 'おこな'],
-    ['入る', '入', 'はい'],
     ['書いて', '書', 'か'],
-  ])('reads the 来 of %s through its verb', (text, kanji, reading) => {
+    ['読み', '読', 'よ'],
+  ])('reads %s as a pair', (text, kanji, reading) => {
     expect(readingAfter(annotate(text), kanji, ivs)).toBe(reading)
   })
 
-  it('leaves 出来る as the font already reads it', () => {
+  it('writes nothing where the font already shows the reading', () => {
+    expect(ivs.lone['見']).toBe('み')
+    expect(annotate('見る')).toBe('見る')
     expect(annotate('出来る')).toBe('出来る')
-    expect(annotate('出来ない')).toBe('出来ない')
+  })
+
+  it('leaves a pair that reads two ways bare', () => {
+    expect(ivs.lone['入']).toBe('い')
+    expect(readingAfter(annotate('入る'), '入', ivs)).toBe('bare')
+    expect(annotate('行って')).toBe('行って')
   })
 
   it('changes nothing but selectors, and can run again', () => {
@@ -90,8 +96,8 @@ describe.skipIf(!(await checkPython()).ok)('with a font', () => {
     })
   }
 
-  it('draws the reading the analyzer found', () => {
-    const annotate = createAnnotator(tokenizer, reference)
+  it('draws the reading the pair decides', () => {
+    const annotate = createAnnotator(OKURIGANA, reference)
     expect(rubyOf(annotate('来ない'))).toEqual(['来:こ'])
     expect(rubyOf(annotate('来ます'))).toEqual(['来:き'])
     expect(rubyOf(annotate('来る'))).toEqual(['来:く'])
