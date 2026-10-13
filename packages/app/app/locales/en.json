@@ -10,7 +10,9 @@
     "github": "GitHub repository",
     "light": "Switch to light",
     "dark": "Switch to dark",
-    "language": "Language"
+    "language": "Language",
+    "rubyOff": "Hide the ruby",
+    "rubyOn": "Show the ruby"
   },
   "footer": {
     "fonts": "The fonts use the {license}. They come from Source Han Sans and Source Han Serif by Adobe.",

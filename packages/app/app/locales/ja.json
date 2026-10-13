@@ -10,7 +10,9 @@
     "github": "GitHub リポジトリ",
     "light": "ライトモードに切り替え",
     "dark": "ダークモードに切り替え",
-    "language": "言語"
+    "language": "言語",
+    "rubyOff": "ふりがなを隠す",
+    "rubyOn": "ふりがなを表示"
   },
   "footer": {
     "fonts": "フォントは{license}です。Adobe の Source Han Sans と Source Han Serif から作りました。",

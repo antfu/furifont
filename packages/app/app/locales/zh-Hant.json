@@ -10,7 +10,9 @@
     "github": "GitHub 儲存庫",
     "light": "切換為淺色",
     "dark": "切換為深色",
-    "language": "語言"
+    "language": "語言",
+    "rubyOff": "隱藏振假名",
+    "rubyOn": "顯示振假名"
   },
   "footer": {
     "fonts": "字型採用{license}，源自 Adobe 的 Source Han Sans 和 Source Han Serif。",
