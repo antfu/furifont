@@ -8,7 +8,6 @@ You need:
 
 - Node 22.18 or later.
 - pnpm, through `corepack enable`.
-- Python 3.10 or later. On Debian and Ubuntu, also install `python3-venv`.
 
 Then run:
 
@@ -16,13 +15,12 @@ Then run:
 pnpm run setup
 ```
 
-`pnpm setup` is pnpm's own command, so type `run`. The script does five things:
+`pnpm setup` is pnpm's own command, so type `run`. The script does four things:
 
-1. It checks your Node and Python versions.
-2. It installs fontTools, uharfbuzz and brotli from `packages/compiler/python/requirements.txt`. If your system Python refuses a global install, as Homebrew's and recent Debian's do, the script puts the libraries in `.venv`, and the compiler finds them there.
-3. It runs `pnpm install`.
-4. It installs Chromium, Firefox and WebKit for the browser tests. Add `--no-browsers` to skip about 500 MB of downloads. On Linux, the browsers can also need system libraries: `pnpm exec playwright install-deps`.
-5. It builds every package. `pnpm dev` and the browser tests need that build.
+1. It checks your Node version.
+2. It runs `pnpm install`.
+3. It installs Chromium, Firefox and WebKit for the browser tests. Add `--no-browsers` to skip about 500 MB of downloads. On Linux, the browsers can also need system libraries: `pnpm exec playwright install-deps`.
+4. It builds every package. `pnpm dev` and the browser tests need that build.
 
 The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 
@@ -31,9 +29,9 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 | Command | |
 | --- | --- |
 | `pnpm dev` | The app on `localhost:3000`, with the studio on live RPC. Run `pnpm build` again after you change a package. |
-| `pnpm test` | Unit and font tests. The compiler tests skip themselves when Python's font libraries are missing. |
+| `pnpm test` | Unit and font tests. |
 | `pnpm test:e2e` | Rendering in Chromium, Firefox and WebKit, and the studio. Run `pnpm build` first. |
-| `pnpm fonts` | All eight prebuilt fonts, OpenType and WOFF2, into `dist/fonts`, as the release builds them. It takes about 10 minutes. |
+| `pnpm fonts` | All eight prebuilt fonts, OpenType and WOFF2, into `dist/fonts`, as the release builds them. It takes about 2 minutes. |
 | `node packages/cli/bin.mjs dev` | The studio as users get it, built from your checkout. |
 | `pnpm dict:update` | Downloads JMdict, JMnedict, JmdictFurigana and KANJIDIC2 and recompiles the dictionary, the place names and the okurigana pairs. |
 
@@ -57,7 +55,7 @@ The interface is in English, Japanese, Simplified Chinese and Traditional Chines
 
 ## Releases
 
-Maintainers release with `pnpm release`, which needs Python's font libraries. It builds the packages, asks for the new version, and rebuilds the site's fonts into `fonts/` (the four Regular WOFF2s and their `.ivs.json`, about 5 minutes). The bump and the fonts go into one commit and tag, which it pushes. `fonts/` changes only this way: don't commit fonts you built yourself.
+Maintainers release with `pnpm release`. It builds the packages, asks for the new version, and rebuilds the site's fonts into `fonts/` (the four Regular WOFF2s and their `.ivs.json`, about a minute). The bump and the fonts go into one commit and tag, which it pushes. `fonts/` changes only this way: don't commit fonts you built yourself.
 
 The tag then makes CI:
 
