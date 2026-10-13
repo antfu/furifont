@@ -11,10 +11,10 @@ const style = computed(() => {
   const baselinePx = Math.round(LINE_GUIDES.baseline * size)
   const px = (em: number): string => `${Math.round(baselinePx + (em - LINE_GUIDES.baseline) * size)}px`
   const rule = (em: number): string => `transparent ${px(em)}, var(--ff-line) ${px(em)} calc(${px(em)} + 1px), transparent calc(${px(em)} + 1px)`
-  const { rubyTop, emTop, baseline, emBottom } = LINE_GUIDES
+  const { emTop, emBottom } = LINE_GUIDES
   return {
     backgroundImage: [
-      `linear-gradient(${[rubyTop, emTop, baseline, emBottom].map(rule).join(', ')})`,
+      `linear-gradient(${[emTop, emBottom].map(rule).join(', ')})`,
       'linear-gradient(90deg, var(--ff-line) 1px, transparent 1px)',
     ].join(', '),
     backgroundSize: `100% ${size * LINE_HEIGHT}px, ${size}px 100%`,
