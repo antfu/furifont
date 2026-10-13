@@ -2,6 +2,8 @@ import * as v from 'valibot'
 
 export const RUBY_SCRIPTS = ['hiragana', 'katakanaOn', 'hepburn'] as const
 export const PRIORITY_TAGS = ['ichi1', 'ichi2', 'news1', 'news2', 'spec1', 'spec2', 'gai1', 'gai2'] as const
+/** Easiest first. */
+export const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const
 export type RubyScript = typeof RUBY_SCRIPTS[number]
 
 /** Sizes in em, relative to the base font. */
@@ -17,18 +19,34 @@ const RubyMetricsSchema = v.object({
 })
 export type RubyMetrics = v.InferOutput<typeof RubyMetricsSchema>
 
-export const PlanOptionsSchema = v.object({
+const Bucket = v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(48))
+
+/** `schema`, checking that its frequency window `nfMin..nfMax` holds a bucket; for schemas that extend the options too. */
+export function withNfWindow<T extends v.GenericSchema<unknown, { nfMin: number, nfMax: number }>>(schema: T): v.SchemaWithPipe<readonly [T, v.CheckAction<v.InferOutput<T>, string>]> {
+  return v.pipe(schema, v.check(o => o.nfMin <= o.nfMax, 'nfMin must not exceed nfMax'))
+}
+
+export const PlanOptionsSchema = withNfWindow(v.object({
   family: v.optional(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.check(name => !/source/i.test(name), 'Source is a reserved font name of the base font')), 'Furifont Sans'),
   rubyScript: v.optional(v.picklist(RUBY_SCRIPTS), 'hiragana'),
+  /**
+   * Words whose newspaper frequency bucket is below this stay bare: the most
+   * common ones, which a reader knows. Tags don't bring them back.
+   */
+  nfMin: v.optional(Bucket, 1),
   /** Words whose newspaper frequency bucket is at most this are annotated. */
-  nfMax: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(48)), 30),
+  nfMax: v.optional(Bucket, 30),
   /**
    * JMdict priority tags that select a word whatever its frequency bucket:
    * `spec1` catches words like 日本 that the newspaper ranking misses.
    */
   selectTags: v.optional(v.array(v.picklist(PRIORITY_TAGS)), ['spec1']),
+  /** Words on the JLPT lists of this level and every easier one stay bare. */
+  skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate place names from the dictionary where no common word claims the run. */
   places: v.optional(v.boolean(), true),
+  /** Annotate a kanji alone in its run; when off, only selectors give it ruby. */
+  isolated: v.optional(v.boolean(), true),
   /** A kanji alone in its run is annotated only when one reading has this share of the evidence. */
   isolatedMinShare: v.optional(v.pipe(v.number(), v.minValue(0.5), v.maxValue(1)), 0.8),
   words: v.optional(v.object({
@@ -40,7 +58,7 @@ export const PlanOptionsSchema = v.object({
     pin: v.optional(v.array(v.string()), []),
   }), {}),
   metrics: v.optional(RubyMetricsSchema, {}),
-})
+}))
 export type PlanOptions = v.InferOutput<typeof PlanOptionsSchema>
 export type PlanOptionsInput = v.InferInput<typeof PlanOptionsSchema>
 

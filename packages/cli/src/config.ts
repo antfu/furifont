@@ -1,15 +1,15 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { PlanOptionsSchema } from '@furifont/core'
+import { PlanOptionsSchema, withNfWindow } from '@furifont/core'
 import * as v from 'valibot'
 
 export const CONFIG_FILE = 'furifont.config.json'
 
-export const FurifontConfigSchema = v.object({
+export const FurifontConfigSchema = withNfWindow(v.object({
   ...PlanOptionsSchema.entries,
   /** A Source Han Sans JP weight (downloaded once), or the path of another OpenType font. */
   base: v.optional(v.pipe(v.string(), v.nonEmpty()), 'Source Han Sans JP Regular'),
-})
+}))
 export type FurifontConfig = v.InferOutput<typeof FurifontConfigSchema>
 export type FurifontConfigInput = v.InferInput<typeof FurifontConfigSchema>
 
