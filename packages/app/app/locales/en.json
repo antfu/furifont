@@ -54,10 +54,7 @@
     "rubyNote": "(ss01 when off)",
     "textHint": "Click the text to edit it. Ruby comes from the font alone.",
     "copy": "Copy the text",
-    "pasteNote": "Paste it anywhere: no ruby characters come along.",
-    "annotate": "Add selectors for verbs",
-    "annotating": "Reading the text",
-    "annotateHint": "A font never sees the kana after a kanji, so 来る and 来ない look alike to it. This reads each kanji with the kana after it as one dictionary word, and writes the invisible selector for that reading. A pair that reads two ways stays bare. Copying keeps the selectors."
+    "pasteNote": "Paste it anywhere: no ruby characters come along."
   },
   "how": {
     "runs": {

@@ -43,8 +43,7 @@ The repository is a pnpm monorepo. Each package has one job:
 | `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana and KANJIDIC2 into committed JSON. It also holds a short list of curated default readings. |
 | `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
 | `@furifont/compiler` | TS | Draws the plan into the base font, compiles the rules and checks the output with HarfBuzz (harfbuzzjs, WebAssembly). |
-| `@furifont/annotate` | TS | Writes the selectors that okurigana decide into a text, from the dictionary's pairs and a font's reading lists (see [Verbs](#verbs)). |
-| `furifont` | TS | The CLI (`furifont build`, `furifont dev`, `furifont annotate`) and the studio's Devframe definition and RPC functions. |
+| `furifont` | TS | The CLI (`furifont build`, `furifont dev`) and the studio's Devframe definition and RPC functions. |
 | `packages/app` | Nuxt | The demo site and the studio, as one static SPA. The CLI ships it as its Devframe client. |
 
 ```
@@ -162,7 +161,7 @@ right before or after it. That includes ruby and variant glyphs.
 Every kanji also gets an ordered list of its readings for the selectors: each
 reading with at least 2% of the evidence, then the readings it has before
 okurigana in untagged words (奉 たてまつ, for 奉る). These last ones give
-[Verbs](#verbs) a reading to pick for verbs too rare to rank.
+selectors a reading to pick for verbs too rare to rank.
 
 ### Protection
 
@@ -227,12 +226,13 @@ kanji through `variants_off`. Placeholders therefore cost nothing in outlines.
 The reading lists ship as `<font>.ivs.json`, with the reading each lone kanji
 shows by default (`lone`), and on the demo's reference page.
 
-## Verbs
+## Okurigana pairs
 
 A font cannot read verbs, because their okurigana is in another run. 来 is
-こ in 来ない and き in 来ます. So the text gets the selectors instead, before
-it reaches the font, from a table of **pairs**: a run of kanji with the kana
-after it, read as one word.
+こ in 来ない and き in 来ます. The text itself can carry that reading as a
+selector, and a table of **pairs** decides it: a run of kanji with the kana
+after it, read as one word. Nothing in Furifont writes these selectors yet;
+`@furifont/dictionary/okurigana` exports the table.
 
 `dict:update` writes the pairs to `okurigana.json` from JMdict words spelled as
 one kanji run and kana (読み, 行く, 美味しい). Compounds and phrases such as
@@ -253,15 +253,7 @@ compound.
    and so is a run of several kanji with one reading everywhere, which the font
    already shows. About 37,000 pairs remain (0.9 MB, 160 KB gzipped).
 
-`@furifont/annotate` matches the longest pair each run of kanji in a text starts
-with. It writes the selector only where the font's own reading differs: the
-reference's `lone` lists what each kanji alone in its run shows by default, and
-`words` the default of each word. A null pair, or a reading the font cannot draw,
-gets VS225 where the font would show ruby, and nothing otherwise. Existing
-selectors are removed first, so annotating twice gives the same text.
-
-`furifont annotate` reads a file or standard input. The demo's playground loads
-the pairs as a chunk of its own, on first use.
+The longest pair a run of kanji in a text starts with decides its reading.
 
 ## Metrics
 
@@ -365,9 +357,6 @@ own mount.
 - **dictionary**: the compiled data plans sensible defaults (今日 きょう,
   明日 あした, 出来 でき), reads places (新宿 しんじゅく) and pairs (来ない こ,
   下りた お, 行って null).
-- **annotate**: the pairs write the selectors for 来る, 来ない, 来ます, 奉り and
-  行かない, nothing for 見る, and VS225 for 入る (はいる or いる). The compiled
-  test font shapes them with their ruby.
 - **compiler**: compiles against three committed subsets of Source Han Sans
   JP: CID-keyed CFF, and name-keyed CFF and TrueType without GSUB. It shapes
   with harfbuzzjs and checks words, protection, lone kanji, selectors, `ss01`,
@@ -416,10 +405,11 @@ site only with the next release.
 
 - A word broken across lines is shaped as two runs, and may lose or change its
   ruby. In Chromium, `word-break: auto-phrase` keeps phrases together.
-- In plain text, inflected forms of verbs with ambiguous kanji (書く, 行く)
-  stay bare. `furifont annotate` writes their selectors, but a pair has no
-  context beyond its own kana: 行った stays bare, and a noun written as kanji and
-  kana wins over a verb's stem (降り is ふり, also in 降り口).
+- Inflected forms of verbs with ambiguous kanji (書く, 行く, 来ない) stay
+  bare, because their okurigana is in another run. Selectors can add their ruby.
+- An okurigana pair has no context beyond its own kana: 行った stays
+  ambiguous, and a noun written as kanji and kana wins over a verb's stem
+  (降り is ふり, also in 降り口).
 - A rare word that no common word covers, but that is spelled like a place, is
   read as the place.
 - A compound missing from the dictionary is read through the words it
