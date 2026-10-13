@@ -61,9 +61,10 @@ export interface PlanReport {
   }
   /**
    * The lists variation selectors index into, VS226 being the first entry.
-   * Words list their readings in inline notation, the default first.
+   * Words list their readings in inline notation, the default first. `lone`
+   * is the reading a kanji alone in its run shows without a selector.
    */
-  ivs: { kanji: Record<string, string[]>, words: Record<string, string[]> }
+  ivs: { kanji: Record<string, string[]>, words: Record<string, string[]>, lone: Record<string, string> }
 }
 
 export interface PlanResult {
@@ -576,7 +577,7 @@ export function createFontPlanner(dictionary: Dictionary) {
           glyphs: keptGlyphs.length,
           rules: keptRules.length,
         },
-        ivs: { kanji: Object.fromEntries(kanjiReadings), words: ivsWords },
+        ivs: { kanji: Object.fromEntries(kanjiReadings), words: ivsWords, lone: Object.fromEntries(isolated) },
       },
     }
   }
