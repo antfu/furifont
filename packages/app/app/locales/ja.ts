@@ -42,6 +42,7 @@ export default {
     how: '仕組み',
     selectors: '読みを選ぶ',
     download: 'ダウンロード',
+    anyPage: 'どのページでも',
   },
   playground: {
     script: 'ルビの文字',
@@ -87,6 +88,14 @@ export default {
     buildOwn: 'ベースフォント、辞書の規模、ルビの文字、寸法を変えて、自分でビルドすることもできます。Python 3.10 以上と fontTools が必要です。',
     cliBuild: 'コマンドラインでフォントを作る',
     cliDev: 'スタジオ：調整、プレビュー、ビルド',
+  },
+  anyPage: {
+    body: 'どのウェブサイトも Furifont で表示できます。漢字を含む行は、ルビが収まるように行間を広げます。フォントはこのサイトから読み込み、初回は約 5 MB です。',
+    bookmarklet: 'ブックマークレット',
+    bookmarkletHint: 'ブックマークバーにドラッグしてください。どのページでも、クリックすると Furifont がオンになり、もう一度クリックするとオフになります。X や GitHub のように外部のフォントを禁止しているサイトでは動きません。',
+    userscript: 'ユーザースクリプト',
+    install: 'ユーザースクリプトをインストール',
+    userscriptHint: 'Tampermonkey または Violentmonkey 用です。日本語のページでは自動でオンになり、ブックマークレットが動かないサイトでも使えます。メニューからファミリーの切り替えやオフができます。',
   },
   reference: {
     eyebrow: 'リファレンス',

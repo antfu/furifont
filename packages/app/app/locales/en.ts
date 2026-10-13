@@ -40,6 +40,7 @@ export default {
     how: 'How it works',
     selectors: 'Choosing a reading',
     download: 'Download',
+    anyPage: 'On any page',
   },
   playground: {
     script: 'Ruby script',
@@ -85,6 +86,14 @@ export default {
     buildOwn: 'Or build one: another base font, dictionary size, ruby script or metrics. Needs Python 3.10+ with fontTools.',
     cliBuild: 'a font from the command line',
     cliDev: 'the studio: tune, preview, build',
+  },
+  anyPage: {
+    body: 'Set any website in Furifont. Lines with kanji get room for their ruby. The font loads from this site, about 5 MB the first time.',
+    bookmarklet: 'Bookmarklet',
+    bookmarkletHint: 'Drag it to your bookmarks bar. On any page, click it to turn Furifont on, and again to turn it off. Sites that block fonts from other sites, such as X and GitHub, stop it.',
+    userscript: 'Userscript',
+    install: 'Install the userscript',
+    userscriptHint: 'For Tampermonkey or Violentmonkey. It turns Furifont on by itself on Japanese pages, also on sites that stop the bookmarklet. Its menu switches the family or turns it off.',
   },
   reference: {
     eyebrow: 'Reference',

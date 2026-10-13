@@ -29,6 +29,10 @@ Each font also comes with a `.ivs.json` file. It lists the readings that the var
 - **Turning ruby off.** `font-feature-settings: "ss01"` shows the plain kanji, and so does `"rclt" 0`.
 - **Line breaks.** A word broken across two lines is read as two words. In Chromium, `word-break: auto-phrase` keeps phrases together.
 
+### On any page
+
+The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both load the Regular WOFF2 from the site, and give lines with kanji room for the ruby. Sites that block fonts from other sites, such as X and GitHub, stop the bookmarklet but not the userscript.
+
 ### Which words get ruby
 
 Browsers shape Japanese text one script at a time. The font sees a run of kanji, but never the kana next to it. So Furifont works on runs of kanji:
