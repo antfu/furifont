@@ -17,15 +17,20 @@ import json
 import math
 import sys
 
-from fontTools import subset as ft_subset
-from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
-from fontTools.pens.boundsPen import BoundsPen
-from fontTools.pens.recordingPen import DecomposingRecordingPen
-from fontTools.pens.t2CharStringPen import T2CharStringPen
-from fontTools.pens.transformPen import TransformPen
-from fontTools.pens.ttGlyphPen import TTGlyphPen
-from fontTools.ttLib import TTFont, getTableClass
-from fontTools.ttLib.tables._c_m_a_p import CmapSubtable
+try:
+    import brotli  # noqa: F401  fontTools writes WOFF2 with it
+    import uharfbuzz as hb
+    from fontTools import subset as ft_subset
+    from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
+    from fontTools.pens.boundsPen import BoundsPen
+    from fontTools.pens.recordingPen import DecomposingRecordingPen
+    from fontTools.pens.t2CharStringPen import T2CharStringPen
+    from fontTools.pens.transformPen import TransformPen
+    from fontTools.pens.ttGlyphPen import TTGlyphPen
+    from fontTools.ttLib import TTFont, getTableClass
+    from fontTools.ttLib.tables._c_m_a_p import CmapSubtable
+except ImportError as error:
+    sys.exit(f'{error.name} is not installed for {sys.executable}. Run: {sys.executable} -m pip install fonttools uharfbuzz brotli, or install them into a .venv in your project, which Furifont uses.')
 
 MAX_GLYPHS = 65535
 RIBBI = {'Regular', 'Bold', 'Italic', 'Bold Italic'}
@@ -281,7 +286,6 @@ def raise_ascender(font, metrics, em):
 
 
 def check_shaping(data, smoke, logical_order):
-    import uharfbuzz as hb
     face = hb.Face(hb.Blob(data))
     hb_font = hb.Font(face)
     for check in smoke:
