@@ -2,6 +2,13 @@
 function scrollToDownloads(): void {
   document.getElementById('downloads')?.scrollIntoView({ behavior: 'smooth' })
 }
+
+// The bookmarklet's and the userscript's toast link here; the page renders after the browser looks for the hash.
+const route = useRoute()
+onMounted(() => {
+  if (route.hash === '#downloads')
+    scrollToDownloads()
+})
 </script>
 
 <template>

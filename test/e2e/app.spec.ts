@@ -85,17 +85,38 @@ test('previews, plans and builds a font', async ({ page }) => {
   expect((await download.body()).subarray(0, 4).toString()).toBe('OTTO')
 })
 
-/** Opens a page on another site, in `lang`, with tight lines; the demo site's fonts are the test font. */
-async function openElsewhere(page: Page, lang: string): Promise<void> {
+/** Opens a page on another site, in `lang`, with tight lines and maybe a CSP; the demo site's fonts are the test font. */
+async function openElsewhere(page: Page, lang: string, csp?: string): Promise<void> {
   const font = await readFile(TEST_FONT)
   await page.route('https://furifont.antfu.me/fonts/**', route =>
     route.fulfill({ body: font, contentType: 'font/otf', headers: { 'access-control-allow-origin': '*' } }))
   await page.route('https://elsewhere.test/**', route => route.fulfill({
     contentType: 'text/html; charset=utf-8',
+    headers: csp ? { 'content-security-policy': csp } : {},
     body: `<!doctype html><html lang="${lang}"><meta charset="utf-8">
       <body style="font: 20px/1.2 monospace"><p id="kanji">日本の市場</p><p id="latin">Market</p>`,
   }))
   await page.goto('https://elsewhere.test/')
+}
+
+/** A userscript manager: its menu commands are buttons, its values outlive a reload. */
+async function addUserscriptManager(page: Page): Promise<void> {
+  await page.addInitScript(() => Object.assign(window, {
+    GM_getValue: (key: string, fallback: string) => localStorage.getItem(key) ?? fallback,
+    GM_setValue: (key: string, value: string) => localStorage.setItem(key, value),
+    GM_registerMenuCommand: (caption: string, onClick: () => void) => {
+      const button = document.createElement('button')
+      button.textContent = caption
+      button.onclick = onClick
+      document.body.append(button)
+    },
+    GM_xmlhttpRequest: ({ url, onload, onerror }: { url: string, onload: (response: { response: ArrayBuffer }) => void, onerror: () => void }) =>
+      fetch(url).then(r => r.arrayBuffer()).then(response => onload({ response }), onerror),
+  }))
+}
+
+async function fetchUserscript(page: Page): Promise<string> {
+  return (await page.request.get(new URL('/furifont.user.js', url).href)).text()
 }
 
 function styleOf(page: Page, id: string): Promise<{ fontFamily: string, lineHeight: string }> {
@@ -129,22 +150,28 @@ test('sets another site in Furifont from the bookmarklet, and a second click tur
   expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: 'monospace', lineHeight: '24px' })
 })
 
+test('asks to install Furifont where a CSP blocks fonts from other sites, and links to the downloads', async ({ page }) => {
+  await page.goto(new URL('/#/', url).href)
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const href = await section.getByRole('link', { name: 'Furifont Sans', exact: true }).getAttribute('href')
+
+  await openElsewhere(page, 'en', 'font-src \'self\'')
+  await page.evaluate(decodeURIComponent(href!.replace(/^javascript:/, '')))
+  const toast = page.getByRole('alert')
+  await expect(toast).toContainText('Sites that block fonts from other sites, such as X and GitHub, need Furifont installed on your computer.')
+  await expect(toast.getByRole('link', { name: 'Download the fonts' })).toHaveAttribute('href', 'https://furifont.antfu.me/#downloads')
+  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: 'monospace', lineHeight: '24px' })
+  await toast.getByRole('button', { name: 'Close' }).click()
+  await expect(toast).toBeHidden()
+
+  await page.goto(new URL('/#downloads', url).href)
+  await expect(page.locator('#downloads')).toBeInViewport()
+})
+
 test('turns the userscript on by itself on Japanese pages, and its menu switches family', async ({ page }) => {
-  const userscript = await (await page.request.get(new URL('/furifont.user.js', url).href)).text()
+  const userscript = await fetchUserscript(page)
   expect(userscript).toMatch(/^\/\/ ==UserScript==\n/)
-  // A userscript manager: its menu commands are buttons, its values outlive a reload.
-  await page.addInitScript(() => Object.assign(window, {
-    GM_getValue: (key: string, fallback: string) => localStorage.getItem(key) ?? fallback,
-    GM_setValue: (key: string, value: string) => localStorage.setItem(key, value),
-    GM_registerMenuCommand: (caption: string, onClick: () => void) => {
-      const button = document.createElement('button')
-      button.textContent = caption
-      button.onclick = onClick
-      document.body.append(button)
-    },
-    GM_xmlhttpRequest: ({ url, onload }: { url: string, onload: (response: { response: ArrayBuffer }) => void }) =>
-      fetch(url).then(r => r.arrayBuffer()).then(response => onload({ response })),
-  }))
+  await addUserscriptManager(page)
 
   await openElsewhere(page, 'en')
   await page.evaluate(userscript)
@@ -163,4 +190,18 @@ test('turns the userscript on by itself on Japanese pages, and its menu switches
 
   await page.getByRole('button', { name: 'Furifont Serif Romaji' }).click()
   expect((await styleOf(page, 'kanji')).fontFamily).toBe('monospace')
+})
+
+test('turns the userscript back off with a toast in the browser\'s language when the font fails to download', async ({ browser }) => {
+  const context = await browser.newContext({ locale: 'ja-JP' })
+  const page = await context.newPage()
+  const userscript = await fetchUserscript(page)
+  await addUserscriptManager(page)
+
+  await openElsewhere(page, 'ja')
+  await page.route('https://furifont.antfu.me/fonts/**', route => route.abort())
+  await page.evaluate(userscript)
+  await expect(page.getByRole('alert')).toContainText('パソコンに Furifont をインストールする必要があります。')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe('monospace')
+  await context.close()
 })

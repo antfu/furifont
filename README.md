@@ -31,7 +31,7 @@ Each font also comes with a `.ivs.json` file. It lists the readings that the var
 
 ### On any page
 
-The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both load the Regular WOFF2 from the site, and give lines with kanji room for the ruby. Sites that block fonts from other sites, such as X and GitHub, stop the bookmarklet but not the userscript.
+The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both use Furifont when it is installed on your computer, and otherwise load the Regular WOFF2 from the site. They give lines with kanji room for the ruby. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed for the bookmarklet, but not for the userscript. When neither works, a toast says so and links to the downloads.
 
 ### Which words get ruby
 

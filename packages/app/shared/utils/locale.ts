@@ -16,7 +16,8 @@ export function isLocale(value: string | null): value is Locale {
 /**
  * The first supported language among the browser's preferences. Chinese for
  * Taiwan, Hong Kong and Macau, or marked Hant, is Traditional; other Chinese
- * is Simplified.
+ * is Simplified. The userscript ships this function as source text, so it MUST
+ * NOT use anything from outside its own body.
  */
 export function detectLocale(languages: readonly string[]): Locale {
   for (const tag of languages.map(l => l.toLowerCase())) {
