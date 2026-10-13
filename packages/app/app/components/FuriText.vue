@@ -8,11 +8,10 @@ const { family = FAMILIES[0]!.family, ruby = true, size = 32 } = defineProps<{
 /** Editable in place: bound, edits flow back; unbound, they stay local. */
 const text = defineModel<string>('text', { required: true })
 
-// Ruby sits above the em box: below ~1.6 lines start to clip it.
 const style = computed(() => ({
   fontFamily: `"${family}", sans-serif`,
   fontSize: `${size}px`,
-  lineHeight: 1.75,
+  lineHeight: LINE_HEIGHT,
   fontFeatureSettings: ruby ? 'normal' : '"ss01"',
 }))
 
