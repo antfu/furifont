@@ -65,6 +65,18 @@ describe('planner', () => {
     expect(report.stats.isolated).toBe(1)
   })
 
+  it('reads place names where no common word claims the run', () => {
+    const places = [{ form: '渋谷', furigana: '0:しぶ;1:や' }, { form: '日本', furigana: '0:ひ;1:もと' }]
+    const planner = createFontPlanner({ ...dictionary, places })
+    const coverageWithPlaces = new Set([...coverage, ...[...'渋谷しぶやもと'].map(c => c.codePointAt(0)!)])
+    const { plan: p, report } = planner(resolveOptions(), coverageWithPlaces)
+    expect(drawn(p)).toEqual(expect.arrayContaining(['渋:しぶ', '谷:や', '日:に', '本:ほん']))
+    expect(drawn(p)).not.toContain('本:もと')
+    expect(report.stats.places).toBe(1)
+    expect(report.ivs.kanji['谷']).toBeUndefined()
+    expect(drawn(planner(resolveOptions({ places: false }), coverageWithPlaces).plan)).not.toContain('渋:しぶ')
+  })
+
   it('applies pins and removals', () => {
     const pinned = plan({ words: { pin: ['今[こん]日[にち]', '書[か]'] } }).report
     expect(pinned.ivs.words['今日']![0]).toBe('今[こん]日[にち]')

@@ -21,6 +21,8 @@ export interface Dictionary {
   sources: Record<string, string>
   /** Curated default readings in inline notation, for words the data ranks wrong; pins override them. */
   defaults?: string[]
+  /** Place names, each with the one reading to show; common words take precedence over them. */
+  places?: { form: string, furigana: string }[]
 }
 
 /** A ruby annotation over characters `[start, end)` of a run. */

@@ -29,6 +29,8 @@ interface RunReading {
   tags: Set<string>
   /** Made the default by the dictionary's curated list (1) or by the user (2). */
   pinned?: number
+  /** A place name: its readings are no evidence for the kanji's own. */
+  place?: boolean
 }
 
 interface SingleReading {
@@ -49,6 +51,7 @@ interface DictionaryIndex {
 export interface PlanReport {
   stats: {
     patterns: number
+    places: number
     ambiguous: number
     isolated: number
     protectedAnnotated: number
@@ -217,18 +220,30 @@ function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notati
   }
 }
 
-/** Runs of common words, plus custom words; pinned readings of lone kanji are returned apart. */
-function selectWords(index: DictionaryIndex, defaults: readonly string[], ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string> } {
+/** Place names fill the runs no common word claims. */
+function addPlaces(patterns: Patterns, places: Dictionary['places'], ctx: PlanContext): void {
+  for (const place of places ?? []) {
+    const spans = parseFurigana(place.furigana)
+    if (patterns.has(place.form) || ctx.removed.has(place.form) || !ctx.renderable({ text: place.form, spans }))
+      continue
+    patterns.set(place.form, [{ spans, weight: 0, tagged: false, order: 0, nf: 0, tags: new Set(), place: true }])
+  }
+}
+
+/** Runs of common words, then place names and custom words; pinned readings of lone kanji are returned apart. */
+function selectWords(index: DictionaryIndex, dictionary: Dictionary, ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string> } {
   const patterns: Patterns = new Map()
   for (const [text, readings] of index.runs) {
     const common = [...readings.values()].filter(r => ctx.selected(r) && ctx.renderable({ text, spans: r.spans }))
     if (common.length && !ctx.removed.has(text))
       patterns.set(text, common.map(r => ({ ...r })))
   }
+  if (ctx.options.places)
+    addPlaces(patterns, dictionary.places, ctx)
   const lonePins = new Map<string, string>()
   for (const notation of ctx.options.words.add)
     addCustomWord(patterns, lonePins, notation, 0, ctx)
-  for (const notation of defaults)
+  for (const notation of dictionary.defaults ?? [])
     addCustomWord(patterns, lonePins, notation, 1, ctx)
   for (const notation of ctx.options.words.pin)
     addCustomWord(patterns, lonePins, notation, 2, ctx)
@@ -249,7 +264,7 @@ type AddEvidence = (kanji: string, ruby: string, weight: number) => void
 function addWordEvidence(patterns: Patterns, add: AddEvidence): void {
   for (const [text, readings] of patterns) {
     const chars = [...text]
-    for (const r of readings) {
+    for (const r of readings.filter(r => !r.place)) {
       for (const s of r.spans.filter(s => s.end - s.start === 1))
         add(chars[s.start]!, s.ruby, r.weight || 1e-6)
     }
@@ -355,7 +370,10 @@ function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadin
   }
   // Each protected run is a new rule that can misread others in turn.
   for (let pass = 0, changed = true; changed && pass < 5; pass++) {
-    const longest = Math.max(2, ...[...known.keys()].map(length))
+    // A loop, not Math.max(...keys): with place names there are too many keys to spread.
+    let longest = 2
+    for (const text of known.keys())
+      longest = Math.max(longest, length(text))
     changed = false
     for (const [text, readings] of index.runs) {
       if (!known.has(text) && ctx.covered(text) && protect(text, readings, longest))
@@ -495,7 +513,7 @@ export function createFontPlanner(dictionary: Dictionary) {
   /** Plans a font; with `previewText`, keeps only what that text can trigger. */
   return function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
     const ctx = createContext(dictionary, options, coverage)
-    const { patterns, lonePins } = selectWords(index, dictionary.defaults ?? [], ctx)
+    const { patterns, lonePins } = selectWords(index, dictionary, ctx)
     const { isolated, kanjiReadings } = chooseLoneKanji(index, patterns, lonePins, ctx)
     const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, ctx)
     const glyphs = createGlyphRegistry(ctx.render)
@@ -550,6 +568,7 @@ export function createFontPlanner(dictionary: Dictionary) {
       report: {
         stats: {
           patterns: patterns.size,
+          places: [...patterns.values()].filter(r => r[0]!.place).length,
           ambiguous: Object.keys(ivsWords).length,
           isolated: isolated.size,
           protectedAnnotated: [...protectedRuns.values()].filter(Boolean).length,
