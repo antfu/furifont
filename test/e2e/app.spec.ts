@@ -158,7 +158,7 @@ test('asks to install Furifont where a CSP blocks fonts from other sites, and li
   await openElsewhere(page, 'en', 'font-src \'self\'')
   await page.evaluate(decodeURIComponent(href!.replace(/^javascript:/, '')))
   const toast = page.getByRole('alert')
-  await expect(toast).toContainText('Sites that block fonts from other sites, such as X and GitHub, need Furifont installed on your computer.')
+  await expect(toast).toContainText('On those sites, you must install Furifont on your computer.')
   await expect(toast.getByRole('link', { name: 'Download the fonts' })).toHaveAttribute('href', 'https://furifont.antfu.me/#downloads')
   expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: 'monospace', lineHeight: '24px' })
   await toast.getByRole('button', { name: 'Close' }).click()

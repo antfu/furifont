@@ -46,7 +46,7 @@ export default defineNuxtConfig({
       title: 'Furifont: furigana built into the font',
       htmlAttrs: { lang: 'en' },
       meta: [
-        { name: 'description', content: 'A Japanese font that shows furigana by itself, without changing the text.' },
+        { name: 'description', content: 'A Japanese font that shows furigana by itself. The text does not change.' },
       ],
       link: [{ rel: 'icon', type: 'image/svg+xml', href: 'favicon.svg' }],
     },

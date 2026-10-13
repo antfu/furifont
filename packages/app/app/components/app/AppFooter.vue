@@ -1,5 +1,11 @@
 <script setup lang="ts">
 const link = 'underline underline-offset-3 hover:color-base'
+const sources = {
+  jmdict: ['JMdict', 'https://www.edrdg.org/jmdict/j_jmdict.html'],
+  jmnedict: ['JMnedict', 'https://www.edrdg.org/enamdict/enamdict_doc.html'],
+  kanjidic: ['KANJIDIC2', 'https://www.edrdg.org/wiki/index.php/KANJIDIC_Project'],
+  furigana: ['JmdictFurigana', 'https://github.com/Doublevil/JmdictFurigana'],
+} as const
 </script>
 
 <template>
@@ -35,7 +41,11 @@ const link = 'underline underline-offset-3 hover:color-base'
             <a :class="link" href="https://openfontlicense.org" target="_blank" rel="noopener">SIL Open Font License</a>
           </template>
         </i18n-t>
-        <p>{{ $t('footer.data') }}</p>
+        <i18n-t keypath="footer.data" tag="p">
+          <template v-for="(source, name) in sources" :key="name" #[name]>
+            <a :class="link" :href="source[1]" target="_blank" rel="noopener">{{ source[0] }}</a>
+          </template>
+        </i18n-t>
         <p>
           {{ $t('footer.code') }}
         </p>

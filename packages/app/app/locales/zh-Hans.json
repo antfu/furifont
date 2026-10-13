@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Furifont：自带振假名的日文字体",
-    "description": "一款不改动文本、自动显示振假名的日文字体。"
+    "description": "自带振假名的日语字体，文字本身不会改变。"
   },
   "nav": {
     "demo": "演示",
@@ -13,8 +13,8 @@
     "language": "语言"
   },
   "footer": {
-    "fonts": "字体衍生自 Adobe 思源黑体（Source Han Sans）与思源宋体（Source Han Serif），采用 {license}。",
-    "data": "读音数据来自 JMdict、JMnedict、KANJIDIC2（EDRDG）与 JmdictFurigana，采用 CC BY-SA 4.0。",
+    "fonts": "字体采用{license}，源自 Adobe 的 Source Han Sans 和 Source Han Serif。",
+    "data": "读音数据来自 {jmdict}、{jmnedict}、{kanjidic}（EDRDG）和 {furigana}，采用 CC BY-SA 4.0 许可。",
     "code": "工具采用 MIT 许可。",
     "source": "GitHub 上的源代码",
     "made": "作者：{author}",
@@ -23,7 +23,7 @@
   },
   "copied": "已复制",
   "shuffle": "换一个例句",
-  "editable": "可编辑的示例文本",
+  "editable": "示例文字，可以编辑。",
   "scripts": {
     "hiragana": "平假名",
     "hepburn": "罗马字"
@@ -35,7 +35,7 @@
   "hero": {
     "title1": "振假名，",
     "title2": "交给字体。",
-    "body": "Furifont 在词典中查找每个词，并在汉字上方标出读音。文本本身保持不变：复制、搜索和屏幕阅读器看到的都是你写下的原文。",
+    "body": "Furifont 是一款能自己显示振假名的日语字体。振假名是汉字上方的小字，告诉你这个字怎么读。文字本身保持不变。复制、搜索或用屏幕朗读时，得到的都是你写下的原文。",
     "download": "下载字体",
     "build": "自己构建"
   },
@@ -47,35 +47,35 @@
     "anyPage": "用于任意网页"
   },
   "playground": {
-    "script": "振假名样式",
-    "face": "字体",
+    "script": "振假名所用文字",
+    "face": "字体样式",
     "size": "字号 / {size}px",
     "ruby": "振假名",
-    "rubyNote": "（关闭时为 ss01）",
-    "textHint": "点击文本即可编辑，振假名完全由字体显示。",
+    "rubyNote": "（汉字上方的小字）",
+    "textHint": "点击文字即可编辑。振假名完全由字体显示。",
     "copy": "复制文本",
-    "pasteNote": "粘贴到任何地方都不会带上振假名。"
+    "pasteNote": "可以粘贴到任何地方。带走的只有你写的文字。"
   },
   "how": {
     "runs": {
-      "title": "按汉字串读取",
-      "body": "浏览器按文字类别分段排版日文，所以字体看不到汉字旁边的假名。Furifont 把每一串连续的汉字当作一个整体来读。"
+      "title": "一次读一组汉字",
+      "body": "浏览器会把日语文字分成几个部分交给字体。只含汉字的部分，字体看不到旁边的假名（日语的简单文字）。所以 Furifont 把每一组汉字当作一个整体来读。"
     },
     "longest": {
       "title": "长词优先",
-      "body": "每串汉字都会与数千个常用词比对，从最长的开始匹配：先「日本語」后「日本」，「今日」作为一个词读作「きょう」。"
+      "body": "Furifont 把每一组汉字与几千个常用词的列表对照，先试最长的词。例如，会先选 日本語，再考虑 日本。今日 会当作一个词，读作 きょう。"
     },
     "bare": {
-      "title": "拿不准就不标",
-      "body": "单独的汉字只有在某个读音明显占优时才标注。「大人気」可以读作「だいにんき」或「おとなげ」，所以不标注。"
+      "title": "拿不准就不加",
+      "body": "只有一个汉字时，只有当某个读音明显最可能，才加振假名。大人気 可以读作 だいにんき，也可以读作 おとなげ，所以不加振假名。"
     },
     "pick": {
-      "title": "读音可选",
-      "body": "在词的第一个汉字后写入变体选择器，即可选择其他读音或去掉振假名。它不可见，复制粘贴后仍然保留。"
+      "title": "读音可以自选",
+      "body": "一个词可能有多个读音。在词的第一个汉字后面写一个变体选择器，就能选择另一个读音，或去掉振假名。变体选择器是一个看不见的字符，复制粘贴后仍会保留。"
     }
   },
   "selectors": {
-    "body": "有些词有多个常用读音。Furifont 显示最常见的那个；在第一个汉字后紧跟一个变体选择器即可选择其他读音：VS226 为读音 1，VS227 为读音 2，依此类推。VS225 去掉振假名。",
+    "body": "有些词有多个常用读音。Furifont 显示最常见的那个。要选其他读音，就在第一个汉字后面紧跟一个变体选择器（看不见的字符）。VS226 是读音 1，VS227 是读音 2，依此类推。VS225 去掉振假名。",
     "lookUp": "查询读音",
     "default": "默认",
     "reading2": "读音 2（VS227）",
@@ -84,19 +84,19 @@
   "downloads": {
     "family": "字体家族",
     "ruby": "振假名",
-    "buildOwn": "也可以自己构建：更换基础字体、词典规模、振假名样式或尺寸。",
+    "buildOwn": "你也可以自己制作字体。可以选择其他基础字体、词的数量、振假名所用文字或尺寸。",
     "cliBuild": "用命令行构建字体",
-    "cliDev": "工作室：调整、预览、构建"
+    "cliDev": "工作室：调整设置、预览、制作字体"
   },
   "anyPage": {
-    "body": "把任意网站换成 Furifont 显示。含汉字的行会加大行距，留出振假名的位置。电脑上已安装 Furifont 时无需下载，否则字体从本站加载，首次约 5 MB。",
+    "body": "你可以在任何网站上使用 Furifont。有汉字的行会留出放振假名的空间。如果电脑上已安装 Furifont，就不用下载。否则字体会从本站加载，第一次约 5 MB。",
     "bookmarklet": "书签小工具",
-    "bookmarkletHint": "把它拖到书签栏。在任意网页上点击即可开启 Furifont，再点一次关闭。在 X、GitHub 等禁止加载外部字体的网站上，需要先在电脑上安装 Furifont。",
+    "bookmarkletHint": "把它拖到书签栏。在任何页面点击它，就会打开 Furifont；再点一次就会关闭。有些网站（如 X 和 GitHub）不允许加载其他网站的字体。在这些网站上，请在电脑上安装 Furifont。",
     "userscript": "用户脚本",
     "install": "安装用户脚本",
-    "userscriptHint": "适用于 Tampermonkey 或 Violentmonkey。在日文网页上自动开启，在禁止加载外部字体的网站上也能用。可在菜单中切换字体家族或关闭。",
+    "userscriptHint": "适用于 Tampermonkey 或 Violentmonkey（运行小脚本的浏览器扩展）。它会在日语页面自动打开 Furifont，在不允许加载其他网站字体的网站上也能用。你可以在它的菜单里切换到另一款 Furifont 字体，或将其关闭。",
     "toast": {
-      "message": "Furifont 无法在此页面加载字体。在 X、GitHub 等禁止加载外部字体的网站上，需要先在电脑上安装 Furifont。",
+      "message": "Furifont 无法在此页面加载字体。有些网站（如 X 和 GitHub）不允许加载其他网站的字体。在这些网站上，需要在电脑上安装 Furifont。",
       "download": "下载字体",
       "close": "关闭"
     }
@@ -104,11 +104,11 @@
   "reference": {
     "eyebrow": "参考",
     "title": "选择读音",
-    "body": "Furifont 显示词语最常见的读音。要显示其他读音，请在词的第一个汉字后紧跟一个变体选择器：VS226 为读音 1，VS227 为读音 2，依此类推。写在单个汉字后时，选择该汉字自己的读音；VS225 显示不带振假名的汉字。",
+    "body": "Furifont 显示词最常见的读音。要显示其他读音，就在词的第一个汉字后面紧跟一个变体选择器（看不见的字符）。VS226 是读音 1，VS227 是读音 2，依此类推。单个汉字后面的选择器，选的是这个汉字的读音。VS225 显示不带振假名的汉字。",
     "search": "搜索词语或汉字：市場、今日、生",
     "searchLabel": "搜索读音",
     "hint": "点击读音即可复制带选择器的词语。",
-    "unavailable": "参考数据随预构建字体一起发布，此处无法加载（{error}）。请用 {command} 构建字体，或打开工作室。",
+    "unavailable": "参考表随现成字体一起提供，但这里没能加载（{error}）。请用 {command} 制作字体，或打开工作室。",
     "loading": "加载中",
     "words": "有多个读音的词 / {count}",
     "kanji": "汉字 / {count}",
@@ -121,14 +121,14 @@
     "offline": {
       "eyebrow": "工作室 / 离线",
       "title": "构建你自己的 Furifont",
-      "body": "工作室运行在你的电脑上，读取基础字体并写出构建的字体。在任意文件夹中启动它，此页面就会连接上，提供实时预览、词典和构建按钮。构建结果保存在 {folder}。",
-      "needs": "需要 Node 22.18 及以上版本。",
+      "body": "工作室是运行在你电脑上的工具。它读取基础字体，并保存制作好的字体。在任意文件夹中启动它，本页就会连接上并打开，提供实时预览、词典和构建按钮。制作好的字体保存在 {folder}。",
+      "needs": "需要 Node 22.18 或更高版本（一个运行 JavaScript 工具的免费程序）。",
       "run": "在任意文件夹中启动工作室"
     },
     "auth": {
       "eyebrow": "工作室 / 已锁定",
       "title": "输入终端中显示的验证码",
-      "body": "{command} 已在终端中打印了一个六位数验证码。",
+      "body": "{command} 在你的终端（输入命令的窗口）中显示了一个六位数验证码。",
       "code": "验证码",
       "failed": "验证码无效，请查看终端后重试。",
       "unlock": "解锁"
@@ -140,47 +140,47 @@
       "words": "你的词语"
     },
     "options": {
-      "family": "字体家族名",
+      "family": "字体名称",
       "base": "基础字体",
-      "baseHint": "要下载的字体（如 Source Han Serif JP Bold），或其他字体文件的路径。",
-      "script": "振假名样式",
+      "baseHint": "要加振假名的字体。可以是要下载的字体，如 Source Han Serif JP Bold，也可以是电脑上另一个字体文件的路径。",
+      "script": "振假名所用文字",
       "hiragana": "平假名",
       "katakanaOn": "片假名",
       "hepburn": "罗马字",
-      "nfMax": "词频档位上限",
-      "nfMaxHint": "nf01 包含报纸中最常见的 500 个词，nf48 到第 24,000 个。",
+      "nfMax": "词表大小",
+      "nfMaxHint": "Furifont 从按报纸出现频率排序的词表中选词加振假名。档位从 nf01（最常见的 500 个词）到 nf48（最常见的 24,000 个词）。数字越大，加振假名的词越多。",
       "sources": "同时收录来自以下来源的词",
       "source": {
         "spec1": {
           "name": "日常词",
-          "hint": "JMdict“spec1”：其他词表遗漏的常用词，如 日本。"
+          "hint": "JMdict“spec1”：其他词表没有收录的常用词，如 日本。"
         },
         "ichi1": {
-          "name": "基础词汇",
-          "hint": "JMdict“ichi1”：“一万语”词表的第一层。"
+          "name": "基础词",
+          "hint": "JMdict“ichi1”：“一万语”词表（基础词汇表）中最常用的词。"
         },
         "news1": {
-          "name": "报纸",
-          "hint": "JMdict“news1”：报纸中最常见的 12,000 个词。"
+          "name": "报纸用词",
+          "hint": "JMdict“news1”：报纸中出现最多的 12,000 个词。"
         },
         "gai1": {
           "name": "外来语",
-          "hint": "JMdict“gai1”：常用外来语。"
+          "hint": "JMdict“gai1”：日语从其他语言借来的常用词。"
         },
         "places": {
           "name": "地名",
-          "hint": "JMnedict：站名与地名，仅用于没有常用词匹配的文字。"
+          "hint": "JMnedict：站名和地名。在没有常用词匹配的文字上使用。"
         }
       },
-      "share": "单独汉字所需占比",
-      "shareHint": "当某个读音的占比达到该值时，单独的汉字才会标注。",
-      "rubyScale": "振假名缩放",
-      "rubyGap": "间距 / em",
-      "squeeze": "最小压缩比",
-      "maxWidth": "最大宽度 / em"
+      "share": "单个汉字的把握度",
+      "shareHint": "只有一个汉字时，只有当某个读音在词典中至少占这个比例，才加振假名。请输入 0.5 到 1 之间的数。数字越大，加振假名的汉字越少。",
+      "rubyScale": "振假名大小（汉字的几倍）",
+      "rubyGap": "汉字上方的间距（em）",
+      "squeeze": "最窄压缩到（正常宽度的几倍）",
+      "maxWidth": "振假名最大宽度（em）"
     },
     "preview": {
-      "compiling": "正在编译预览",
+      "compiling": "正在制作预览",
       "size": "预览字号",
       "stats": "{glyphs} 个字形 / {ms} ms"
     },
@@ -188,19 +188,19 @@
       "words": "词语",
       "places": "地名",
       "ambiguous": "多读音",
-      "lone": "单独汉字",
-      "protected": "受保护",
+      "lone": "单个汉字",
+      "protected": "你的设置",
       "glyphs": "振假名字形",
       "rules": "规则",
       "planning": "规划中",
       "run": "构建字体",
-      "save": "保存配置"
+      "save": "保存设置"
     },
     "dictionary": {
       "search": "搜索词典：今日、生",
       "results": "{count} 个词",
-      "hint": "这些词有多个常用读音。固定其中一个即设为默认。",
-      "noTag": "无优先级标签",
+      "hint": "这些词有多个常用读音。固定其中一个，它就成为默认读音。",
+      "noTag": "不是常用词",
       "restore": "恢复",
       "remove": "不加振假名"
     },

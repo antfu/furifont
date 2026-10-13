@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Furifont: furigana built into the font",
-    "description": "A Japanese font that shows furigana by itself, without changing the text."
+    "description": "A Japanese font that shows furigana by itself. The text does not change."
   },
   "nav": {
     "demo": "Demo",
@@ -13,9 +13,9 @@
     "language": "Language"
   },
   "footer": {
-    "fonts": "Fonts under the {license}, derived from Source Han Sans and Source Han Serif by Adobe.",
-    "data": "Readings from JMdict, JMnedict and KANJIDIC2 (EDRDG) and JmdictFurigana, under CC BY-SA 4.0.",
-    "code": "Tooling under MIT.",
+    "fonts": "The fonts use the {license}. They come from Source Han Sans and Source Han Serif by Adobe.",
+    "data": "The readings come from {jmdict}, {jmnedict}, {kanjidic} (EDRDG) and {furigana}. They use the CC BY-SA 4.0 license.",
+    "code": "The tools use the MIT license.",
     "source": "Source on GitHub",
     "made": "Made by {author}",
     "supported": "Supported by {vercel} and {sponsors}",
@@ -23,7 +23,7 @@
   },
   "copied": "Copied",
   "shuffle": "Show another sample",
-  "editable": "Sample text, editable",
+  "editable": "Sample text. You can edit it.",
   "scripts": {
     "hiragana": "Hiragana",
     "hepburn": "Romaji"
@@ -35,7 +35,7 @@
   "hero": {
     "title1": "Furigana,",
     "title2": "set by the font.",
-    "body": "Furifont looks every word up in its dictionary and draws the reading above the kanji. The text itself stays plain: copy, search and screen readers see exactly what you wrote.",
+    "body": "Furifont is a Japanese font that shows furigana by itself. Furigana are the small letters above a kanji (a Chinese-style character) that tell you how to say it. The text stays plain. When you copy it, search it, or have it read aloud, you get the exact text that you wrote.",
     "download": "Download the fonts",
     "build": "Build your own"
   },
@@ -47,35 +47,35 @@
     "anyPage": "On any page"
   },
   "playground": {
-    "script": "Ruby script",
-    "face": "Typeface",
+    "script": "Ruby letters",
+    "face": "Font style",
     "size": "Size / {size}px",
     "ruby": "Ruby",
-    "rubyNote": "(ss01 when off)",
-    "textHint": "Click the text to edit it. Ruby comes from the font alone.",
+    "rubyNote": "(the small letters above the kanji)",
+    "textHint": "Click the text to edit it. The font alone makes the ruby.",
     "copy": "Copy the text",
-    "pasteNote": "Paste it anywhere: no ruby characters come along."
+    "pasteNote": "Paste it anywhere. Only the text that you wrote comes with it."
   },
   "how": {
     "runs": {
-      "title": "One run of kanji at a time",
-      "body": "Browsers shape Japanese one script at a time, so a font never sees the kana next to a kanji. Furifont reads each run of kanji as a whole."
+      "title": "One group of kanji at a time",
+      "body": "A browser gives Japanese text to a font in separate parts. One part holds only kanji. The font cannot see the kana (the simple Japanese letters) next to it. So Furifont reads each group of kanji as one whole."
     },
     "longest": {
       "title": "Longest word first",
-      "body": "Every run is matched against a few thousand common words, longest first: 日本語 before 日本, 今日 as one word, read きょう."
+      "body": "Furifont compares each group of kanji with a list of thousands of common words. It tries the longest word first. For example, it picks 日本語 before 日本. It reads 今日 as one word, きょう."
     },
     "bare": {
-      "title": "Bare when unsure",
-      "body": "A kanji alone gets ruby only when one reading clearly dominates. 大人気 could be だいにんき or おとなげ, so it stays bare."
+      "title": "No ruby when unsure",
+      "body": "A single kanji gets ruby only when one reading is clearly the most likely. 大人気 can be read だいにんき or おとなげ, so Furifont shows no ruby."
     },
     "pick": {
-      "title": "Readings you can pick",
-      "body": "Write a variation selector after a word's first kanji to choose another reading, or to drop the ruby. Invisible, and it survives copy and paste."
+      "title": "Readings you can choose",
+      "body": "A word can have more than one reading. Put a variation selector after the first kanji of the word to choose another reading, or to remove the ruby. A variation selector is an invisible character. It stays when you copy and paste."
     }
   },
   "selectors": {
-    "body": "Some words have several common readings. Furifont shows the most common one, and a variation selector right after the first kanji picks another: VS226 for reading 1, VS227 for reading 2, and so on. VS225 drops the ruby.",
+    "body": "Some words have more than one common reading. Furifont shows the most common one. To choose another, put a variation selector (an invisible character) right after the first kanji. VS226 gives reading 1, VS227 gives reading 2, and so on. VS225 removes the ruby.",
     "lookUp": "Look up readings",
     "default": "Default",
     "reading2": "Reading 2 (VS227)",
@@ -84,19 +84,19 @@
   "downloads": {
     "family": "Family",
     "ruby": "Ruby",
-    "buildOwn": "Or build one: another base font, dictionary size, ruby script or metrics.",
+    "buildOwn": "Or build your own font. You can choose another base font, a list with fewer or more words, other ruby letters, or other sizes.",
     "cliBuild": "a font from the command line",
-    "cliDev": "the studio: tune, preview, build"
+    "cliDev": "the studio: change the settings, preview, build the font"
   },
   "anyPage": {
-    "body": "Set any website in Furifont. Lines with kanji get room for their ruby. Furifont installed on your computer needs no download; otherwise the font loads from this site, about 5 MB the first time.",
+    "body": "You can use Furifont on any website. Lines with kanji get extra space for the ruby. If Furifont is installed on your computer, nothing downloads. If it is not, the font loads from this site. It is about 5 MB the first time.",
     "bookmarklet": "Bookmarklet",
-    "bookmarkletHint": "Drag it to your bookmarks bar. On any page, click it to turn Furifont on, and again to turn it off. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed on your computer.",
+    "bookmarkletHint": "Drag it to your bookmarks bar. On any page, click it to turn Furifont on. Click it again to turn Furifont off. Some sites, such as X and GitHub, do not let fonts load from other sites. On those sites, install Furifont on your computer.",
     "userscript": "Userscript",
     "install": "Install the userscript",
-    "userscriptHint": "For Tampermonkey or Violentmonkey. It turns Furifont on by itself on Japanese pages, also on sites that block fonts from other sites. Its menu switches the family or turns it off.",
+    "userscriptHint": "This works with Tampermonkey or Violentmonkey (browser add-ons that run small scripts). It turns Furifont on by itself on Japanese pages. It also works on sites that do not let fonts load from other sites. Its menu lets you switch to another Furifont font or turn it off.",
     "toast": {
-      "message": "Furifont could not load its font on this page. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed on your computer.",
+      "message": "Furifont could not load its font on this page. Some sites, such as X and GitHub, do not let fonts load from other sites. On those sites, you must install Furifont on your computer.",
       "download": "Download the fonts",
       "close": "Close"
     }
@@ -104,11 +104,11 @@
   "reference": {
     "eyebrow": "Reference",
     "title": "Pick a reading",
-    "body": "Furifont shows the most common reading of a word. To show another, write a variation selector right after the word's first kanji: VS226 is reading 1, VS227 reading 2, and so on. After a single kanji, it picks that kanji's reading; VS225 shows the kanji without ruby.",
+    "body": "Furifont shows the most common reading of a word. To show another reading, put a variation selector (an invisible character) right after the first kanji of the word. VS226 gives reading 1, VS227 gives reading 2, and so on. After a single kanji, the selector chooses the reading of that kanji. VS225 shows the kanji with no ruby.",
     "search": "Search a word or kanji: 市場, 今日, 生",
     "searchLabel": "Search readings",
     "hint": "Click a reading to copy the word with its selector.",
-    "unavailable": "The reference ships with the prebuilt fonts and could not be loaded here ({error}). Build fonts with {command} or open the studio.",
+    "unavailable": "The reference comes with the ready-made fonts, and it could not load here ({error}). Build the fonts with {command}, or open the studio.",
     "loading": "Loading",
     "words": "Words with several readings / {count}",
     "kanji": "Kanji / {count}",
@@ -121,14 +121,14 @@
     "offline": {
       "eyebrow": "Studio / offline",
       "title": "Build your own Furifont",
-      "body": "The studio runs on your machine: it reads base fonts and writes the fonts it builds there. Start it in any folder and this page opens connected, with a live preview, the dictionary, and a build button. Builds land in {folder}.",
-      "needs": "Needs Node 22.18 or later.",
+      "body": "The studio is a tool that runs on your computer. It reads your base fonts and saves the fonts that it builds. Start it in any folder. Then this page opens with a live preview, the dictionary, and a Build button. The new fonts go in {folder}.",
+      "needs": "You need Node 22.18 or later (a free program that runs JavaScript tools).",
       "run": "Start the studio in any folder"
     },
     "auth": {
       "eyebrow": "Studio / locked",
       "title": "Enter the code from your terminal",
-      "body": "{command} printed a six-digit code in its terminal.",
+      "body": "{command} showed a six-digit code in your terminal (the window where you started it).",
       "code": "Code",
       "failed": "That code did not work. Check the terminal and try again.",
       "unlock": "Unlock"
@@ -140,47 +140,47 @@
       "words": "Your words"
     },
     "options": {
-      "family": "Family name",
+      "family": "Font name",
       "base": "Base font",
-      "baseHint": "A font to download, such as Source Han Serif JP Bold, or the path of another font.",
-      "script": "Ruby script",
+      "baseHint": "The font to add ruby to. Use a font to download, such as Source Han Serif JP Bold, or the path to another font file on your computer.",
+      "script": "Ruby letters",
       "hiragana": "Hiragana",
       "katakanaOn": "Kata on",
       "hepburn": "Romaji",
-      "nfMax": "Words up to frequency bucket",
-      "nfMaxHint": "nf01 holds the 500 most frequent newspaper words, nf48 the 24,000th.",
+      "nfMax": "Word list size",
+      "nfMaxHint": "Furifont adds ruby to words from a newspaper word list, sorted by how often the words appear. The steps go from nf01 (the 500 most common words) to nf48 (the 24,000 most common words). A higher number adds ruby to more words.",
       "sources": "Also include words from",
       "source": {
         "spec1": {
           "name": "Everyday words",
-          "hint": "JMdict \"spec1\": common words the other lists miss, such as 日本."
+          "hint": "JMdict \"spec1\": common words that the other lists miss, such as 日本."
         },
         "ichi1": {
-          "name": "Core vocabulary",
-          "hint": "JMdict \"ichi1\": the first tier of the Ichimango vocabulary list."
+          "name": "Basic words",
+          "hint": "JMdict \"ichi1\": the most common words from the Ichimango list (a list of basic words)."
         },
         "news1": {
-          "name": "Newspaper",
-          "hint": "JMdict \"news1\": the 12,000 most frequent words in newspapers."
+          "name": "Newspaper words",
+          "hint": "JMdict \"news1\": the 12,000 words that appear most often in newspapers."
         },
         "gai1": {
           "name": "Loanwords",
-          "hint": "JMdict \"gai1\": common words borrowed from other languages."
+          "hint": "JMdict \"gai1\": common words that Japanese borrowed from other languages."
         },
         "places": {
           "name": "Place names",
-          "hint": "JMnedict: stations and places, used where no common word claims the text."
+          "hint": "JMnedict: stations and places. Furifont uses them where no common word matches the text."
         }
       },
-      "share": "Lone kanji need this share",
-      "shareHint": "A kanji alone gets ruby when one reading has this share of the evidence.",
-      "rubyScale": "Ruby scale",
-      "rubyGap": "Gap / em",
-      "squeeze": "Squeeze to",
-      "maxWidth": "Max width / em"
+      "share": "Single kanji: how sure",
+      "shareHint": "A single kanji gets ruby only when one reading makes up at least this share of its uses in the dictionary. Use a number from 0.5 to 1. A higher number gives ruby to fewer kanji.",
+      "rubyScale": "Ruby size (× kanji)",
+      "rubyGap": "Space above kanji (em)",
+      "squeeze": "Narrowest squeeze (× normal)",
+      "maxWidth": "Widest ruby (em)"
     },
     "preview": {
-      "compiling": "Compiling a preview",
+      "compiling": "Making a preview",
       "size": "Preview size",
       "stats": "{glyphs} glyphs / {ms} ms"
     },
@@ -188,21 +188,21 @@
       "words": "Words",
       "places": "Places",
       "ambiguous": "Several readings",
-      "lone": "Lone kanji",
-      "protected": "Protected",
+      "lone": "Single kanji",
+      "protected": "Your changes",
       "glyphs": "Ruby glyphs",
       "rules": "Rules",
       "planning": "Planning",
       "run": "Build font",
-      "save": "Save config"
+      "save": "Save settings"
     },
     "dictionary": {
       "search": "Search the dictionary: 今日, 生",
       "results": "{count} words",
-      "hint": "Words with several common readings. Pin one to make it the default.",
-      "noTag": "no priority tag",
+      "hint": "These words have several common readings. Pin one to make it the default reading.",
+      "noTag": "not a common word",
       "restore": "Restore",
-      "remove": "Never annotate"
+      "remove": "Never add ruby"
     },
     "custom": {
       "placeholder": "日[に]本[ほん] or 今日[きょう]",
@@ -210,9 +210,9 @@
       "add": "Add word",
       "added": "Added / {count}",
       "pinned": "Pinned / {count}",
-      "removed": "Never annotated / {count}",
+      "removed": "Never given ruby / {count}",
       "none": "None",
-      "takeOut": "Take {item} out"
+      "takeOut": "Remove {item}"
     }
   }
 }

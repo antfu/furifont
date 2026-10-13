@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Furifont：內建振假名的日文字型",
-    "description": "一款不更動文字、自動顯示振假名的日文字型。"
+    "description": "自帶振假名的日語字型，文字本身不會改變。"
   },
   "nav": {
     "demo": "展示",
@@ -13,8 +13,8 @@
     "language": "語言"
   },
   "footer": {
-    "fonts": "字型衍生自 Adobe 思源黑體（Source Han Sans）與思源宋體（Source Han Serif），採用 {license}。",
-    "data": "讀音資料來自 JMdict、JMnedict、KANJIDIC2（EDRDG）與 JmdictFurigana，採用 CC BY-SA 4.0。",
+    "fonts": "字型採用{license}，源自 Adobe 的 Source Han Sans 和 Source Han Serif。",
+    "data": "讀音資料來自 {jmdict}、{jmnedict}、{kanjidic}（EDRDG）和 {furigana}，採用 CC BY-SA 4.0 授權。",
     "code": "工具採用 MIT 授權。",
     "source": "GitHub 上的原始碼",
     "made": "作者：{author}",
@@ -23,7 +23,7 @@
   },
   "copied": "已複製",
   "shuffle": "換一個例句",
-  "editable": "可編輯的範例文字",
+  "editable": "範例文字，可以編輯。",
   "scripts": {
     "hiragana": "平假名",
     "hepburn": "羅馬字"
@@ -35,7 +35,7 @@
   "hero": {
     "title1": "振假名，",
     "title2": "交給字型。",
-    "body": "Furifont 會在辭典中查詢每個詞，並在漢字上方標出讀音。文字本身保持不變：複製、搜尋和螢幕閱讀器看到的都是你寫下的原文。",
+    "body": "Furifont 是一款能自己顯示振假名的日語字型。振假名是漢字上方的小字，告訴你這個字怎麼讀。文字本身保持不變。複製、搜尋或用螢幕朗讀時，得到的都是你寫下的原文。",
     "download": "下載字型",
     "build": "自行建置"
   },
@@ -47,35 +47,35 @@
     "anyPage": "用於任何網頁"
   },
   "playground": {
-    "script": "振假名樣式",
-    "face": "字體",
+    "script": "振假名所用文字",
+    "face": "字型樣式",
     "size": "字級 / {size}px",
     "ruby": "振假名",
-    "rubyNote": "（關閉時為 ss01）",
-    "textHint": "點選文字即可編輯，振假名完全由字型顯示。",
+    "rubyNote": "（漢字上方的小字）",
+    "textHint": "點選文字即可編輯。振假名完全由字型顯示。",
     "copy": "複製文字",
-    "pasteNote": "貼到任何地方都不會帶上振假名。"
+    "pasteNote": "可以貼到任何地方。帶走的只有你寫的文字。"
   },
   "how": {
     "runs": {
-      "title": "依漢字串讀取",
-      "body": "瀏覽器依文字類別分段排版日文，所以字型看不到漢字旁的假名。Furifont 把每一串連續的漢字當成一個整體來讀。"
+      "title": "一次讀一組漢字",
+      "body": "瀏覽器會把日語文字分成幾個部分交給字型。只含漢字的部分，字型看不到旁邊的假名（日語的簡單文字）。所以 Furifont 把每一組漢字當作一個整體來讀。"
     },
     "longest": {
       "title": "長詞優先",
-      "body": "每串漢字都會與數千個常用詞比對，由最長的開始：先「日本語」再「日本」，「今日」視為一個詞，讀作「きょう」。"
+      "body": "Furifont 把每一組漢字與幾千個常用詞的清單對照，先試最長的詞。例如，會先選 日本語，再考慮 日本。今日 會當作一個詞，讀作 きょう。"
     },
     "bare": {
-      "title": "沒把握就不標",
-      "body": "單獨的漢字只有在某個讀音明顯占優勢時才標注。「大人気」可讀作「だいにんき」或「おとなげ」，所以不標注。"
+      "title": "拿不準就不加",
+      "body": "只有一個漢字時，只有當某個讀音明顯最可能，才加振假名。大人気 可以讀作 だいにんき，也可以讀作 おとなげ，所以不加振假名。"
     },
     "pick": {
-      "title": "讀音可選",
-      "body": "在詞的第一個漢字後寫入變體選擇器，就能選擇其他讀音或移除振假名。它看不見，複製貼上後依然保留。"
+      "title": "讀音可以自選",
+      "body": "一個詞可能有多個讀音。在詞的第一個漢字後面寫一個變體選擇器，就能選擇另一個讀音，或移除振假名。變體選擇器是一個看不見的字元，複製貼上後依然保留。"
     }
   },
   "selectors": {
-    "body": "有些詞有多個常用讀音。Furifont 顯示最常見的那個；在第一個漢字後緊接一個變體選擇器，即可選擇其他讀音：VS226 為讀音 1，VS227 為讀音 2，依此類推。VS225 會移除振假名。",
+    "body": "有些詞有多個常用讀音。Furifont 顯示最常見的那個。要選其他讀音，就在第一個漢字後面緊接一個變體選擇器（看不見的字元）。VS226 是讀音 1，VS227 是讀音 2，依此類推。VS225 會移除振假名。",
     "lookUp": "查詢讀音",
     "default": "預設",
     "reading2": "讀音 2（VS227）",
@@ -84,19 +84,19 @@
   "downloads": {
     "family": "字型家族",
     "ruby": "振假名",
-    "buildOwn": "也可以自行建置：更換基礎字型、辭典規模、振假名樣式或尺寸。",
+    "buildOwn": "你也可以自己製作字型。可以選擇其他基礎字型、詞的數量、振假名所用文字或尺寸。",
     "cliBuild": "用命令列建置字型",
-    "cliDev": "工作室：調整、預覽、建置"
+    "cliDev": "工作室：調整設定、預覽、製作字型"
   },
   "anyPage": {
-    "body": "將任何網站改以 Furifont 顯示。含漢字的行會加大行距，留出振假名的位置。電腦上已安裝 Furifont 時無需下載，否則字型從本站載入，首次約 5 MB。",
+    "body": "你可以在任何網站上使用 Furifont。有漢字的行會留出放振假名的空間。如果電腦上已安裝 Furifont，就不用下載。否則字型會從本站載入，第一次約 5 MB。",
     "bookmarklet": "書籤小工具",
-    "bookmarkletHint": "把它拖到書籤列。在任何網頁上點一下即可開啟 Furifont，再點一次關閉。在 X、GitHub 等禁止載入外部字型的網站上，需要先在電腦上安裝 Furifont。",
+    "bookmarkletHint": "把它拖到書籤列。在任何頁面點選它，就會開啟 Furifont；再點一次就會關閉。有些網站（如 X 和 GitHub）不允許載入其他網站的字型。在這些網站上，請在電腦上安裝 Furifont。",
     "userscript": "使用者腳本",
     "install": "安裝使用者腳本",
-    "userscriptHint": "適用於 Tampermonkey 或 Violentmonkey。在日文網頁上自動開啟，在禁止載入外部字型的網站上也能用。可在選單中切換字型家族或關閉。",
+    "userscriptHint": "適用於 Tampermonkey 或 Violentmonkey（執行小腳本的瀏覽器擴充功能）。它會在日語頁面自動開啟 Furifont，在不允許載入其他網站字型的網站上也能用。你可以在它的選單裡切換到另一款 Furifont 字型，或將其關閉。",
     "toast": {
-      "message": "Furifont 無法在此頁面載入字型。在 X、GitHub 等禁止載入外部字型的網站上，需要先在電腦上安裝 Furifont。",
+      "message": "Furifont 無法在此頁面載入字型。有些網站（如 X 和 GitHub）不允許載入其他網站的字型。在這些網站上，需要在電腦上安裝 Furifont。",
       "download": "下載字型",
       "close": "關閉"
     }
@@ -104,11 +104,11 @@
   "reference": {
     "eyebrow": "參考",
     "title": "選擇讀音",
-    "body": "Furifont 顯示詞語最常見的讀音。若要顯示其他讀音，請在詞的第一個漢字後緊接一個變體選擇器：VS226 為讀音 1，VS227 為讀音 2，依此類推。寫在單一漢字後時，會選擇該漢字本身的讀音；VS225 則顯示不帶振假名的漢字。",
+    "body": "Furifont 顯示詞最常見的讀音。要顯示其他讀音，就在詞的第一個漢字後面緊接一個變體選擇器（看不見的字元）。VS226 是讀音 1，VS227 是讀音 2，依此類推。單個漢字後面的選擇器，選的是這個漢字的讀音。VS225 顯示不帶振假名的漢字。",
     "search": "搜尋詞語或漢字：市場、今日、生",
     "searchLabel": "搜尋讀音",
     "hint": "點選讀音即可複製帶有選擇器的詞語。",
-    "unavailable": "參考資料隨預先建置的字型一起發布，此處無法載入（{error}）。請用 {command} 建置字型，或開啟工作室。",
+    "unavailable": "參考表隨現成字型一起提供，但這裡沒能載入（{error}）。請用 {command} 製作字型，或開啟工作室。",
     "loading": "載入中",
     "words": "有多個讀音的詞 / {count}",
     "kanji": "漢字 / {count}",
@@ -121,14 +121,14 @@
     "offline": {
       "eyebrow": "工作室 / 離線",
       "title": "建置你自己的 Furifont",
-      "body": "工作室在你的電腦上執行，讀取基礎字型並寫出建置的字型。在任何資料夾啟動它，此頁面就會連線，提供即時預覽、辭典與建置按鈕。建置結果會存放在 {folder}。",
-      "needs": "需要 Node 22.18 以上版本。",
+      "body": "工作室是執行在你電腦上的工具。它讀取基礎字型，並儲存製作好的字型。在任意資料夾中啟動它，本頁就會連線並開啟，提供即時預覽、辭典和建置按鈕。製作好的字型儲存在 {folder}。",
+      "needs": "需要 Node 22.18 或更新版本（一個執行 JavaScript 工具的免費程式）。",
       "run": "在任意資料夾中啟動工作室"
     },
     "auth": {
       "eyebrow": "工作室 / 已鎖定",
       "title": "輸入終端機顯示的驗證碼",
-      "body": "{command} 已在終端機印出一組六位數驗證碼。",
+      "body": "{command} 在你的終端機（輸入指令的視窗）中顯示了一個六位數驗證碼。",
       "code": "驗證碼",
       "failed": "驗證碼無效，請查看終端機後再試一次。",
       "unlock": "解鎖"
@@ -140,47 +140,47 @@
       "words": "你的詞語"
     },
     "options": {
-      "family": "字型家族名稱",
+      "family": "字型名稱",
       "base": "基礎字型",
-      "baseHint": "要下載的字型（如 Source Han Serif JP Bold），或其他字型檔的路徑。",
-      "script": "振假名樣式",
+      "baseHint": "要加振假名的字型。可以是要下載的字型，如 Source Han Serif JP Bold，也可以是電腦上另一個字型檔案的路徑。",
+      "script": "振假名所用文字",
       "hiragana": "平假名",
       "katakanaOn": "片假名",
       "hepburn": "羅馬字",
-      "nfMax": "詞頻級距上限",
-      "nfMaxHint": "nf01 收錄報紙中最常見的 500 個詞，nf48 到第 24,000 個。",
+      "nfMax": "詞表大小",
+      "nfMaxHint": "Furifont 從依報紙出現頻率排序的詞表中選詞加振假名。級距從 nf01（最常見的 500 個詞）到 nf48（最常見的 24,000 個詞）。數字越大，加振假名的詞越多。",
       "sources": "一併收錄來自以下來源的詞",
       "source": {
         "spec1": {
           "name": "日常詞",
-          "hint": "JMdict「spec1」：其他詞表遺漏的常用詞，如 日本。"
+          "hint": "JMdict「spec1」：其他詞表沒有收錄的常用詞，如 日本。"
         },
         "ichi1": {
-          "name": "基礎詞彙",
-          "hint": "JMdict「ichi1」：「一萬語」詞表的第一層。"
+          "name": "基礎詞",
+          "hint": "JMdict「ichi1」：「一萬語」詞表（基礎詞彙表）中最常用的詞。"
         },
         "news1": {
-          "name": "報紙",
-          "hint": "JMdict「news1」：報紙中最常見的 12,000 個詞。"
+          "name": "報紙用詞",
+          "hint": "JMdict「news1」：報紙中出現最多的 12,000 個詞。"
         },
         "gai1": {
           "name": "外來語",
-          "hint": "JMdict「gai1」：常用外來語。"
+          "hint": "JMdict「gai1」：日語從其他語言借來的常用詞。"
         },
         "places": {
           "name": "地名",
-          "hint": "JMnedict：站名與地名，僅用於沒有常用詞匹配的文字。"
+          "hint": "JMnedict：站名和地名。在沒有常用詞符合的文字上使用。"
         }
       },
-      "share": "單獨漢字所需比例",
-      "shareHint": "當某個讀音的比例達到此值時，單獨的漢字才會標注。",
-      "rubyScale": "振假名縮放",
-      "rubyGap": "間距 / em",
-      "squeeze": "最小壓縮比",
-      "maxWidth": "最大寬度 / em"
+      "share": "單個漢字的把握度",
+      "shareHint": "只有一個漢字時，只有當某個讀音在辭典中至少占這個比例，才加振假名。請輸入 0.5 到 1 之間的數。數字越大，加振假名的漢字越少。",
+      "rubyScale": "振假名大小（漢字的幾倍）",
+      "rubyGap": "漢字上方的間距（em）",
+      "squeeze": "最窄壓縮到（正常寬度的幾倍）",
+      "maxWidth": "振假名最大寬度（em）"
     },
     "preview": {
-      "compiling": "正在編譯預覽",
+      "compiling": "正在製作預覽",
       "size": "預覽字級",
       "stats": "{glyphs} 個字形 / {ms} ms"
     },
@@ -188,8 +188,8 @@
       "words": "詞語",
       "places": "地名",
       "ambiguous": "多讀音",
-      "lone": "單獨漢字",
-      "protected": "受保護",
+      "lone": "單個漢字",
+      "protected": "你的設定",
       "glyphs": "振假名字形",
       "rules": "規則",
       "planning": "規劃中",
@@ -199,8 +199,8 @@
     "dictionary": {
       "search": "搜尋辭典：今日、生",
       "results": "{count} 個詞",
-      "hint": "這些詞有多個常用讀音。固定其中一個即設為預設。",
-      "noTag": "無優先順序標籤",
+      "hint": "這些詞有多個常用讀音。固定其中一個，它就成為預設讀音。",
+      "noTag": "不是常用詞",
       "restore": "還原",
       "remove": "不加振假名"
     },
