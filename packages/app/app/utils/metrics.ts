@@ -16,7 +16,6 @@ const BASELINE = (LINE_HEIGHT - ASCENT - DESCENT) / 2 + ASCENT
 /** Where each line's guides fall below the top of its line box, in em. */
 export const LINE_GUIDES = {
   rubyTop: BASELINE - ASCENT,
-  rubyBottom: BASELINE - EM_TOP - rubyGap,
   emTop: BASELINE - EM_TOP,
   baseline: BASELINE,
   emBottom: BASELINE + EM_BOTTOM,
