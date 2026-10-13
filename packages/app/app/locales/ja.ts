@@ -15,7 +15,7 @@ export default {
     language: '言語',
   },
   footer: {
-    fonts: 'フォントは Adobe の源ノ角ゴシック（Source Han Sans）の派生物で、{license} で提供しています。',
+    fonts: 'フォントは Adobe の源ノ角ゴシック（Source Han Sans）と源ノ明朝（Source Han Serif）の派生物で、{license} で提供しています。',
     data: '読みは JMdict・JMnedict・KANJIDIC2（EDRDG）と JmdictFurigana に基づき、CC BY-SA 4.0 で提供しています。',
     code: 'ツールは MIT ライセンスです。{source}。',
     source: 'GitHub のソースコード',
@@ -24,8 +24,11 @@ export default {
   editable: '編集できるサンプルテキスト',
   scripts: {
     hiragana: 'ひらがな',
-    katakanaOn: '音読みはカタカナ',
     hepburn: 'ローマ字',
+  },
+  faces: {
+    sans: 'ゴシック',
+    serif: '明朝',
   },
   hero: {
     title1: 'ふりがなは、',
@@ -42,7 +45,7 @@ export default {
   },
   playground: {
     script: 'ルビの文字',
-    weight: 'ウェイト',
+    face: '書体',
     size: 'サイズ / {size}px',
     ruby: 'ルビ',
     rubyNote: '（オフのときは ss01）',

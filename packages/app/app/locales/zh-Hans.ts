@@ -15,7 +15,7 @@ export default {
     language: '语言',
   },
   footer: {
-    fonts: '字体衍生自 Adobe 思源黑体（Source Han Sans），采用 {license}。',
+    fonts: '字体衍生自 Adobe 思源黑体（Source Han Sans）与思源宋体（Source Han Serif），采用 {license}。',
     data: '读音数据来自 JMdict、JMnedict、KANJIDIC2（EDRDG）与 JmdictFurigana，采用 CC BY-SA 4.0。',
     code: '工具采用 MIT 许可。{source}。',
     source: 'GitHub 上的源代码',
@@ -24,8 +24,11 @@ export default {
   editable: '可编辑的示例文本',
   scripts: {
     hiragana: '平假名',
-    katakanaOn: '音读用片假名',
     hepburn: '罗马字',
+  },
+  faces: {
+    sans: '黑体',
+    serif: '宋体',
   },
   hero: {
     title1: '振假名，',
@@ -42,7 +45,7 @@ export default {
   },
   playground: {
     script: '振假名样式',
-    weight: '字重',
+    face: '字体',
     size: '字号 / {size}px',
     ruby: '振假名',
     rubyNote: '（关闭时为 ss01）',

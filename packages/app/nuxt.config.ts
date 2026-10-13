@@ -36,6 +36,10 @@ export default defineNuxtConfig({
     '@furifont/core': source('core'),
     '@furifont/dictionary/okurigana': source('dictionary', 'okurigana'),
   },
+  nitro: {
+    // The prebuilt fonts are committed at the repository root on release.
+    publicAssets: [{ dir: fileURLToPath(new URL('../../fonts', import.meta.url)), baseURL: 'fonts' }],
+  },
   router: {
     options: { hashMode: true },
   },

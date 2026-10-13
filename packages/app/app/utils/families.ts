@@ -2,16 +2,19 @@ export interface Family {
   family: string
   /** File name stem: `<stem>-Regular.woff2`. */
   stem: string
-  script: 'hiragana' | 'katakanaOn' | 'hepburn'
+  face: 'sans' | 'serif'
+  script: 'hiragana' | 'hepburn'
 }
 
-/** The prebuilt fonts, one family per ruby script. */
+/** The prebuilt fonts: hiragana and romaji ruby on Source Han Sans and Serif. */
 export const FAMILIES: Family[] = [
-  { family: 'Furifont Sans JP', stem: 'FurifontSansJP', script: 'hiragana' },
-  { family: 'Furifont Sans JP Kata', stem: 'FurifontSansJPKata', script: 'katakanaOn' },
-  { family: 'Furifont Sans JP Romaji', stem: 'FurifontSansJPRomaji', script: 'hepburn' },
+  { family: 'Furifont Sans JP', stem: 'FurifontSansJP', face: 'sans', script: 'hiragana' },
+  { family: 'Furifont Sans JP Romaji', stem: 'FurifontSansJPRomaji', face: 'sans', script: 'hepburn' },
+  { family: 'Furifont Serif JP', stem: 'FurifontSerifJP', face: 'serif', script: 'hiragana' },
+  { family: 'Furifont Serif JP Romaji', stem: 'FurifontSerifJPRomaji', face: 'serif', script: 'hepburn' },
 ]
 
+/** Weights on the release; the site serves Regular only. */
 export const WEIGHTS = [
   { weight: 400, style: 'Regular' },
   { weight: 700, style: 'Bold' },
