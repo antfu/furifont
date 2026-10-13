@@ -8,7 +8,7 @@ const { report } = createFontPlanner(dictionary)(resolveOptions(), coverage)
 
 describe('compiled dictionary', () => {
   it('records the sources it was compiled from', () => {
-    expect(Object.keys(dictionary.sources)).toEqual(['JMdict', 'JmdictFurigana', 'KANJIDIC2'])
+    expect(Object.keys(dictionary.sources)).toEqual(['JMdict', 'JMnedict', 'JmdictFurigana', 'KANJIDIC2'])
     expect(dictionary.entries.length).toBeGreaterThan(100_000)
   })
 
@@ -24,9 +24,18 @@ describe('compiled dictionary', () => {
     expect(report.ivs.kanji['来']).toEqual(expect.arrayContaining(['く', 'き', 'こ']))
   })
 
+  it('reads stations as they are called and leaves ambiguous places out', () => {
+    const place = (form: string): string | undefined => dictionary.places?.find(p => p.form === form)?.furigana
+    expect(place('新宿')).toBe('0:しん;1:じゅく')
+    expect(place('上野')).toBe('0:うえ;1:の')
+    expect(place('神戸')).toBeUndefined()
+    expect(report.stats.places).toBeGreaterThan(100_000)
+  })
+
   it('keeps a few thousand words and leaves ambiguous lone kanji out', () => {
-    expect(report.stats.patterns).toBeGreaterThan(3000)
-    expect(report.stats.patterns).toBeLessThan(10_000)
+    const words = report.stats.patterns - report.stats.places
+    expect(words).toBeGreaterThan(3000)
+    expect(words).toBeLessThan(10_000)
     expect(report.ivs.kanji['来']).toEqual(expect.arrayContaining(['く', 'き']))
     expect(report.ivs.kanji['桜']).toEqual(['さくら'])
   })
