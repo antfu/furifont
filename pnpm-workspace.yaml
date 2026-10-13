@@ -109,8 +109,6 @@ catalogs:
     vite: ^8.3.4
   frontend:
     '@devframes/vite': ^1.2.3
-    '@fontsource-variable/geist': ^5.3.0
-    '@fontsource-variable/geist-mono': ^5.3.0
     '@iconify-json/ph': ^1.2.2
     '@nuxt/kit': ^4.6.1
     '@unocss/nuxt': ^66.11.0

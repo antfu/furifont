@@ -8,7 +8,7 @@ const model = defineModel<T>({ required: true })
 </script>
 
 <template>
-  <div role="radiogroup" :aria-label="label" class="inline-flex border border-strong">
+  <div role="radiogroup" :aria-label="label" class="inline-flex border border-strong w-fit">
     <button
       v-for="(option, i) in options"
       :key="option.value"

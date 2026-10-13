@@ -14,7 +14,7 @@ const links = [
       <UiCross class="-bottom-[6px] -left-[6px]" />
       <UiCross class="-bottom-[6px] -right-[6px]" />
       <NuxtLink to="/" class="focus-ring flex items-center gap-2.5 font-mono text-sm font-medium">
-        <span class="grid size-6 place-items-center bg-inverse font-furi text-sm color-inverse" aria-hidden="true">ふ</span>
+        <img src="/logo.svg" alt="" class="size-6" :class="{ invert: dark }" aria-hidden="true">
         <span class="hidden sm:inline">furifont</span>
       </NuxtLink>
       <div class="flex items-center gap-1">
