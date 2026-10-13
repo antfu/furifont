@@ -17,7 +17,7 @@ rules. It differs in three ways:
 
 ## Goals
 
-- Prebuilt fonts: **Furifont Sans JP** and **Furifont Serif JP**, Regular and
+- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and
   Bold, from Source Han Sans JP and Source Han Serif JP, with hiragana or
   Hepburn romaji ruby. Katakana for on'yomi is a build option.
 - A build anyone can run with another base font, word list or options.

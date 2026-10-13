@@ -50,7 +50,7 @@ describe.skipIf(!python.ok)('compileFont', () => {
   it('compiles a preview whose text has only lone kanji', async () => {
     const { codepoints } = await readFontInfo(BASE)
     const preview = createFontPlanner(dictionary)(resolveOptions(), new Set(codepoints), '桜').plan
-    await expect(compileFont({ plan: preview, base: BASE, output: join(dir, 'lone.otf') })).resolves.toMatchObject({ family: 'Furifont Sans JP' })
+    await expect(compileFont({ plan: preview, base: BASE, output: join(dir, 'lone.otf') })).resolves.toMatchObject({ family: 'Furifont Sans' })
   })
 
   /**
@@ -112,7 +112,7 @@ describe.skipIf(!python.ok)('compileFont', () => {
 
   it('reads the base font\'s coverage', async () => {
     const info = await readFontInfo(join(dir, 'out.otf'))
-    expect(info.family).toBe('Furifont Sans JP')
+    expect(info.family).toBe('Furifont Sans')
     expect(info.codepoints).toContain('桜'.codePointAt(0))
   })
 })

@@ -5,7 +5,7 @@
 A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji. [Try it on furifont.antfu.me](https://furifont.antfu.me).
 
 ```html
-<p style="font-family: 'Furifont Sans JP'; line-height: 1.7">今日は日本語の勉強をします。</p>
+<p style="font-family: 'Furifont Sans'; line-height: 1.7">今日は日本語の勉強をします。</p>
 ```
 
 Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and [Source Han Serif JP](https://github.com/adobe-fonts/source-han-serif), and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JMnedict](https://www.edrdg.org/enamdict/enamdict_doc.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). The tools that build it work with other base fonts and other word lists.
@@ -16,10 +16,10 @@ Each [release](https://github.com/antfu/furigana-font/releases/latest) has eight
 
 | Family | Base | Ruby | Weights |
 | --- | --- | --- | --- |
-| Furifont Sans JP | Source Han Sans JP | Hiragana | Regular, Bold |
-| Furifont Sans JP Romaji | Source Han Sans JP | Modified Hepburn, with macrons | Regular, Bold |
-| Furifont Serif JP | Source Han Serif JP | Hiragana | Regular, Bold |
-| Furifont Serif JP Romaji | Source Han Serif JP | Modified Hepburn, with macrons | Regular, Bold |
+| Furifont Sans | Source Han Sans JP | Hiragana | Regular, Bold |
+| Furifont Sans Romaji | Source Han Sans JP | Modified Hepburn, with macrons | Regular, Bold |
+| Furifont Serif | Source Han Serif JP | Hiragana | Regular, Bold |
+| Furifont Serif Romaji | Source Han Serif JP | Modified Hepburn, with macrons | Regular, Bold |
 
 Each font also comes with a `.ivs.json` file. It lists the readings that the variation selectors pick, as described below. The Regular WOFF2s and their `.ivs.json` are also in [`fonts/`](fonts), as the site serves them. Katakana for on'yomi is a build option.
 
@@ -62,7 +62,7 @@ Selectors are invisible, survive copy and paste, and need no markup. The [refere
 The font cannot tell 来る from 来ない, because it never sees the kana after the kanji. `furifont annotate` reads each kanji together with the kana after it, as one word: 来ない, 来ます, 行かない and 読み are pairs in a table compiled from JMdict, with every conjugated form. It writes the selector for that reading:
 
 ```sh
-echo '明日は来ない。' | npx furifont annotate --reference FurifontSansJP-Regular.ivs.json
+echo '明日は来ない。' | npx furifont annotate --reference FurifontSans-Regular.ivs.json
 ```
 
 It writes a selector only where the font would not already show that reading. A pair that reads two ways, such as 行った (行く or 行う), or a reading the font has no ruby for, leaves the kanji bare. The playground on the demo site does the same in your browser, and [`@furifont/annotate`](packages/annotate) does it in your own code.
@@ -94,7 +94,7 @@ Both commands read `furifont.config.json` from the current folder, and the studi
 ```json
 {
   "base": "Source Han Sans JP Regular",
-  "family": "Furifont Sans JP",
+  "family": "Furifont Sans",
   "rubyScript": "hiragana",
   "nfMax": 30,
   "selectTags": ["spec1"],
