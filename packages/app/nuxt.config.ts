@@ -41,6 +41,7 @@ export default defineNuxtConfig({
     preset: 'static',
     // The prebuilt fonts are committed at the repository root on release.
     publicAssets: [{ dir: fileURLToPath(new URL('../../fonts', import.meta.url)), baseURL: 'fonts' }],
+    prerender: { routes: ['/furifont.user.js'] },
   },
   app: {
     head: {
