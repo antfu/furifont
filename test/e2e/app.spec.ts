@@ -51,7 +51,7 @@ test.afterAll(async () => {
 test('speaks the browser\'s language and remembers the one chosen', async ({ browser }) => {
   const context = await browser.newContext({ locale: 'zh-TW' })
   const page = await context.newPage()
-  await page.goto(new URL('/#/', url).href)
+  await page.goto(new URL('/', url).href)
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hant')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('交給字型')
 
@@ -63,7 +63,7 @@ test('speaks the browser\'s language and remembers the one chosen', async ({ bro
 })
 
 test('writes the selectors for verbs from the playground', async ({ page }) => {
-  await page.goto(new URL('/#/', url).href)
+  await page.goto(new URL('/', url).href)
   const playground = page.locator('section', { has: page.getByRole('heading', { name: 'Try it' }) })
   await playground.getByRole('textbox').fill('来ない。来ます。')
   await playground.getByRole('button', { name: 'Add selectors for verbs' }).click()
