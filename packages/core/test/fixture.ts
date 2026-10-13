@@ -20,10 +20,12 @@ export const dictionary: Dictionary = {
     { form: '書', furigana: '0:しょ', nf: 9, priority: 'news1 nf09', order: 0 },
     { form: '東京', furigana: '0:とう;1:きょう', nf: 25, priority: 'news2 nf25 spec1', order: 0 },
     { form: '来る', furigana: '0:く', nf: 3, priority: 'ichi1 news1 nf03', order: 0, conjugatesReading: true },
+    { form: '奉る', furigana: '0:たてまつ', nf: 0, priority: '', order: 0 },
+    { form: '奉仕', furigana: '0:ほう;1:し', nf: 3, priority: 'ichi1 news1 nf03', order: 0 },
   ],
 }
 
 export const coverage = new Set<number>(
-  [...'日本今学校大人気桜書来東京', ...'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽっゃゅょ', ...'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポッャュョ', ...'abcdefghijklmnopqrstuvwxyzōū\'']
+  [...'日本今学校大人気桜書来東京奉仕', ...'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽっゃゅょ', ...'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポッャュョ', ...'abcdefghijklmnopqrstuvwxyzōū\'']
     .map(c => c.codePointAt(0)!),
 )
