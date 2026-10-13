@@ -24,6 +24,7 @@ export default {
     sponsors: '贊助者',
   },
   copied: '已複製',
+  shuffle: '換一個例句',
   editable: '可編輯的範例文字',
   scripts: {
     hiragana: '平假名',
