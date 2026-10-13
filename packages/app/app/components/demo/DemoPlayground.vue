@@ -10,12 +10,6 @@ const family = computed(() => FAMILIES.find(f => f.face === face.value && f.scri
 const ruby = ref(true)
 const size = ref(30)
 const { copied, copy } = useCopy()
-const { reference } = useReadingReference()
-const { annotate, loading } = useAnnotator(reference)
-
-async function addSelectors(): Promise<void> {
-  text.value = await annotate(text.value)
-}
 
 const faces = computed(() => (['sans', 'serif'] as const).map(value => ({ value, label: t(`faces.${value}`) })))
 const scripts = computed(() => (['hiragana', 'hepburn'] as const).map(value => ({ value, label: t(`scripts.${value}`) })))
@@ -39,14 +33,6 @@ const scripts = computed(() => (['hiragana', 'hepburn'] as const).map(value => (
       <p class="text-xs color-muted">
         {{ $t('playground.textHint') }}
       </p>
-      <div class="flex flex-col gap-2 border-t border-base pt-5">
-        <UiButton icon="i-ph-magic-wand" class="self-start" :disabled="loading || !reference" @click="addSelectors">
-          {{ loading ? $t('playground.annotating') : $t('playground.annotate') }}
-        </UiButton>
-        <p class="text-xs leading-relaxed color-muted">
-          {{ $t('playground.annotateHint') }}
-        </p>
-      </div>
     </div>
     <div class="flex min-w-0 flex-col">
       <div class="min-h-72 flex-1 px-6 py-8">

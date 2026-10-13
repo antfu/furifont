@@ -36,7 +36,7 @@ Browsers shape Japanese text one script at a time. The font sees a run of kanji,
 - **Runs of two or more kanji** are matched against a few thousand common words, longest first. 日本語 matches before 日本, and 今日 reads きょう as one word.
 - **Protected words.** Some longer dictionary words would be misread through a shorter match. 大人気 contains 大人, for example. These longer words get their own reading, or stay bare when they can be read more than one way.
 - **Place names.** Station names, and places with only one reading, fill the runs that no common word claims: 新宿, 渋谷, 池袋.
-- **A kanji alone in its run** gets ruby only when one reading clearly dominates the common words it stands alone in. 桜 and 駅 get ruby. 書 (書く, 書) and 行 (行く, 行う) stay bare, but [selectors](#verbs) can give them ruby.
+- **A kanji alone in its run** gets ruby only when one reading clearly dominates the common words it stands alone in. 桜 and 駅 get ruby. 書 (書く, 書) and 行 (行く, 行う) stay bare, but [selectors](#choosing-another-reading) can give them ruby.
 - **Anything not in the dictionary** stays bare, as do kana and Latin text.
 
 ### Choosing another reading
@@ -52,16 +52,6 @@ To pick another reading, write a variation selector right after the first kanji 
 After the first kanji of a word with several readings, the selector picks the word's reading. For example, `市\u{E01E2}場` shows しじょう instead of いちば. After any other kanji, it picks that kanji's own reading.
 
 Selectors are invisible, survive copy and paste, and need no markup. The [reference page](https://furifont.antfu.me/#/reference) lists every reading and copies a word together with its selector.
-
-### Verbs
-
-The font cannot tell 来る from 来ない, because it never sees the kana after the kanji. `furifont annotate` reads each kanji together with the kana after it, as one word: 来ない, 来ます, 行かない and 読み are pairs in a table compiled from JMdict, with every conjugated form. It writes the selector for that reading:
-
-```sh
-echo '明日は来ない。' | npx furifont annotate --reference FurifontSansJP-Regular.ivs.json
-```
-
-It writes a selector only where the font would not already show that reading. A pair that reads two ways, such as 行った (行く or 行う), or a reading the font has no ruby for, leaves the kanji bare. The playground on the demo site does the same in your browser, and [`@furifont/annotate`](packages/annotate) does it in your own code.
 
 ## Build your own
 
@@ -122,7 +112,6 @@ These are the settings:
 | [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary. It reads no fonts. |
 | [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font with fontTools and compiles the rules |
 | [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary and the script that updates it |
-| [`@furifont/annotate`](packages/annotate) | Writes the selectors that okurigana decide into a text |
 | [`packages/app`](packages/app) | The demo site and the studio (Nuxt) |
 
 [docs/design.md](docs/design.md) explains how it works.

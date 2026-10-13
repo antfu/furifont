@@ -1,13 +1,12 @@
 /**
  * Downloads JMdict, JMnedict, their JmdictFurigana alignments and KANJIDIC2, and
- * compiles them into data/dictionary.json, data/places.json and
- * data/okurigana.json, one entry per line so updates diff well.
+ * compiles them into data/dictionary.json and data/places.json, one entry per
+ * line so updates diff well.
  *
  *   node scripts/update.ts
  */
 import { writeFile } from 'node:fs/promises'
 import { gunzipSync } from 'node:zlib'
-import { hanRuns, parseFurigana } from '@furifont/core'
 
 const JMDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz'
 const JMNEDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMnedict.xml.gz'
@@ -15,7 +14,6 @@ const KANJIDIC2 = 'http://www.edrdg.org/kanjidic/kanjidic2.xml.gz'
 const FURIGANA_RELEASE = 'https://api.github.com/repos/Doublevil/JmdictFurigana/releases/latest'
 const OUTPUT = new URL('../data/dictionary.json', import.meta.url)
 const PLACES = new URL('../data/places.json', import.meta.url)
-const OKURIGANA = new URL('../data/okurigana.json', import.meta.url)
 
 const HAN = /\p{Script=Han}/u
 const ALL_HAN = /^\p{Script=Han}{2,}$/u
@@ -46,27 +44,15 @@ function parseAlignments(source: string): Map<string, string> {
 
 type Entry = [form: string, furigana: string, nf: number, priority: string, order: number, conjugatesReading?: 1]
 
-/** A (form, reading) pair with what the okurigana table needs: its JMdict entry and how it conjugates. */
-interface Word {
-  entry: number
-  form: string
-  furigana: string
-  order: number
-  common: boolean
-  classes: string[]
-}
-
 /**
  * A (form, reading) pair is common only when the form itself is: a reading's
  * priority tags count when the written form also carries some, and a form's
  * own tags pass to its reading when it has no other.
  */
-function parseJmdict(xml: string, furigana: Map<string, string>): { entries: Entry[], words: Word[] } {
+function parseJmdict(xml: string, furigana: Map<string, string>): Entry[] {
   const entries: Entry[] = []
-  const words: Word[] = []
-  for (const [entry, [, body]] of [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].entries()) {
+  for (const [, body] of xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
     const conjugatesReading = body!.includes('<pos>&vk;</pos>')
-    const classes = [...new Set(all(body!, 'pos').map(pos => pos.slice(1, -1)))]
     const readings = all(body!, 'r_ele').filter(r => !r.includes('<re_nokanji/>') && !r.includes('&sk;'))
     for (const kanji of all(body!, 'k_ele')) {
       const form = all(kanji, 'keb')[0]!
@@ -84,161 +70,14 @@ function parseJmdict(xml: string, furigana: Map<string, string>): { entries: Ent
         if (!aligned)
           return
         const tags = formPriority.length ? [...new Set([...all(r, 're_pri'), ...(valid.length === 1 ? formPriority : [])])] : []
-        const row: Entry = [form, aligned, nf, tags.join(' '), order]
+        const entry: Entry = [form, aligned, nf, tags.join(' '), order]
         if (conjugatesReading)
-          row.push(1)
-        entries.push(row)
-        words.push({ entry, form, furigana: aligned, order, common: tags.length > 0, classes })
+          entry.push(1)
+        entries.push(entry)
       })
     }
   }
-  return { entries, words }
-}
-
-const GODAN_ROWS: Record<string, string> = { う: 'わいうえお', く: 'かきくけこ', ぐ: 'がぎぐげご', す: 'さしすせそ', つ: 'たちつてと', ぬ: 'なにぬねの', ぶ: 'ばびぶべぼ', む: 'まみむめも', る: 'らりるれろ' }
-const GODAN_ONBIN: Record<string, string> = { う: 'っ', く: 'い', ぐ: 'い', す: 'し', つ: 'っ', ぬ: 'ん', ぶ: 'ん', む: 'ん', る: 'っ' }
-const MASU = ['', 'ます', 'ました', 'ません', 'たい', 'ながら', 'そう', 'やすい', 'にくい', 'に', 'つつ']
-const ICHIDAN = ['る', 'れば', 'ろ', 'よう', 'ない', 'なかった', 'させる', 'られる', 'ず', 'た', 'て', ...MASU]
-const ADJECTIVE = ['', 'い', 'く', 'くて', 'くない', 'かった', 'ければ', 'さ', 'そう', 'すぎる', 'み', 'げ']
-/** 来る: its kanji reads く, こ or き by what follows. */
-const KURU: Record<string, string[]> = { く: ['る', 'れば'], こ: ['ない', 'なかった', 'よう', 'させる', 'られる', 'い', 'ず'], き: ['た', 'て', ...MASU.slice(1)] }
-const SURU = ['する', 'すれば', 'しない', 'します', 'した', 'して', 'しろ', 'せよ', 'される', 'させる', 'せず']
-const ZURU = ['ずる', 'ずれば', 'じる', 'じない', 'じます', 'じた', 'じて', 'ぜず']
-
-interface Form {
-  reading: string
-  okurigana: string
-  /** A bare stem, as 読ま or 食べ: weaker evidence than a whole form. */
-  stem: boolean
-}
-
-function forms(reading: string, base: string, endings: string[], stems = true): Form[] {
-  return endings.map(e => ({ reading, okurigana: base + e, stem: stems && !e }))
-}
-
-function godan(pos: string, okurigana: string, reading: string): Form[] {
-  const stem = okurigana.slice(0, -1)
-  const last = okurigana.slice(-1)
-  const row = GODAN_ROWS[last]!
-  const onbin = pos === 'v5k-s' ? 'っ' : pos === 'v5u-s' ? 'う' : GODAN_ONBIN[last]!
-  return [
-    ...forms(reading, stem + row[0], ['', 'ない', 'なかった', 'せる', 'れる', 'ず']),
-    ...forms(reading, stem + row[1], MASU),
-    ...forms(reading, stem, [row[2]!, `${row[2]}な`, ...(pos === 'v5aru' ? ['い', 'います', 'いません'] : [])]),
-    ...forms(reading, stem + row[3], ['', 'ば', 'る', 'ない', 'ます', 'た', 'て'], false),
-    ...forms(reading, stem + row[4], ['', 'う']),
-    ...forms(reading, stem + onbin, ['', ...'ぐぬぶむ'.includes(last) ? ['で', 'だ'] : ['て', 'た']]),
-  ]
-}
-
-/** The forms one JMdict conjugation class gives, or none when the word is not written as the class conjugates. */
-function conjugateAs(pos: string, okurigana: string, reading: string): Form[] {
-  const last = okurigana.slice(-1)
-  if (pos === 'vk' && okurigana === 'る' && reading.endsWith('く'))
-    return Object.entries(KURU).flatMap(([kana, endings]) => forms(reading.slice(0, -1) + kana, '', endings))
-  if (pos.startsWith('v5') && GODAN_ROWS[last])
-    return godan(pos, okurigana, reading)
-  if ((pos === 'v1' || pos === 'v1-s') && last === 'る')
-    return forms(reading, okurigana.slice(0, -1), ICHIDAN)
-  if ((pos === 'adj-i' || pos === 'adj-ix') && last === 'い')
-    return forms(reading, okurigana.slice(0, -1), ADJECTIVE)
-  if ((pos === 'vs-s' || pos === 'vs-i') && okurigana === 'する')
-    return forms(reading, '', SURU)
-  if (pos === 'vz' && okurigana === 'ずる')
-    return forms(reading, '', ZURU)
-  return []
-}
-
-/** The okurigana a word takes as it conjugates, each with the reading of the kanji before it. */
-function conjugate(okurigana: string, reading: string, classes: string[]): Form[] {
-  const conjugated = classes.flatMap(pos => conjugateAs(pos, okurigana, reading))
-  return conjugated.length ? conjugated : [{ reading, okurigana, stem: false }]
-}
-
-/** A word written as one run of kanji and the kana after it, as 読み or 美味しい, with the run's reading. */
-function splitWord(form: string, furigana: string): { run: string, reading: string, kana: string } | undefined {
-  const match = /^(\p{Script=Han}+)(\P{Script=Han}*)$/u.exec(form)
-  const spans = parseFurigana(furigana)
-  const length = [...match?.[1] ?? ''].length
-  if (match && spans.every(s => s.end <= length && s.ruby) && spans.reduce((n, s) => n + s.end - s.start, 0) === length)
-    return { run: match[1]!, reading: spans.map(s => s.ruby).join(''), kana: match[2]! }
-}
-
-/** Kana a noun takes as a particle: 上が is 上 うえ + が as often as 上がる. */
-const PARTICLES = new Set('がのをにへとでやもはか')
-
-interface Candidate { entry: number, order: number, common: boolean, stem: boolean, reading: string }
-
-const runOf = (key: string): string => key.replace(/\P{Script=Han}+$/u, '')
-
-/** Every pair the dictionary's words give, and what deciding between them needs. */
-function collectPairs(words: Word[]): { candidates: Map<string, Candidate[]>, runReadings: Map<string, Set<string>>, nouns: Map<string, Candidate> } {
-  const candidates = new Map<string, Candidate[]>()
-  const runReadings = new Map<string, Set<string>>()
-  const nouns = new Map<string, Candidate>()
-  for (const word of words) {
-    for (const run of hanRuns(word.form, parseFurigana(word.furigana)))
-      getOrCreate(runReadings, run.text).add(run.spans.map(s => s.ruby).join(''))
-    const split = splitWord(word.form, word.furigana)
-    if (!split)
-      continue
-    const candidate = { entry: word.entry, order: word.order, common: word.common }
-    if (!split.kana && word.common && !nouns.has(split.run))
-      nouns.set(split.run, { ...candidate, stem: false, reading: split.reading })
-    for (const { reading, okurigana, stem } of split.kana ? conjugate(split.kana, split.reading, word.classes) : []) {
-      if (!okurigana)
-        continue
-      const key = split.run + okurigana
-      const list = candidates.get(key) ?? []
-      list.push({ ...candidate, stem, reading })
-      candidates.set(key, list)
-    }
-  }
-  return { candidates, runReadings, nouns }
-}
-
-const preferred = <T>(list: T[], test: (item: T) => boolean): T[] => list.some(test) ? list.filter(test) : list
-
-/** Common words outrank rare ones, whole forms outrank bare stems, and within a word its first reading counts. */
-function resolvePair(candidates: Candidate[]): string | null {
-  const firsts = new Map<number, Candidate>()
-  for (const c of preferred(preferred(candidates, c => c.common), c => !c.stem)) {
-    if ((firsts.get(c.entry)?.order ?? Infinity) > c.order)
-      firsts.set(c.entry, c)
-  }
-  const readings = new Set([...firsts.values()].map(c => c.reading))
-  return readings.size === 1 ? [...readings][0]! : null
-}
-
-/** The reading of the longest shorter key that `key` starts with. */
-function shorterKey(resolved: Map<string, string | null>, key: string): string | null | undefined {
-  for (let end = key.length - 1; end > runOf(key).length; end--) {
-    if (resolved.has(key.slice(0, end)))
-      return resolved.get(key.slice(0, end))
-  }
-}
-
-/**
- * Words of one kanji run and its okurigana, read as a pair: 来ない is こ, 来ます
- * is き. Keys are whole forms and their stems (読ま, 読みます), and the longest
- * key a text starts with decides. A key still read two ways is ambiguous
- * (null), and so is a noun's kanji with a particle that a verb also starts
- * with (上が). Keys that only repeat the reading of a shorter key are dropped.
- */
-function compileOkurigana(words: Word[]): [key: string, reading: string | null][] {
-  const { candidates, runReadings, nouns } = collectPairs(words)
-  const resolved = new Map<string, string | null>()
-  for (const [key, list] of candidates) {
-    const run = runOf(key)
-    // A run of several kanji read one way needs no pair: the font already shows that reading.
-    if ([...run].length > 1 && runReadings.get(run)!.size < 2)
-      continue
-    const noun = nouns.get(run)
-    resolved.set(key, resolvePair(noun && key.length === run.length + 1 && PARTICLES.has(key.at(-1)!) ? [...list, noun] : list))
-  }
-  return [...resolved]
-    .filter(([key, reading]) => reading === null || shorterKey(resolved, key) !== reading)
-    .sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)
+  return entries
 }
 
 /**
@@ -313,8 +152,7 @@ const [jmdict, jmnedict, furigana, namesFurigana, kanjidic] = await Promise.all(
   download(KANJIDIC2, true),
 ])
 
-const { entries, words } = parseJmdict(jmdict, parseAlignments(furigana))
-const okurigana = compileOkurigana(words)
+const entries = parseJmdict(jmdict, parseAlignments(furigana))
 const places = parseJmnedict(jmnedict, parseAlignments(namesFurigana))
 const onyomi = parseKanjidic(kanjidic)
 const used = new Set(entries.flatMap(([form]) => [...form]))
@@ -336,5 +174,4 @@ const lines = [
 ]
 await writeFile(OUTPUT, `${lines.join('\n')}\n`)
 await writeFile(PLACES, `[\n${places.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
-await writeFile(OKURIGANA, `[\n${okurigana.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
-console.log(`Wrote ${entries.length} entries, ${places.length} places, ${okurigana.length} okurigana pairs, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)
+console.log(`Wrote ${entries.length} entries, ${places.length} places, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)
