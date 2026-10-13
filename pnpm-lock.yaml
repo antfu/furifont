@@ -414,6 +414,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@furifont/annotate':
+        specifier: workspace:*
+        version: link:../annotate
       '@furifont/compiler':
         specifier: workspace:*
         version: link:../compiler

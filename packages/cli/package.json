@@ -39,6 +39,7 @@
     "build": "tsdown && pnpm -F @furifont/app run generate && node scripts/bundle-client.ts"
   },
   "dependencies": {
+    "@furifont/annotate": "workspace:*",
     "@furifont/compiler": "workspace:*",
     "@furifont/core": "workspace:*",
     "@furifont/dictionary": "workspace:*",
