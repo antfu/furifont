@@ -11,12 +11,12 @@ const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
 /** Shows `body` on a page that has the test font as `Furifont`, at 40px. */
 async function show(page: Page, body: string): Promise<void> {
   const font = await readFile(TEST_FONT)
-  await page.route(`${ORIGIN}/**`, route => route.request().url().endsWith('.otf')
-    ? route.fulfill({ body: font, contentType: 'font/otf' })
+  await page.route(`${ORIGIN}/**`, route => route.request().url().endsWith('.woff2')
+    ? route.fulfill({ body: font, contentType: 'font/woff2' })
     : route.fulfill({
         contentType: 'text/html; charset=utf-8',
         body: `<!doctype html><meta charset="utf-8"><style>
-          @font-face { font-family: Furifont; src: url(/test.otf) }
+          @font-face { font-family: Furifont; src: url(/test.woff2) }
           body { margin: 16px; font: 40px/normal Furifont; }
           p { margin: 0 0 8px; width: fit-content; }
           .off { font-feature-settings: "ss01"; }

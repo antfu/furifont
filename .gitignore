@@ -12,10 +12,8 @@ node_modules
 temp
 .eslintcache
 .agents/skills
-__pycache__
 .nuxt
 .output
 test/e2e/.cache
 test-results
 playwright-report
-.venv

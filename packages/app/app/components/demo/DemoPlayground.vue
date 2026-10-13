@@ -1,18 +1,9 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-
-const { t } = useI18n()
 const text = ref('今日は日本語の勉強をします。\n明日は東京の大学へ行きます。\n私は毎朝新聞を読みます。桜が咲きました。')
-const face = ref<Family['face']>('sans')
-const script = ref<Family['script']>('hiragana')
-// Every face comes in every script.
-const family = computed(() => FAMILIES.find(f => f.face === face.value && f.script === script.value)!.family)
+const { face, script, family, faces, scripts } = useFamilyPicker()
 const ruby = ref(true)
 const size = ref(30)
 const { copied, copy } = useCopy()
-
-const faces = computed(() => (['sans', 'serif'] as const).map(value => ({ value, label: t(`faces.${value}`) })))
-const scripts = computed(() => (['hiragana', 'hepburn'] as const).map(value => ({ value, label: t(`scripts.${value}`) })))
 </script>
 
 <template>
@@ -36,7 +27,7 @@ const scripts = computed(() => (['hiragana', 'hepburn'] as const).map(value => (
     </div>
     <div class="flex min-w-0 flex-col">
       <div class="min-h-72 flex-1 px-6 py-8">
-        <FuriText v-model:text="text" :family :ruby :size />
+        <FuriText v-model:text="text" :family="family.family" :ruby :size />
       </div>
       <div class="flex items-center gap-3 border-t border-base px-6 py-3">
         <UiButton variant="ghost" :icon="copied ? 'i-ph-check' : 'i-ph-copy'" @click="copy(text)">

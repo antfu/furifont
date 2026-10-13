@@ -33,16 +33,16 @@
     "prepare": "git config core.hooksPath .githooks && simple-git-hooks && skills-npm"
   },
   "scripts-info": {
-    "setup": "Install dependencies, the font libraries and the test browsers, then build; run it as `pnpm run setup`",
+    "setup": "Install dependencies and the test browsers, then build; run it as `pnpm run setup`",
     "build": "Build every package",
     "dev": "Run the app with a live studio (build the packages first)",
     "fonts": "Build every prebuilt font, OpenType and WOFF2, into dist/fonts",
     "dict:update": "Download JMdict, JmdictFurigana and KANJIDIC2 and recompile the dictionary",
     "knip": "Find unused files, exports and dependencies",
     "lint": "Check for code style issues",
-    "release": "Bump every package and commit the site's fonts with it, rebuilt into fonts/ (needs Python)",
+    "release": "Bump every package and commit the site's fonts with it, rebuilt into fonts/",
     "test": "Run the unit and font tests",
-    "test:e2e": "Run the browser rendering tests (needs Python and Playwright browsers)",
+    "test:e2e": "Run the browser rendering tests (needs Playwright browsers)",
     "typecheck": "Check types",
     "ci": "Run the full continuous integration pipeline",
     "prepare": "Set up git hooks and skills"
@@ -58,7 +58,6 @@
     "eslint-plugin-slop": "catalog:cli",
     "eslint-plugin-sonarjs": "catalog:cli",
     "furifont": "workspace:*",
-    "harfbuzzjs": "catalog:testing",
     "knip": "catalog:cli",
     "nano-staged": "catalog:cli",
     "publint": "catalog:cli",

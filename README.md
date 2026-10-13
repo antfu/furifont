@@ -5,7 +5,7 @@
 A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji. [Try it on furifont.antfu.me](https://furifont.antfu.me).
 
 ```html
-<p style="font-family: 'Furifont Sans JP'; line-height: 1.7">今日は日本語の勉強をします。</p>
+<p style="font-family: 'Furifont Sans'; line-height: 1.7">今日は日本語の勉強をします。</p>
 ```
 
 Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and [Source Han Serif JP](https://github.com/adobe-fonts/source-han-serif), and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JMnedict](https://www.edrdg.org/enamdict/enamdict_doc.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). The tools that build it work with other base fonts and other word lists.
@@ -16,10 +16,10 @@ Each [release](https://github.com/antfu/furigana-font/releases/latest) has eight
 
 | Family | Base | Ruby | Weights |
 | --- | --- | --- | --- |
-| Furifont Sans JP | Source Han Sans JP | Hiragana | Regular, Bold |
-| Furifont Sans JP Romaji | Source Han Sans JP | Modified Hepburn, with macrons | Regular, Bold |
-| Furifont Serif JP | Source Han Serif JP | Hiragana | Regular, Bold |
-| Furifont Serif JP Romaji | Source Han Serif JP | Modified Hepburn, with macrons | Regular, Bold |
+| Furifont Sans | Source Han Sans JP | Hiragana | Regular, Bold |
+| Furifont Sans Romaji | Source Han Sans JP | Modified Hepburn, with macrons | Regular, Bold |
+| Furifont Serif | Source Han Serif JP | Hiragana | Regular, Bold |
+| Furifont Serif Romaji | Source Han Serif JP | Modified Hepburn, with macrons | Regular, Bold |
 
 Each font also comes with a `.ivs.json` file. It lists the readings that the variation selectors pick, as described below. The Regular WOFF2s and their `.ivs.json` are also in [`fonts/`](fonts), as the site serves them. Katakana for on'yomi is a build option.
 
@@ -28,6 +28,10 @@ Each font also comes with a `.ivs.json` file. It lists the readings that the var
 - **Line height.** The ruby sits above the line, inside the font's ascender. A `line-height` below about 1.6 clips it, and `line-height: normal` always fits.
 - **Turning ruby off.** `font-feature-settings: "ss01"` shows the plain kanji, and so does `"rclt" 0`.
 - **Line breaks.** A word broken across two lines is read as two words. In Chromium, `word-break: auto-phrase` keeps phrases together.
+
+### On any page
+
+The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both load the Regular WOFF2 from the site, and give lines with kanji room for the ruby. Sites that block fonts from other sites, such as X and GitHub, stop the bookmarklet but not the userscript.
 
 ### Which words get ruby
 
@@ -55,15 +59,7 @@ Selectors are invisible, survive copy and paste, and need no markup. The [refere
 
 ## Build your own
 
-You need Node 22.18 or later, and Python 3.10 or later with fontTools:
-
-```sh
-python3 -m pip install fonttools uharfbuzz brotli
-```
-
-If your Python refuses a global install, as Homebrew's does, install them into a `.venv` in your project instead, and Furifont uses it from there. `FURIFONT_PYTHON` points it at any other Python.
-
-From the command line:
+You need Node 22.18 or later. From the command line:
 
 ```sh
 npx furifont build --base "Source Han Serif JP Bold" --script hepburn --family "My Furigana"
@@ -80,9 +76,9 @@ Both commands read `furifont.config.json` from the current folder, and the studi
 ```json
 {
   "base": "Source Han Sans JP Regular",
-  "family": "Furifont Sans JP",
+  "family": "Furifont Sans",
   "rubyScript": "hiragana",
-  "nfMax": 10,
+  "nfMax": 30,
   "selectTags": ["spec1"],
   "isolatedMinShare": 0.8,
   "places": true,
@@ -110,7 +106,7 @@ These are the settings:
 | --- | --- |
 | [`furifont`](packages/cli) | The CLI and the studio's server |
 | [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary. It reads no fonts. |
-| [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font with fontTools and compiles the rules |
+| [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font and compiles the rules, in TypeScript with HarfBuzz |
 | [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary and the script that updates it |
 | [`packages/app`](packages/app) | The demo site and the studio (Nuxt) |
 
@@ -119,7 +115,7 @@ These are the settings:
 ## Development
 
 ```sh
-pnpm run setup      # dependencies, Python's font libraries, test browsers, first build
+pnpm run setup      # dependencies, test browsers, first build
 pnpm test           # unit and font tests
 pnpm test:e2e       # rendering in Chromium, Firefox and WebKit, and the studio
 pnpm dev            # the app, with a live studio

@@ -20,8 +20,8 @@ export interface FeaInput {
 }
 
 /**
- * Rules per subtable of the main lookup. Breaking it up lets fontTools pack each
- * part as one glyph-keyed format 1 subtable under the 16-bit offset limit,
+ * Rules per subtable of the main lookup. Breaking it up lets the compiler pack
+ * each part as one glyph-keyed format 1 subtable under the 16-bit offset limit,
  * instead of thousands of format 3 subtables; order is kept across the breaks.
  */
 const RULES_PER_SUBTABLE = 600
@@ -36,6 +36,23 @@ function chainRule(rule: Rule): string {
   if (rule.ignore)
     return `ignore sub ${rule.input.map(g => `${g}'`).join(' ')};`
   return `sub ${rule.input.map((g, i) => `${g}'${rule.lookups[i] ? ` lookup ${rule.lookups[i]}` : ''}`).join(' ')};`
+}
+
+/** The chain rules, longest first, then the lone-kanji class rules. */
+function mainRules(input: FeaInput): string[] {
+  const words = input.rules.flatMap((rule, i) => i && i % RULES_PER_SUBTABLE === 0 ? ['subtable;', chainRule(rule)] : [chainRule(rule)])
+  if (!input.isolated.length)
+    return words
+  const kanji = `[${input.isolated.map(i => i.input).join(' ')}]`
+  return [
+    ...words,
+    // Class-based rules get a subtable of their own, or none of the above could be
+    // glyph-keyed; a break before the first rule would only open an empty one.
+    ...words.length ? ['subtable;'] : [],
+    `ignore sub @han ${kanji}';`,
+    `ignore sub ${kanji}' @han;`,
+    `sub ${kanji}' lookup isolated;`,
+  ]
 }
 
 /**
@@ -57,17 +74,7 @@ export function emitFea(input: FeaInput): string {
   if (input.isolated.length)
     out.push(block('lookup', 'isolated', input.isolated.map(i => `sub ${i.input} by ${i.output};`)))
 
-  const main = input.rules.flatMap((rule, i) => i && i % RULES_PER_SUBTABLE === 0 ? ['subtable;', chainRule(rule)] : [chainRule(rule)])
-  if (input.isolated.length) {
-    const kanji = `[${input.isolated.map(i => i.input).join(' ')}]`
-    // Class-based rules get a subtable of their own, or none of the above could be glyph-keyed.
-    main.push(
-      'subtable;',
-      `ignore sub @han ${kanji}';`,
-      `ignore sub ${kanji}' @han;`,
-      `sub ${kanji}' lookup isolated;`,
-    )
-  }
+  const main = mainRules(input)
   if (main.length)
     out.push(block('lookup', 'furigana', main))
   if (input.variantReadings.length)

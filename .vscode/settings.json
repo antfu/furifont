@@ -35,6 +35,16 @@
     "jsonc",
     "yaml"
   ],
+
+  // i18n Ally: show translations inline in the app
+  "i18n-ally.localesPaths": ["packages/app/app/locales"],
+  "i18n-ally.enabledFrameworks": ["vue"],
+  "i18n-ally.sourceLanguage": "en",
+  "i18n-ally.displayLanguage": "en",
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.sortKeys": false,
+  "i18n-ally.annotations": true,
+
   "cSpell.words": [
     "furifont"
   ]

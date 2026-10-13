@@ -19,5 +19,8 @@ function scrollToDownloads(): void {
     <UiSection id="downloads" index="04" :title="$t('sections.download')">
       <DemoDownloads />
     </UiSection>
+    <UiSection index="05" :title="$t('sections.anyPage')">
+      <DemoAnyPage />
+    </UiSection>
   </div>
 </template>

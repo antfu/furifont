@@ -1,5 +1,8 @@
 <script setup lang="ts">
 const emit = defineEmits<{ download: [] }>()
+const text = ref(SAMPLES[0]!.text)
+const author = computed(() => SAMPLES.find(s => s.text === text.value)?.author)
+const size = 44
 </script>
 
 <template>
@@ -21,9 +24,14 @@ const emit = defineEmits<{ download: [] }>()
         </UiButton>
       </div>
     </div>
-    <div class="relative flex flex-col justify-center gap-4 border-t border-base bg-grid px-6 py-12 lg:border-t-0">
-      <FuriText text="今日は&#10;日本語の勉強を&#10;します。" :size="44" />
-      <span class="label">Furifont Sans JP Regular / 44px</span>
+    <div class="relative isolate flex flex-col justify-center gap-4 overflow-hidden border-t border-base px-6 py-12 lg:border-t-0">
+      <UiButton icon="i-ph-shuffle" class="absolute right-3 top-3 w-9 bg-base px-0" :aria-label="$t('shuffle')" :title="$t('shuffle')" @click="text = otherSample(text).text" />
+      <div class="relative">
+        <UiTypeGrid :size />
+        <FuriText v-model:text="text" :size />
+      </div>
+      <span v-if="author" class="label [font-feature-settings:'ss01'] absolute right-3 bottom-3 border border-base bg-base px-2 py-1">⁄ {{ author }}</span>
+      <span class="label absolute bottom-3 left-3 border border-base bg-base px-2 py-1">Furifont Sans Regular / {{ size }}px</span>
     </div>
   </div>
 </template>

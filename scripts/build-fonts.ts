@@ -15,10 +15,10 @@ import * as v from 'valibot'
 const site = argv[2] === '--site'
 const outDir = site ? fileURLToPath(new URL('../fonts', import.meta.url)) : argv[2] ?? fileURLToPath(new URL('../dist/fonts', import.meta.url))
 const families = [
-  { family: 'Furifont Sans JP', rubyScript: 'hiragana', base: 'Source Han Sans JP' },
-  { family: 'Furifont Sans JP Romaji', rubyScript: 'hepburn', base: 'Source Han Sans JP' },
-  { family: 'Furifont Serif JP', rubyScript: 'hiragana', base: 'Source Han Serif JP' },
-  { family: 'Furifont Serif JP Romaji', rubyScript: 'hepburn', base: 'Source Han Serif JP' },
+  { family: 'Furifont Sans', rubyScript: 'hiragana', base: 'Source Han Sans JP' },
+  { family: 'Furifont Sans Romaji', rubyScript: 'hepburn', base: 'Source Han Sans JP' },
+  { family: 'Furifont Serif', rubyScript: 'hiragana', base: 'Source Han Serif JP' },
+  { family: 'Furifont Serif Romaji', rubyScript: 'hepburn', base: 'Source Han Serif JP' },
 ] as const
 
 // Fonts of families since dropped must not linger.
