@@ -3,5 +3,6 @@
   "framework": null,
   "installCommand": "npx pnpm@12.8.1 install --frozen-lockfile",
   "buildCommand": "npx pnpm@12.8.1 -F @furifont/app run generate",
-  "outputDirectory": "packages/app/.output/public"
+  "outputDirectory": "packages/app/.output/public",
+  "rewrites": [{ "source": "/(.*)", "destination": "/200.html" }]
 }

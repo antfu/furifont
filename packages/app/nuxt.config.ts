@@ -42,9 +42,6 @@ export default defineNuxtConfig({
     // The prebuilt fonts are committed at the repository root on release.
     publicAssets: [{ dir: fileURLToPath(new URL('../../fonts', import.meta.url)), baseURL: 'fonts' }],
   },
-  router: {
-    options: { hashMode: true },
-  },
   app: {
     head: {
       title: 'Furifont: furigana built into the font',
