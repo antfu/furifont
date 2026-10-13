@@ -49,7 +49,7 @@ export default {
     pasteNote: 'Paste it anywhere: no ruby characters come along.',
     annotate: 'Add selectors for verbs',
     annotating: 'Reading the text',
-    annotateHint: 'A font never sees the kana after a kanji, so 来る and 来ない look alike to it. This reads the text with a morphological analyzer (a 17 MB download, once) and writes, after each verb, the invisible selector for its reading. Copying keeps them.',
+    annotateHint: 'A font never sees the kana after a kanji, so 来る and 来ない look alike to it. This reads each kanji with the kana after it as one dictionary word, and writes the invisible selector for that reading. A pair that reads two ways stays bare. Copying keeps the selectors.',
   },
   how: {
     runs: {

@@ -4,7 +4,6 @@ import { readFile } from 'node:fs/promises'
 import { relative } from 'node:path'
 import process from 'node:process'
 import { createAnnotator } from '@furifont/annotate'
-import { loadTokenizer } from '@furifont/annotate/node'
 import { RUBY_SCRIPTS } from '@furifont/core'
 import { cac } from 'cac'
 import * as v from 'valibot'
@@ -61,7 +60,7 @@ async function readInput(file: string | undefined): Promise<string> {
 }
 
 cli
-  .command('annotate [file]', 'Write the selectors that give verbs their reading, and print the text')
+  .command('annotate [file]', 'Write the selectors that give words their reading by their okurigana, and print the text')
   .option('--reference <file>', 'The .ivs.json of the font the text is for (default: planned from the config)')
   .option('--config <file>', 'Config file', { default: CONFIG_FILE })
   .action(async (file: string | undefined, flags: { reference?: string, config: string }) => {
@@ -69,7 +68,8 @@ cli
     const reference = flags.reference
       ? v.parse(ReferenceSchema, JSON.parse(await readFile(flags.reference, 'utf8')))
       : (await planWithBase(await loadConfig(cwd, flags.config), cwd)).report.ivs
-    const annotate = createAnnotator(await loadTokenizer(), reference)
+    const { OKURIGANA } = await import('@furifont/dictionary/okurigana')
+    const annotate = createAnnotator(OKURIGANA, reference)
     process.stdout.write(annotate(await readInput(file)))
   })
 

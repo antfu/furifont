@@ -243,9 +243,6 @@ catalogs:
       specifier: ^9.3.0
       version: 9.3.0
   prod:
-    '@patdx/kuromoji':
-      specifier: ^1.0.4
-      version: 1.0.4
     cac:
       specifier: ^7.1.0
       version: 7.1.0
@@ -349,9 +346,6 @@ importers:
       '@furifont/core':
         specifier: workspace:*
         version: link:../core
-      '@patdx/kuromoji':
-        specifier: catalog:prod
-        version: 1.0.4
     devDependencies:
       '@furifont/compiler':
         specifier: workspace:*
@@ -365,9 +359,9 @@ importers:
       '@furifont/annotate':
         specifier: workspace:*
         version: link:../annotate
-      '@patdx/kuromoji':
-        specifier: catalog:prod
-        version: 1.0.4
+      '@furifont/dictionary':
+        specifier: workspace:*
+        version: link:../dictionary
       devframe:
         specifier: catalog:prod
         version: 1.2.3(cac@7.1.0)(srvx@1.0.5)
@@ -1581,9 +1575,6 @@ packages:
     engines: {node: '>= 10.0.0'}
     bundledDependencies:
       - napi-wasm
-
-  '@patdx/kuromoji@1.0.4':
-    resolution: {integrity: sha512-RyDyFh33XLxbsANNnai2h9LyR8AS1NCkqbO8Ts836g8cCb9XPBHQgzFjkja6PSGH8SKMaPUISIft7l9NUkm2PQ==}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -7215,8 +7206,6 @@ snapshots:
     dependencies:
       is-glob: 4.0.3
       picomatch: 4.0.7
-
-  '@patdx/kuromoji@1.0.4': {}
 
   '@pkgjs/parseargs@0.11.0':
     optional: true

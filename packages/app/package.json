@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@furifont/annotate": "workspace:*",
-    "@patdx/kuromoji": "catalog:prod",
+    "@furifont/dictionary": "workspace:*",
     "devframe": "catalog:prod",
     "vue-i18n": "catalog:frontend"
   },

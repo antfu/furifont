@@ -2,7 +2,7 @@
   "name": "@furifont/annotate",
   "type": "module",
   "version": "0.0.0",
-  "description": "Write variation selectors so a Furifont shows the right reading of verbs",
+  "description": "Write variation selectors so a Furifont shows the reading that okurigana decides",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/antfu/furigana-font#readme",
@@ -15,7 +15,6 @@
   "sideEffects": false,
   "exports": {
     ".": "./dist/index.mjs",
-    "./node": "./dist/node.mjs",
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.mts",
@@ -26,8 +25,7 @@
     "build": "tsdown"
   },
   "dependencies": {
-    "@furifont/core": "workspace:*",
-    "@patdx/kuromoji": "catalog:prod"
+    "@furifont/core": "workspace:*"
   },
   "devDependencies": {
     "@furifont/compiler": "workspace:*",
