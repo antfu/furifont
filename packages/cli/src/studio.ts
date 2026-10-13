@@ -4,7 +4,7 @@ import type { FurifontConfig, FurifontConfigInput } from './config'
 import { Buffer } from 'node:buffer'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { checkPython, SOURCE_HAN_SANS_JP_WEIGHTS } from '@furifont/compiler'
+import { BASE_FONTS, checkPython } from '@furifont/compiler'
 import { formatNotation, hanRuns, parseFurigana } from '@furifont/core'
 import { defineRpcFunction } from 'devframe'
 import * as v from 'valibot'
@@ -24,7 +24,8 @@ export interface StudioState {
   outDir: string
   python: { ok: true } | { ok: false, message: string }
   sources: Record<string, string>
-  weights: readonly string[]
+  /** Fonts the build downloads by name. */
+  baseFonts: readonly string[]
 }
 
 export interface PreviewResult {
@@ -102,7 +103,7 @@ export async function setupStudio(ctx: DevframeNodeContext): Promise<void> {
         outDir,
         python: await checkPython(),
         sources: (await getDictionary()).sources,
-        weights: SOURCE_HAN_SANS_JP_WEIGHTS,
+        baseFonts: BASE_FONTS.map(f => f.name),
       }),
     }),
     defineRpcFunction({

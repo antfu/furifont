@@ -8,7 +8,7 @@ export const CONFIG_FILE = 'furifont.config.json'
 export const FurifontConfigSchema = v.object({
   ...PlanOptionsSchema.entries,
   /** A Source Han Sans JP weight (downloaded once), or the path of another OpenType font. */
-  base: v.optional(v.pipe(v.string(), v.nonEmpty()), 'Regular'),
+  base: v.optional(v.pipe(v.string(), v.nonEmpty()), 'Source Han Sans JP Regular'),
 })
 export type FurifontConfig = v.InferOutput<typeof FurifontConfigSchema>
 export type FurifontConfigInput = v.InferInput<typeof FurifontConfigSchema>

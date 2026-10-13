@@ -17,7 +17,7 @@ afterAll(() => rm(cwd, { recursive: true, force: true }))
 describe('loadConfig', () => {
   it('fills defaults when there is no config file', async () => {
     const config = await loadConfig(cwd)
-    expect(config).toMatchObject({ family: 'Furifont Sans JP', base: 'Regular', rubyScript: 'hiragana', nfMax: 10 })
+    expect(config).toMatchObject({ family: 'Furifont Sans JP', base: 'Source Han Sans JP Regular', rubyScript: 'hiragana', nfMax: 10 })
   })
 
   it('names the file and the problem when the config is invalid', async () => {
