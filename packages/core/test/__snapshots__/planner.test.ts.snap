@@ -25,15 +25,9 @@ lookup rb_2 useExtension {
 
 lookup lig_1 useExtension {
   sub uni4ECA uni65E5 by uni4ECA_uni65E5.rb.1;
-} lig_1;
-
-lookup lig_2 useExtension {
   sub uni4ECA.vs1 uni65E5 by uni4ECA_uni65E5.rb.1;
-} lig_2;
-
-lookup lig_3 useExtension {
   sub uni5927 uni4EBA by uni5927_uni4EBA.rb.1;
-} lig_3;
+} lig_1;
 
 lookup isolated useExtension {
   sub uni685C by uni685C.rb.1;
@@ -42,11 +36,11 @@ lookup isolated useExtension {
 lookup furigana useExtension {
   sub uni4EBA' lookup rb_1 uni6C17' lookup rb_1;
   sub uni4ECA' lookup lig_1 uni65E5';
-  sub uni4ECA.vs1' lookup lig_2 uni65E5';
+  sub uni4ECA.vs1' lookup lig_1 uni65E5';
   sub uni4ECA.vs2' lookup rb_1 uni65E5' lookup rb_2;
   sub uni5927' lookup rb_1 uni4EBA' lookup rb_1 uni6C17' lookup rb_1;
   sub uni5927' lookup rb_1 uni5B66' lookup rb_2;
-  sub uni5927' lookup lig_3 uni4EBA';
+  sub uni5927' lookup lig_1 uni4EBA';
   sub uni5B66' lookup rb_1 uni6821' lookup rb_1;
   sub uni65E5' lookup rb_1 uni672C' lookup rb_1;
   sub uni6771' lookup rb_1 uni4EAC' lookup rb_1;

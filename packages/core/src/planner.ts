@@ -79,6 +79,8 @@ interface Ligature {
   lookup: string
   glyph: string
   components: string[]
+  /** Codepoints of the components, to keep only ligatures a sample text can form. */
+  codepoints: number[]
 }
 
 interface PlanContext {
@@ -379,7 +381,21 @@ function buildRules(
   protectedRuns: Map<string, RubySpan[] | null>,
   glyphs: GlyphRegistry,
 ): { rules: Rule[], ligatures: Ligature[], singles: SingleLookups, variants: Variant[], variantReadings: VariantReading[], ivsWords: Record<string, string[]> } {
-  const ligatures: Ligature[] = []
+  // Ligatures share lookups: the nth distinct ligature of a component sequence lives in lig_<n>.
+  // A shorter sequence never meets a longer one in the same lookup by mistake: the rule for
+  // the longer one would have matched first.
+  const ligatures = new Map<string, Ligature>()
+  const perComponents = new Map<string, number>()
+  const ligatureLookup = (components: string[], glyph: string, codepoints: number[]): string => {
+    const key = `${components.join(' ')}>${glyph}`
+    let ligature = ligatures.get(key)
+    if (!ligature) {
+      const n = (perComponents.get(components.join(' ')) ?? 0) + 1
+      perComponents.set(components.join(' '), n)
+      ligatures.set(key, ligature = { lookup: `lig_${n}`, glyph, components, codepoints })
+    }
+    return ligature.lookup
+  }
   const singles = createSingleLookups()
   const variants = createVariants()
 
@@ -393,8 +409,7 @@ function buildRules(
     }
     const output = glyphs.run(run)
     if (isGrouped(run)) {
-      const lookup = `lig_${ligatures.length + 1}`
-      ligatures.push({ lookup, glyph: output[0]!.name, components: input })
+      const lookup = ligatureLookup(input, output[0]!.name, cps)
       return { input, lookups: input.map((_, i) => i === 0 ? lookup : null), codepoints: cps }
     }
     return { input, lookups: output.map((g, i) => singles.lookupFor(input[i]!, g.name)), codepoints: cps }
@@ -423,7 +438,7 @@ function buildRules(
     readings.forEach((ruby, i) => variantReadings.push({ input: variants.name(kanji, i + 1), glyph: glyphs.lone(kanji, ruby), selector: SELECTOR_SUPPRESS + i + 1 }))
   }
   rules.sort((a, b) => a.input[0]!.localeCompare(b.input[0]!) || b.input.length - a.input.length)
-  return { rules, ligatures, singles, variants: variants.all(), variantReadings, ivsWords }
+  return { rules, ligatures: [...ligatures.values()], singles, variants: variants.all(), variantReadings, ivsWords }
 }
 
 function smokeChecks(patterns: Patterns, lone: { glyph: PlanGlyph }[], glyphs: GlyphRegistry): Plan['smoke'] {
@@ -472,8 +487,7 @@ export function createFontPlanner(dictionary: Dictionary) {
     const keptVariantReadings = variantReadings.filter(v => inSample([...v.glyph.bases, v.selector]))
     const usedLookups = new Set(keptRules.flatMap(r => r.lookups.map((lookup, i) => `${r.input[i]}@${lookup}`)))
     const keptSingles = singles.all().filter(s => usedLookups.has(`${s.input}@${s.lookup}`))
-    const firstLookups = new Set(keptRules.map(r => r.lookups[0]))
-    const keptLigatures = ligatures.filter(l => firstLookups.has(l.lookup))
+    const keptLigatures = ligatures.filter(l => inSample(l.codepoints))
     const keptNames = new Set([
       ...keptSingles.map(s => s.output),
       ...keptLigatures.map(l => l.glyph),
