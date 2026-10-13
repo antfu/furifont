@@ -1,13 +1,14 @@
 import { createI18n } from 'vue-i18n'
-import { messages } from '~/locales'
+import { en, loaders } from '~/locales'
 
 /** The interface speaks the visitor's language: their earlier choice, else the browser's. */
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(async (nuxtApp) => {
   const stored = localStorage.getItem(LOCALE_STORAGE_KEY)
+  const locale = isLocale(stored) ? stored : detectLocale(navigator.languages)
   nuxtApp.vueApp.use(createI18n({
     legacy: false,
-    locale: isLocale(stored) ? stored : detectLocale(navigator.languages),
+    locale,
     fallbackLocale: 'en',
-    messages,
+    messages: { en, [locale]: await loaders[locale]() },
   }))
 })

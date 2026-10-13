@@ -136,7 +136,7 @@ describe.each([
 
   it('names the font after the plan', async () => {
     const info = await readFontInfo(join(built.dir, 'out.otf'))
-    expect(info).toMatchObject({ family: 'Furifont Sans JP', style: 'Regular', glyphCount: built.names.length })
+    expect(info).toMatchObject({ family: 'Furifont Sans', style: 'Regular', glyphCount: built.names.length })
     expect(info.codepoints).toContain('桜'.codePointAt(0))
   })
 
@@ -153,15 +153,23 @@ describe.each([
 })
 
 describe('a live preview', () => {
+  const dirs: string[] = []
+  async function preview(text: string): Promise<Built> {
+    const built = await build(fixture('SourceHanSansJP-Subset.otf'), text)
+    dirs.push(built.dir)
+    return built
+  }
+
+  afterAll(() => Promise.all(dirs.map(dir => rm(dir, { recursive: true, force: true }))))
+
   it('subsets the base font to what the text needs', async () => {
-    const built = await build(fixture('SourceHanSansJP-Subset.otf'), '今日は桜')
-    try {
-      expect(read(built, '今日')).toEqual(['今日:きょう'])
-      expect(read(built, '桜')).toEqual(['桜:さくら'])
-      expect(built.names.length).toBeLessThan(100)
-    }
-    finally {
-      await rm(built.dir, { recursive: true, force: true })
-    }
+    const built = await preview('今日は桜')
+    expect(read(built, '今日')).toEqual(['今日:きょう'])
+    expect(read(built, '桜')).toEqual(['桜:さくら'])
+    expect(built.names.length).toBeLessThan(100)
+  })
+
+  it('compiles a text that has only lone kanji', async () => {
+    expect(read(await preview('桜'), '桜')).toEqual(['桜:さくら'])
   })
 })

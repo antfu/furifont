@@ -11,7 +11,7 @@ import pkg from '../package.json' with { type: 'json' }
 import { buildFont, planWithBase } from './build'
 import { CONFIG_FILE, FurifontConfigSchema, loadConfig } from './config'
 
-const STUDIO_PAGE = '#/studio'
+const STUDIO_PAGE = 'studio'
 
 const cli = cac('furifont')
 

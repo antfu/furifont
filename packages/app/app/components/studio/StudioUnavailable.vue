@@ -16,14 +16,17 @@ const command = 'npx furifont dev'
         </template>
       </i18n-t>
     </div>
-    <div class="flex flex-col justify-center gap-3">
-      <button type="button" class="focus-ring flex items-center justify-between border border-strong px-4 py-3 text-left font-mono text-sm" @click="copy(command)">
-        <span>$ {{ command }}</span>
-        <span :class="copied ? 'i-ph-check' : 'i-ph-copy'" class="color-muted" />
-      </button>
+    <div class="flex flex-col justify-center gap-5">
       <p class="text-xs color-muted">
         {{ $t('studio.offline.needs') }}
       </p>
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ $t('studio.offline.run') }}</span>
+        <button type="button" class="focus-ring flex items-center justify-between gap-3 border border-strong px-4 py-3 text-left font-mono text-sm" @click="copy(command)">
+          <span class="break-all">$ {{ command }}</span>
+          <span :class="copied === command ? 'i-ph-check' : 'i-ph-copy'" class="shrink-0 color-muted" />
+        </button>
+      </div>
     </div>
   </div>
 </template>

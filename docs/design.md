@@ -18,7 +18,7 @@ rules. It differs in three ways:
 
 ## Goals
 
-- Prebuilt fonts: **Furifont Sans JP** and **Furifont Serif JP**, Regular and
+- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and
   Bold, from Source Han Sans JP and Source Han Serif JP, with hiragana or
   Hepburn romaji ruby. Katakana for on'yomi is a build option.
 - A build anyone can run with another base font, word list or options.
@@ -108,7 +108,7 @@ run whose kanji are not all annotated is dropped, and so is one whose
 annotation crosses a kana. Runs of two or more kanji become **patterns** when
 their entry is selected:
 
-- its form has a newspaper bucket of at most `nfMax` (default 10), or
+- its form has a newspaper bucket of at most `nfMax` (default 30), or
 - it has a priority tag in `selectTags` (default `spec1`).
 
 `spec1` is needed because 日本 ranks `nf25`.

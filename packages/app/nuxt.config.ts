@@ -37,11 +37,11 @@ export default defineNuxtConfig({
     '@furifont/dictionary/okurigana': source('dictionary', 'okurigana'),
   },
   nitro: {
+    // Always plain static files in .output/public: on Vercel, Nitro would otherwise write its own output format elsewhere.
+    preset: 'static',
     // The prebuilt fonts are committed at the repository root on release.
     publicAssets: [{ dir: fileURLToPath(new URL('../../fonts', import.meta.url)), baseURL: 'fonts' }],
-  },
-  router: {
-    options: { hashMode: true },
+    prerender: { routes: ['/furifont.user.js'] },
   },
   app: {
     head: {

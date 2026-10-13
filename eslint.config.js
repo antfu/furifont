@@ -13,6 +13,7 @@ export default antfu(
       '**/test/fixtures/**',
       '**/.nuxt/**',
       '**/.output/**',
+      'packages/app/public/fonts/**',
       '**/*.css',
     ],
   },
