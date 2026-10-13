@@ -19,6 +19,11 @@ describe('compiled dictionary', () => {
     expect(report.ivs.words['出来']![0]).toBe('出[で]来[き]')
   })
 
+  it('keeps the readings a conjugating kanji takes', () => {
+    expect(dictionary.entries.find(e => e.form === '来る' && e.furigana === '0:く')?.conjugatesReading).toBe(true)
+    expect(report.ivs.kanji['来']).toEqual(expect.arrayContaining(['く', 'き', 'こ']))
+  })
+
   it('keeps a few thousand words and leaves ambiguous lone kanji out', () => {
     expect(report.stats.patterns).toBeGreaterThan(3000)
     expect(report.stats.patterns).toBeLessThan(10_000)

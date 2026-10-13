@@ -8,10 +8,8 @@ const DATA = new URL('../data/dictionary.json', import.meta.url)
 const DataSchema = v.object({
   sources: v.record(v.string(), v.string()),
   onyomi: v.record(v.string(), v.array(v.string())),
-  entries: v.array(v.union([
-    v.tuple([v.string(), v.string(), v.number(), v.string(), v.number()]),
-    v.tuple([v.string(), v.string(), v.number(), v.string(), v.number(), v.literal(1)]),
-  ])),
+  // One tuple with an optional last item: a shorter tuple in a union would match first and drop it.
+  entries: v.array(v.tuple([v.string(), v.string(), v.number(), v.string(), v.number(), v.optional(v.literal(1))])),
 })
 
 /** Loads the compiled JMdict + JmdictFurigana + KANJIDIC2 dictionary. */
