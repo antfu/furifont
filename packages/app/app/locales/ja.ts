@@ -130,6 +130,7 @@ export default {
       nfMax: '頻度帯の上限',
       nfMaxHint: 'nf01 は新聞で最も頻出する 500 語、nf48 は 24,000 語目までです。',
       tags: 'このタグの単語も含める',
+      places: '地名（JMnedict の駅名と地名）',
       share: '単独の漢字に必要な割合',
       shareHint: 'ひとつの読みがこの割合を占めるとき、単独の漢字にルビを付けます。',
       rubyScale: 'ルビの倍率',
@@ -144,6 +145,7 @@ export default {
     },
     build: {
       words: '単語',
+      places: '地名',
       ambiguous: '複数の読み',
       lone: '単独の漢字',
       protected: '保護',

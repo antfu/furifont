@@ -130,6 +130,7 @@ export default {
       nfMax: '詞頻級距上限',
       nfMaxHint: 'nf01 收錄報紙中最常見的 500 個詞，nf48 到第 24,000 個。',
       tags: '一併收錄帶有以下標籤的詞',
+      places: '地名（JMnedict 的站名與地名）',
       share: '單獨漢字所需比例',
       shareHint: '當某個讀音的比例達到此值時，單獨的漢字才會標注。',
       rubyScale: '振假名縮放',
@@ -144,6 +145,7 @@ export default {
     },
     build: {
       words: '詞語',
+      places: '地名',
       ambiguous: '多讀音',
       lone: '單獨漢字',
       protected: '受保護',

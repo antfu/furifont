@@ -8,7 +8,8 @@ const stats = computed(() => {
   const s = report.value?.stats
   return s
     ? [
-        { label: t('studio.build.words'), value: s.patterns },
+        { label: t('studio.build.words'), value: s.patterns - s.places },
+        { label: t('studio.build.places'), value: s.places },
         { label: t('studio.build.ambiguous'), value: s.ambiguous },
         { label: t('studio.build.lone'), value: s.isolated },
         { label: t('studio.build.protected'), value: s.protectedAnnotated + s.protectedBare },
@@ -22,7 +23,7 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
 
 <template>
   <div>
-    <div class="grid grid-cols-3 border-b border-base lg:grid-cols-6">
+    <div class="grid grid-cols-3 border-b border-base lg:grid-cols-7">
       <UiStat v-for="s in stats" :key="s.label" v-bind="s" class="border-r border-base last:border-r-0" />
       <span v-if="!stats.length" class="label col-span-full px-6 py-4">{{ $t('studio.build.planning') }}</span>
     </div>

@@ -9,6 +9,10 @@ const tags = ['spec1', 'ichi1', 'news1', 'gai1'] as const
 
 // The server sends a complete config, metrics included.
 const metrics = computed(() => config.value.metrics ?? {})
+const places = computed({
+  get: () => config.value.places ?? true,
+  set: value => config.value.places = value,
+})
 const rubyScript = computed({
   get: () => config.value.rubyScript ?? 'hiragana',
   set: value => config.value.rubyScript = value,
@@ -56,6 +60,9 @@ function toggleTag(tag: typeof tags[number]): void {
         </button>
       </div>
     </fieldset>
+    <UiToggle v-model="places">
+      {{ $t('studio.options.places') }}
+    </UiToggle>
     <UiField :label="$t('studio.options.share')" :hint="$t('studio.options.shareHint')">
       <input v-model.number="config.isolatedMinShare" type="number" min="0.5" max="1" step="0.05" class="input font-mono" placeholder="0.8">
     </UiField>

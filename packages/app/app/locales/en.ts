@@ -128,6 +128,7 @@ export default {
       nfMax: 'Words up to frequency bucket',
       nfMaxHint: 'nf01 holds the 500 most frequent newspaper words, nf48 the 24,000th.',
       tags: 'Also take words tagged',
+      places: 'Place names (JMnedict stations and places)',
       share: 'Lone kanji need this share',
       shareHint: 'A kanji alone gets ruby when one reading has this share of the evidence.',
       rubyScale: 'Ruby scale',
@@ -142,6 +143,7 @@ export default {
     },
     build: {
       words: 'Words',
+      places: 'Places',
       ambiguous: 'Several readings',
       lone: 'Lone kanji',
       protected: 'Protected',
