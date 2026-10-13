@@ -96,7 +96,7 @@ Both commands read `furifont.config.json` from the current folder, and the studi
   "base": "Source Han Sans JP Regular",
   "family": "Furifont Sans JP",
   "rubyScript": "hiragana",
-  "nfMax": 10,
+  "nfMax": 30,
   "selectTags": ["spec1"],
   "isolatedMinShare": 0.8,
   "places": true,
