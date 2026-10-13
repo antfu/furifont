@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npx pnpm@12.8.1 install --frozen-lockfile",
+  "buildCommand": "npx pnpm@12.8.1 -F @furifont/app run generate",
+  "outputDirectory": "packages/app/.output/public"
+}
