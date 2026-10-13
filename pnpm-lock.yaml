@@ -249,6 +249,9 @@ catalogs:
       specifier: ^9.3.0
       version: 9.3.0
   prod:
+    '@patdx/kuromoji':
+      specifier: ^1.0.4
+      version: 1.0.4
     cac:
       specifier: ^7.1.0
       version: 7.1.0
@@ -346,6 +349,22 @@ importers:
       vitest:
         specifier: catalog:testing
         version: 5.0.2(@types/node@26.6.3)(vite@8.3.4(@types/node@26.6.3)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.0))
+
+  packages/annotate:
+    dependencies:
+      '@furifont/core':
+        specifier: workspace:*
+        version: link:../core
+      '@patdx/kuromoji':
+        specifier: catalog:prod
+        version: 1.0.4
+    devDependencies:
+      '@furifont/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@furifont/dictionary':
+        specifier: workspace:*
+        version: link:../dictionary
 
   packages/app:
     dependencies:
@@ -1571,6 +1590,9 @@ packages:
     engines: {node: '>= 10.0.0'}
     bundledDependencies:
       - napi-wasm
+
+  '@patdx/kuromoji@1.0.4':
+    resolution: {integrity: sha512-RyDyFh33XLxbsANNnai2h9LyR8AS1NCkqbO8Ts836g8cCb9XPBHQgzFjkja6PSGH8SKMaPUISIft7l9NUkm2PQ==}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -7206,6 +7228,8 @@ snapshots:
     dependencies:
       is-glob: 4.0.3
       picomatch: 4.0.7
+
+  '@patdx/kuromoji@1.0.4': {}
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
