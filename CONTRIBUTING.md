@@ -33,7 +33,7 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 | `pnpm test:e2e` | Rendering in Chromium, Firefox and WebKit, and the studio. Run `pnpm build` first. |
 | `pnpm fonts` | All eight prebuilt fonts, OpenType and WOFF2, into `dist/fonts`, as the release builds them. It takes about 2 minutes. |
 | `node packages/cli/bin.mjs dev` | The studio as users get it, built from your checkout. |
-| `pnpm dict:update` | Downloads JMdict, JMnedict, JmdictFurigana and KANJIDIC2 and recompiles the dictionary, the place names and the okurigana pairs. |
+| `pnpm dict:update` | Downloads JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT lists and recompiles the dictionary, the place names, the okurigana pairs and the JLPT levels. |
 
 ## How it fits together
 
