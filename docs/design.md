@@ -26,7 +26,7 @@ rules. It differs in three ways:
 
 ## Out of scope
 
-- Proper nouns (JMnedict).
+- Personal names. From JMnedict, only stations and places are read.
 - Ruby on kana. Only kanji are annotated.
 - Vertical writing. The base font's `vert` feature is kept, but ruby glyphs
   are drawn for horizontal text only.
@@ -38,17 +38,18 @@ The repository is a pnpm monorepo. Each package has one job:
 
 | Package | Language | Job |
 | --- | --- | --- |
-| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JmdictFurigana and KANJIDIC2 into committed JSON. It also holds a short list of curated default readings. |
+| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana and KANJIDIC2 into committed JSON. It also holds a short list of curated default readings. |
 | `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
 | `@furifont/compiler` | TS + Python | A Node wrapper around `furifont.py` (fontTools). It draws the plan into the base font, compiles the rules and checks the output with HarfBuzz. |
-| `furifont` | TS | The CLI (`furifont build`, `furifont dev`) and the studio's Devframe definition and RPC functions. |
+| `@furifont/annotate` | TS | Writes the selectors for verbs into a text, from kuromoji's analysis and a font's reading lists (see [Verbs](#verbs)). |
+| `furifont` | TS | The CLI (`furifont build`, `furifont dev`, `furifont annotate`) and the studio's Devframe definition and RPC functions. |
 | `packages/app` | Nuxt | The demo site and the studio, as one static SPA. The CLI ships it as its Devframe client. |
 
 ```
-JMdict + JmdictFurigana + KANJIDIC2
+JMdict + JMnedict + JmdictFurigana + KANJIDIC2
         | dict:update (maintainers, network)
         v
-packages/dictionary/data/dictionary.json (committed, one entry per line)
+packages/dictionary/data/{dictionary,places}.json (committed, one entry per line)
         |
         v
 createFontPlanner(dictionary)(options, coverage[, previewText]) -> { plan, report }
@@ -112,6 +113,19 @@ their entry is selected:
 
 The default preset gives about 4,800 patterns from about 6,400 forms.
 
+### Place names
+
+JMnedict gives about 139,000 names read as stations or places:
+
+- a station's name, from its 駅 entry with 駅 dropped (新宿駅 gives 新宿 しんじゅく);
+- otherwise a place spelled all in kanji, with exactly one reading.
+
+With `places` (on by default), each name becomes a pattern only for a run that
+no common word claims. A place name never counts as evidence for a kanji's own
+reading. Places make up about 138,600 of the 143,400 patterns.
+
+### Custom words
+
 Custom words (`words.add`) and pins (`words.pin`) use inline notation:
 `日[に]本[ほん]` for one reading per kanji, `今日[きょう]` for one reading over
 several kanji. `words.remove` keeps a form bare.
@@ -143,6 +157,11 @@ kanji such as 書, 行, 生 and 出 stay bare.
 The rule is class-based: no lone-kanji reading applies when a Han glyph comes
 right before or after it. That includes ruby and variant glyphs.
 
+Every kanji also gets an ordered list of its readings for the selectors: each
+reading with at least 2% of the evidence, then the readings it has before
+okurigana in untagged words (奉 たてまつ, for 奉る). These last ones give
+[Verbs](#verbs) a reading to pick for verbs too rare to rank.
+
 ### Protection
 
 Every multi-kanji run in the full dictionary is read through the longest-match
@@ -155,8 +174,8 @@ readings, as 大人気 does through 大人.
   おとなげ in 大人気ない.
 
 Protected runs become rules themselves, so the check repeats until nothing
-changes. With the default preset, about 650 runs are annotated and 1,300
-left bare.
+changes. With the default preset, about 1,750 runs are annotated and 2,200
+left bare. Without place names, about 680 and 1,260.
 
 ### Glyphs
 
@@ -204,6 +223,27 @@ evidence.
 The rules always replace a placeholder: with a ruby glyph, or with the plain
 kanji through `variants_off`. Placeholders therefore cost nothing in outlines.
 The reading lists ship as `<font>.ivs.json` and on the demo's reference page.
+
+## Verbs
+
+A font cannot read verbs, because their okurigana is in another run. 来 is
+こ in 来ない and き in 来ます. `@furifont/annotate` adds the selectors instead,
+before the text reaches the font:
+
+1. kuromoji (with IPADIC) splits the text into words with their readings.
+2. In each verb or adjective, the kana around the kanji mark which part of the
+   reading is theirs: 書い read かい gives 書 か.
+3. A single kanji gets the selector of that reading in the font's `.ivs.json`
+   (`kanji`). A run of several kanji gets a selector only when its reading is
+   not the font's default for that word (`words`).
+4. When the font lacks the reading, the kanji gets VS225 and stays bare.
+
+Existing selectors are removed first, so annotating twice gives the same text.
+`furifont annotate` reads a file or standard input. The demo's playground loads
+kuromoji and its dictionary (about 17 MB, once) from `kuromoji/`. The site and
+the studio both serve it there. Some servers send these files with
+`Content-Encoding: gzip`, so they are inflated in the browser only while they
+still carry the gzip header.
 
 ## Metrics
 
@@ -257,8 +297,9 @@ fontTools, uharfbuzz and brotli. For a build, it does this:
    Font Name must not appear in them. The font is shaped against the plan's
    smoke checks, then written, with an optional WOFF2.
 
-A full Source Han Sans JP build takes about 35 s and gives about 6.4 MB as
-OpenType and 3.6 MB as WOFF2.
+A full Source Han Sans JP build takes about 2.5 minutes and gives about 20 MB
+as OpenType and 5.2 MB as WOFF2. It uses about 41,700 of the 65,535 glyphs.
+Without place names, the build takes 35 s and gives 6.4 MB and 3.6 MB.
 
 ## Studio
 
@@ -289,7 +330,9 @@ own mount.
   defaults, pins, lone kanji, protection, preview filtering, and a snapshot of
   the feature file.
 - **dictionary**: the compiled data plans sensible defaults (今日 きょう,
-  明日 あした, 出来 でき).
+  明日 あした, 出来 でき) and reads places (新宿 しんじゅく).
+- **annotate**: kuromoji writes the selectors for 来る, 来ない, 来ます, 出来る
+  and 奉り, and the compiled test font shapes them with their ruby.
 - **compiler**: compiles against a committed Source Han Sans JP subset. It
   shapes with harfbuzzjs and checks words, protection, lone kanji, selectors,
   `ss01` and metrics.
@@ -320,6 +363,9 @@ A human pushes the tag.
 - **Code:** MIT.
 - **Dictionary data and the rules compiled from it:** CC BY-SA 4.0 (EDRDG,
   JmdictFurigana). Each font's name table records the source versions.
+- **Morphological analysis:** kuromoji (Apache 2.0) with IPADIC. It is a
+  dependency of `@furifont/annotate`, and the demo serves its dictionary; the
+  fonts contain neither.
 - **Fonts:** SIL OFL 1.1, as derivatives of Source Han Sans. They carry
   Adobe's copyright, and none of their names contains the Reserved Font Name
   "Source".
@@ -328,8 +374,11 @@ A human pushes the tag.
 
 - A word broken across lines is shaped as two runs, and may lose or change its
   ruby. In Chromium, `word-break: auto-phrase` keeps phrases together.
-- Inflected forms of verbs with ambiguous kanji (書く, 行く) stay bare.
-  Selectors can add their ruby.
+- In plain text, inflected forms of verbs with ambiguous kanji (書く, 行く)
+  stay bare. `furifont annotate` writes their selectors, as well as kuromoji
+  reads the text.
+- A rare word that no common word covers, but that is spelled like a place, is
+  read as the place.
 - A compound missing from the dictionary is read through the words it
   contains, longest first.
 - CoreText and DirectWrite are untested. Both support `cmap` format 14 and
