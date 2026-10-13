@@ -52,7 +52,7 @@ test('speaks the browser\'s language and remembers the one chosen', async ({ bro
   const context = await browser.newContext({ locale: 'zh-TW' })
   const page = await context.newPage()
   await page.goto(new URL('/#/', url).href)
-  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hant')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('交給字型')
 
   await page.getByLabel('語言').selectOption('ja')
