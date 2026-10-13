@@ -51,8 +51,9 @@ export function emitFea(input: FeaInput): string {
   const bySlot = Map.groupBy(input.singles, s => s.lookup)
   for (const [lookup, singles] of [...bySlot].sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true })))
     out.push(block('lookup', lookup, singles.map(s => `sub ${s.input} by ${s.output};`)))
-  for (const l of input.ligatures)
-    out.push(block('lookup', l.lookup, [`sub ${l.components.join(' ')} by ${l.glyph};`]))
+  const byLigatureSlot = Map.groupBy(input.ligatures, l => l.lookup)
+  for (const [lookup, ligatures] of [...byLigatureSlot].sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true })))
+    out.push(block('lookup', lookup, ligatures.map(l => `sub ${l.components.join(' ')} by ${l.glyph};`)))
   if (input.isolated.length)
     out.push(block('lookup', 'isolated', input.isolated.map(i => `sub ${i.input} by ${i.output};`)))
 
