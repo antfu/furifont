@@ -3,6 +3,8 @@ export interface ReadingReference {
   kanji: Record<string, string[]>
   /** Word to its readings in inline notation; the first is the default. */
   words: Record<string, string[]>
+  /** Kanji alone in its run to the reading it shows without a selector. */
+  lone: Record<string, string>
 }
 
 /** The selector reference written next to the prebuilt fonts. */

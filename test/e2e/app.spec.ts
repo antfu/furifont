@@ -30,7 +30,7 @@ test.beforeAll(async () => {
   await writeFile(join(cwd, 'furifont.config.json'), JSON.stringify({ base: FIXTURE_FONT }))
   // The reading lists of a font already built, which the playground's selectors index into.
   await mkdir(join(cwd, 'fonts'))
-  await writeFile(join(cwd, 'fonts', 'FurifontSansJP-Regular.ivs.json'), JSON.stringify({ kanji: { 来: ['き', 'こ'] }, words: {} }))
+  await writeFile(join(cwd, 'fonts', 'FurifontSansJP-Regular.ivs.json'), JSON.stringify({ kanji: { 来: ['き', 'こ'] }, words: {}, lone: {} }))
   const port = await freePort()
   studio = spawn(process.execPath, [CLI, 'dev', '--no-open', '--no-auth', '--port', String(port)], { cwd })
   url = await new Promise((resolve, reject) => {
