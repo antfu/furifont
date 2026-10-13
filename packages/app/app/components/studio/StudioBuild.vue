@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const { report, build, state, savedTo, runBuild, save } = useStudio()
+const { report, build, savedTo, runBuild, save } = useStudio()
 
 const stats = computed(() => {
   const s = report.value?.stats
@@ -28,7 +28,7 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
       <span v-if="!stats.length" class="label col-span-full px-6 py-4">{{ $t('studio.build.planning') }}</span>
     </div>
     <div class="flex flex-wrap items-center gap-3 px-6 py-4">
-      <button type="button" class="btn-solid focus-ring" :disabled="build.running || !state?.python.ok" @click="runBuild">
+      <button type="button" class="btn-solid focus-ring" :disabled="build.running" @click="runBuild">
         <span :class="build.running ? 'i-ph-circle-notch animate-spin' : 'i-ph-hammer'" />
         {{ build.running ? progress : $t('studio.build.run') }}
       </button>
@@ -38,9 +38,6 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
       </button>
       <span v-if="savedTo" class="font-mono text-xs color-muted">{{ savedTo }}</span>
     </div>
-    <p v-if="state && !state.python.ok" class="border-t border-base px-6 py-3 font-mono text-xs">
-      {{ state.python.message }}
-    </p>
     <p v-if="build.error" class="border-t border-base px-6 py-3 font-mono text-xs">
       {{ build.error }}
     </p>

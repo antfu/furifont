@@ -2,7 +2,6 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { checkPython } from '@furifont/compiler'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildFont, loadConfig } from '../src'
 
@@ -26,7 +25,7 @@ describe('loadConfig', () => {
   })
 })
 
-describe.skipIf(!(await checkPython()).ok)('buildFont', () => {
+describe('buildFont', () => {
   it('writes the font, its WOFF2 and the selector reference', async () => {
     const config = await loadConfig(cwd)
     const { files, report } = await buildFont({ ...config, base: BASE }, { cwd, outDir: join(cwd, 'fonts') })

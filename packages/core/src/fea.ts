@@ -20,8 +20,8 @@ export interface FeaInput {
 }
 
 /**
- * Rules per subtable of the main lookup. Breaking it up lets fontTools pack each
- * part as one glyph-keyed format 1 subtable under the 16-bit offset limit,
+ * Rules per subtable of the main lookup. Breaking it up lets the compiler pack
+ * each part as one glyph-keyed format 1 subtable under the 16-bit offset limit,
  * instead of thousands of format 3 subtables; order is kept across the breaks.
  */
 const RULES_PER_SUBTABLE = 600

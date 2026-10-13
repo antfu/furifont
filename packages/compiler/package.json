@@ -2,7 +2,7 @@
   "name": "@furifont/compiler",
   "type": "module",
   "version": "0.0.0",
-  "description": "Compile a Furifont plan into a font with fontTools",
+  "description": "Compile a Furifont plan into a font",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/antfu/furigana-font#readme",
@@ -19,14 +19,14 @@
   },
   "types": "./dist/index.d.mts",
   "files": [
-    "dist",
-    "python"
+    "dist"
   ],
   "scripts": {
     "build": "tsdown"
   },
   "dependencies": {
     "@furifont/core": "workspace:*",
+    "harfbuzzjs": "catalog:prod",
     "valibot": "catalog:prod"
   }
 }

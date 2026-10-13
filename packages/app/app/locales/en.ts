@@ -82,7 +82,7 @@ export default {
   downloads: {
     family: 'Family',
     ruby: 'Ruby',
-    buildOwn: 'Or build one: another base font, dictionary size, ruby script or metrics. Needs Python 3.10+ with fontTools.',
+    buildOwn: 'Or build one: another base font, dictionary size, ruby script or metrics.',
     cliBuild: 'a font from the command line',
     cliDev: 'the studio: tune, preview, build',
   },
@@ -106,8 +106,8 @@ export default {
     offline: {
       eyebrow: 'Studio / offline',
       title: 'Build your own Furifont',
-      body: 'The studio runs on your machine: it compiles fonts with Python and fontTools, which a static site cannot do. Start it in any folder and this page opens connected, with a live preview, the dictionary, and a build button. Builds land in {folder}.',
-      needs: 'Needs Node 22+ and Python 3.10+ with {command}.',
+      body: 'The studio runs on your machine: it reads base fonts and writes the fonts it builds there. Start it in any folder and this page opens connected, with a live preview, the dictionary, and a build button. Builds land in {folder}.',
+      needs: 'Needs Node 22.18 or later.',
     },
     auth: {
       eyebrow: 'Studio / locked',

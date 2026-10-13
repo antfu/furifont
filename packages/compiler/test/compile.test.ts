@@ -1,15 +1,16 @@
 import type { Dictionary, Plan } from '@furifont/core'
-import { execFileSync } from 'node:child_process'
+import { Buffer } from 'node:buffer'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { brotliDecompressSync } from 'node:zlib'
 import { createFontPlanner, resolveOptions } from '@furifont/core'
 import * as hb from 'harfbuzzjs'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { checkPython, compileFont, readFontInfo } from '../src'
+import { compileFont, readFontInfo } from '../src'
 
-const BASE = fileURLToPath(new URL('./fixtures/SourceHanSansJP-Subset.otf', import.meta.url))
+const fixture = (name: string): string => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url))
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
 
 const dictionary: Dictionary = {
@@ -27,100 +28,140 @@ const dictionary: Dictionary = {
     { form: '桜', furigana: '0:さくら', nf: 5, priority: 'news1 nf05', order: 0 },
   ],
 }
+const planFont = createFontPlanner(dictionary)
 
-const python = await checkPython()
+interface Built {
+  plan: Plan
+  names: string[]
+  font: hb.Font
+  dir: string
+}
 
-describe.skipIf(!python.ok)('compileFont', () => {
-  let dir: string
-  let plan: Plan
-  let names: string[]
-  let font: hb.Font
+async function build(base: string, previewText?: string): Promise<Built> {
+  const info = await readFontInfo(base)
+  const plan = planFont(resolveOptions(), new Set(info.codepoints), previewText).plan
+  const dir = await mkdtemp(join(tmpdir(), 'furifont-test-'))
+  await compileFont({ plan, base, output: join(dir, 'out.otf'), woff2: join(dir, 'out.woff2'), glyphNames: join(dir, 'names.json') })
+  const names = JSON.parse(await readFile(join(dir, 'names.json'), 'utf8'))
+  const font = new hb.Font(new hb.Face(new hb.Blob(await readFile(join(dir, 'out.otf')))))
+  return { plan, names, font, dir }
+}
+
+/**
+ * Shapes `text` and describes each glyph as `bases:ruby`, or the bare character.
+ * Selectors are left out: HarfBuzz hides them as zero-width glyphs once shaping is done.
+ */
+function read({ plan, names, font }: Built, text: string, features: hb.Feature[] = []): string[] {
+  const buffer = new hb.Buffer()
+  buffer.addText(text)
+  buffer.guessSegmentProperties()
+  hb.shape(font, buffer, features)
+  const positions = buffer.getGlyphPositions()
+  const visible = buffer.getGlyphInfos().filter((_, i) => positions[i]!.xAdvance > 0)
+  return visible.map(({ codepoint }) => {
+    const name = names[codepoint]!
+    const glyph = plan.glyphs.find(g => g.name === name)
+    if (glyph)
+      return `${String.fromCodePoint(...glyph.bases)}:${glyph.ruby.map(r => r.text).join('|')}`
+    const cp = /^u(?:ni)?([0-9A-F]+)$/.exec(name)?.[1]
+    return cp ? String.fromCodePoint(Number.parseInt(cp, 16)) : name
+  })
+}
+
+/** The decompressed table data of a WOFF2, past its table directory. */
+function woff2Stream(woff2: Buffer): Buffer {
+  let at = 48
+  for (let i = 0; i < woff2.readUInt16BE(12); i++) {
+    const arbitraryTag = (woff2[at++]! & 0x3F) === 63
+    at += arbitraryTag ? 4 : 0
+    let more = true
+    while (more)
+      more = (woff2[at++]! & 0x80) !== 0
+  }
+  return brotliDecompressSync(woff2.subarray(at, at + woff2.readUInt32BE(20)))
+}
+
+describe.each([
+  ['CID-keyed CFF', 'SourceHanSansJP-Subset.otf'],
+  ['name-keyed CFF without GSUB', 'FixtureJP-NameKeyed.otf'],
+  ['TrueType without GSUB', 'FixtureJP-TrueType.ttf'],
+])('compileFont on %s', (_, file) => {
+  let built: Built
 
   beforeAll(async () => {
-    const info = await readFontInfo(BASE)
-    plan = createFontPlanner(dictionary)(resolveOptions(), new Set(info.codepoints)).plan
-    dir = await mkdtemp(join(tmpdir(), 'furifont-test-'))
-    await compileFont({ plan, base: BASE, output: join(dir, 'out.otf'), woff2: join(dir, 'out.woff2'), glyphNames: join(dir, 'names.json') })
-    names = JSON.parse(await readFile(join(dir, 'names.json'), 'utf8'))
-    font = new hb.Font(new hb.Face(new hb.Blob(await readFile(join(dir, 'out.otf')))))
+    built = await build(fixture(file))
   })
 
-  afterAll(() => rm(dir, { recursive: true, force: true }))
-
-  /**
-   * Shapes `text` and describes each glyph as `bases:ruby`, or the bare character.
-   * Selectors are left out: HarfBuzz hides them as zero-width glyphs once shaping is done.
-   */
-  function read(text: string, features: hb.Feature[] = []): string[] {
-    const buffer = new hb.Buffer()
-    buffer.addText(text)
-    buffer.guessSegmentProperties()
-    hb.shape(font, buffer, features)
-    const positions = buffer.getGlyphPositions()
-    const visible = buffer.getGlyphInfos().filter((_, i) => positions[i]!.xAdvance > 0)
-    return visible.map(({ codepoint }) => {
-      const name = names[codepoint]!
-      const glyph = plan.glyphs.find(g => g.name === name)
-      if (glyph)
-        return `${String.fromCodePoint(...glyph.bases)}:${glyph.ruby.map(r => r.text).join('|')}`
-      const cp = /^u(?:ni)?([0-9A-F]+)$/.exec(name)?.[1]
-      return cp ? String.fromCodePoint(Number.parseInt(cp, 16)) : name
-    })
-  }
+  afterAll(() => rm(built.dir, { recursive: true, force: true }))
 
   it('annotates words, longest match first', () => {
-    expect(read('日本')).toEqual(['日:に', '本:ほん'])
-    expect(read('日本語')).toEqual(['日:に', '本:ほん', '語:ご'])
-    expect(read('今日')).toEqual(['今日:きょう'])
+    expect(read(built, '日本')).toEqual(['日:に', '本:ほん'])
+    expect(read(built, '日本語')).toEqual(['日:に', '本:ほん', '語:ご'])
+    expect(read(built, '今日')).toEqual(['今日:きょう'])
   })
 
   it('protects a longer word from a shorter match', () => {
-    expect(read('大人')).toEqual(['大人:おとな'])
-    expect(read('大人気')).toEqual(['大:だい', '人:にん', '気:き'])
+    expect(read(built, '大人')).toEqual(['大人:おとな'])
+    expect(read(built, '大人気')).toEqual(['大:だい', '人:にん', '気:き'])
   })
 
   it('annotates a lone kanji only when it is alone in its run', () => {
-    expect(read('桜')).toEqual(['桜:さくら'])
-    expect(read('桜桜')).toEqual(['桜', '桜'])
+    expect(read(built, '桜')).toEqual(['桜:さくら'])
+    expect(read(built, '桜桜')).toEqual(['桜', '桜'])
   })
 
   it('lets variation selectors pick a reading or suppress ruby', () => {
-    expect(read(`今${VS(2)}日`)).toEqual(['今:こん', '日:にち'])
-    expect(read(`今${VS(1)}日`)).toEqual(['今日:きょう'])
-    expect(read(`日${VS(0)}本`)).toEqual(['日', '本'])
+    expect(read(built, `今${VS(2)}日`)).toEqual(['今:こん', '日:にち'])
+    expect(read(built, `今${VS(1)}日`)).toEqual(['今日:きょう'])
+    expect(read(built, `日${VS(0)}本`)).toEqual(['日', '本'])
   })
 
   it('turns ruby off with ss01', () => {
     const off = [new hb.Feature('ss01')]
-    expect(read('日本', off)).toEqual(['日', '本'])
-    expect(read('今日', off)).toEqual(['今', '日'])
-    expect(read('桜', off)).toEqual(['桜'])
+    expect(read(built, '日本', off)).toEqual(['日', '本'])
+    expect(read(built, '今日', off)).toEqual(['今', '日'])
+    expect(read(built, '桜', off)).toEqual(['桜'])
   })
 
-  it('raises the ascender to fit the ruby', () => {
+  it('draws the ruby above the em box and raises the ascender to fit it', () => {
+    const { plan, names, font } = built
     const ruby = names.indexOf(plan.glyphs.find(g => g.ruby[0]?.text === 'さくら')!.name)
-    const top = font.glyphExtents(ruby)!.yBearing
-    expect(top).toBeGreaterThan(880)
-    expect(font.hExtents().ascender).toBeGreaterThanOrEqual(top)
+    const sakura = font.glyphExtents(ruby)!
+    const kanji = font.glyphExtents(font.nominalGlyph('桜'.codePointAt(0)!)!)!
+    expect(sakura.yBearing).toBeGreaterThan(880)
+    expect(sakura.xBearing).toBeGreaterThanOrEqual(kanji.xBearing)
+    expect(font.glyphHAdvance(ruby)).toBe(font.glyphHAdvance(font.nominalGlyph('桜'.codePointAt(0)!)!))
+    expect(font.hExtents().ascender).toBeGreaterThanOrEqual(sakura.yBearing)
   })
 
-  it('reads the base font\'s coverage', async () => {
-    const info = await readFontInfo(join(dir, 'out.otf'))
-    expect(info.family).toBe('Furifont Sans JP')
+  it('names the font after the plan', async () => {
+    const info = await readFontInfo(join(built.dir, 'out.otf'))
+    expect(info).toMatchObject({ family: 'Furifont Sans JP', style: 'Regular', glyphCount: built.names.length })
     expect(info.codepoints).toContain('桜'.codePointAt(0))
+  })
+
+  it('wraps the same tables as WOFF2', async () => {
+    const otf = await readFile(join(built.dir, 'out.otf'))
+    const woff2 = await readFile(join(built.dir, 'out.woff2'))
+    const tables = Array.from({ length: otf.readUInt16BE(4) }, (_, i) => {
+      const offset = otf.readUInt32BE(12 + i * 16 + 8)
+      return otf.subarray(offset, offset + otf.readUInt32BE(12 + i * 16 + 12))
+    })
+    expect(woff2.subarray(0, 4).toString()).toBe('wOF2')
+    expect(woff2Stream(woff2).equals(Buffer.concat(tables))).toBe(true)
   })
 })
 
-describe.skipIf(!python.ok)('without the font libraries', () => {
-  it('says which Python lacks them and how to install them', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'furifont-venv-'))
+describe('a live preview', () => {
+  it('subsets the base font to what the text needs', async () => {
+    const built = await build(fixture('SourceHanSansJP-Subset.otf'), '今日は桜')
     try {
-      execFileSync('python3', ['-m', 'venv', '--without-pip', dir])
-      const error = await readFontInfo(BASE, { python: join(dir, 'bin', 'python') }).catch((e: Error) => e)
-      expect(String(error)).toMatch(/^Error: brotli is not installed for \S+python\. Run: \S+python -m pip install fonttools uharfbuzz brotli, or install them into a \.venv in your project, which Furifont uses\.$/)
+      expect(read(built, '今日')).toEqual(['今日:きょう'])
+      expect(read(built, '桜')).toEqual(['桜:さくら'])
+      expect(built.names.length).toBeLessThan(100)
     }
     finally {
-      await rm(dir, { recursive: true, force: true })
+      await rm(built.dir, { recursive: true, force: true })
     }
   })
 })

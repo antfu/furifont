@@ -21,11 +21,9 @@ const command = 'npx furifont dev'
         <span>$ {{ command }}</span>
         <span :class="copied ? 'i-ph-check' : 'i-ph-copy'" class="color-muted" />
       </button>
-      <i18n-t keypath="studio.offline.needs" tag="p" class="text-xs color-muted">
-        <template #command>
-          <code class="font-mono">pip install fonttools uharfbuzz brotli</code>
-        </template>
-      </i18n-t>
+      <p class="text-xs color-muted">
+        {{ $t('studio.offline.needs') }}
+      </p>
     </div>
   </div>
 </template>

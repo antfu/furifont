@@ -84,7 +84,7 @@ export default {
   downloads: {
     family: '字体家族',
     ruby: '振假名',
-    buildOwn: '也可以自己构建：更换基础字体、词典规模、振假名样式或尺寸。需要 Python 3.10 及以上版本和 fontTools。',
+    buildOwn: '也可以自己构建：更换基础字体、词典规模、振假名样式或尺寸。',
     cliBuild: '用命令行构建字体',
     cliDev: '工作室：调整、预览、构建',
   },
@@ -108,8 +108,8 @@ export default {
     offline: {
       eyebrow: '工作室 / 离线',
       title: '构建你自己的 Furifont',
-      body: '工作室运行在你的电脑上：它用 Python 和 fontTools 编译字体，静态网站做不到这一点。在任意文件夹中启动它，此页面就会连接上，提供实时预览、词典和构建按钮。构建结果保存在 {folder}。',
-      needs: '需要 Node 22 及以上版本，以及安装了 {command} 的 Python 3.10 及以上版本。',
+      body: '工作室运行在你的电脑上，读取基础字体并写出构建的字体。在任意文件夹中启动它，此页面就会连接上，提供实时预览、词典和构建按钮。构建结果保存在 {folder}。',
+      needs: '需要 Node 22.18 及以上版本。',
     },
     auth: {
       eyebrow: '工作室 / 已锁定',
