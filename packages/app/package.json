@@ -16,8 +16,6 @@
   },
   "devDependencies": {
     "@devframes/vite": "catalog:frontend",
-    "@fontsource-variable/geist": "catalog:frontend",
-    "@fontsource-variable/geist-mono": "catalog:frontend",
     "@iconify-json/ph": "catalog:frontend",
     "@nuxt/kit": "catalog:frontend",
     "@unocss/nuxt": "catalog:frontend",

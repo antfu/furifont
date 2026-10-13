@@ -1,0 +1,10 @@
+:root { --ff-bg: #fff; --ff-fg: #0a0a0a; --ff-muted: #0a0a0a9e; --ff-line: #0a0a0a1f; --ff-hover: #0a0a0a0d; color-scheme: light; }
+html.dark { --ff-bg: #0a0a0a; --ff-fg: #fafafa; --ff-muted: #fafafa9e; --ff-line: #fafafa2b; --ff-hover: #fafafa12; color-scheme: dark; }
+html { scrollbar-gutter: stable; }
+html, body { background: var(--ff-bg); color: var(--ff-fg); }
+body { -webkit-font-smoothing: antialiased; }
+::selection { background: var(--ff-fg); color: var(--ff-bg); }
+.display { letter-spacing: -0.045em; line-height: 0.95; text-wrap: balance; }
+:lang(ja) .display, :lang(zh) .display { letter-spacing: 0; line-height: 1.2; word-break: auto-phrase; }
+.hero-title { font-size: clamp(2.75rem, 6vw, 4.75rem); }
+:lang(ja) .hero-title, :lang(zh) .hero-title { font-size: clamp(2.25rem, 4.4vw, 3.5rem); }

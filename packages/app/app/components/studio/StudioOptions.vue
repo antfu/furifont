@@ -5,22 +5,28 @@ const { t } = useI18n()
 const { config, state } = useStudio()
 
 const scripts = computed(() => (['hiragana', 'katakanaOn', 'hepburn'] as const).map(value => ({ value, label: t(`studio.options.${value}`) })))
-const tags = ['spec1', 'ichi1', 'news1', 'gai1'] as const
+// JMdict priority tags, plus the JMnedict place names: each is a source of words.
+const sources = ['spec1', 'ichi1', 'news1', 'gai1', 'places'] as const
+type Source = typeof sources[number]
 
 // The server sends a complete config, metrics included.
 const metrics = computed(() => config.value.metrics ?? {})
-const places = computed({
-  get: () => config.value.places ?? true,
-  set: value => config.value.places = value,
-})
 const rubyScript = computed({
   get: () => config.value.rubyScript ?? 'hiragana',
   set: value => config.value.rubyScript = value,
 })
 
-function toggleTag(tag: typeof tags[number]): void {
+function isOn(source: Source): boolean {
+  return source === 'places' ? config.value.places ?? true : (config.value.selectTags ?? ['spec1']).includes(source)
+}
+
+function toggle(source: Source): void {
+  if (source === 'places') {
+    config.value.places = !isOn(source)
+    return
+  }
   const current = config.value.selectTags ?? ['spec1']
-  config.value.selectTags = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag]
+  config.value.selectTags = current.includes(source) ? current.filter(t => t !== source) : [...current, source]
 }
 </script>
 
@@ -44,25 +50,23 @@ function toggleTag(tag: typeof tags[number]): void {
     </UiField>
     <fieldset class="flex flex-col gap-2">
       <legend class="label mb-1.5">
-        {{ $t('studio.options.tags') }}
+        {{ $t('studio.options.sources') }}
       </legend>
       <div class="flex flex-wrap gap-2">
         <button
-          v-for="tag in tags"
-          :key="tag"
+          v-for="source in sources"
+          :key="source"
           type="button"
-          class="focus-ring border px-2 py-1 font-mono text-xs transition-colors"
-          :class="(config.selectTags ?? ['spec1']).includes(tag) ? 'border-strong bg-inverse color-inverse' : 'border-base color-muted hover:border-strong'"
-          :aria-pressed="(config.selectTags ?? ['spec1']).includes(tag)"
-          @click="toggleTag(tag)"
+          class="focus-ring border px-2 py-1 text-xs transition-colors"
+          :class="isOn(source) ? 'border-strong bg-inverse color-inverse' : 'border-base color-muted hover:border-strong'"
+          :title="$t(`studio.options.source.${source}.hint`)"
+          :aria-pressed="isOn(source)"
+          @click="toggle(source)"
         >
-          {{ tag }}
+          {{ $t(`studio.options.source.${source}.name`) }}
         </button>
       </div>
     </fieldset>
-    <UiToggle v-model="places">
-      {{ $t('studio.options.places') }}
-    </UiToggle>
     <UiField :label="$t('studio.options.share')" :hint="$t('studio.options.shareHint')">
       <input v-model.number="config.isolatedMinShare" type="number" min="0.5" max="1" step="0.05" class="input font-mono" placeholder="0.8">
     </UiField>

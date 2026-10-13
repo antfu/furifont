@@ -1,3 +1,5 @@
+<p align="center"><img src="logo.svg" alt="Furifont" width="96" height="96"></p>
+
 # Furifont
 
 A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji.
