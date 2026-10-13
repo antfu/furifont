@@ -19,7 +19,7 @@ pnpm run setup
 `pnpm setup` is pnpm's own command, so type `run`. The script does five things:
 
 1. It checks your Node and Python versions.
-2. It installs fontTools, uharfbuzz and brotli from `packages/compiler/python/requirements.txt`. If your system Python refuses a global install, as Homebrew's and recent Debian's do, the script puts the libraries in `.venv`. In that case, run `source .venv/bin/activate` before you work, or set `FURIFONT_PYTHON=.venv/bin/python`.
+2. It installs fontTools, uharfbuzz and brotli from `packages/compiler/python/requirements.txt`. If your system Python refuses a global install, as Homebrew's and recent Debian's do, the script puts the libraries in `.venv`, and the compiler finds them there.
 3. It runs `pnpm install`.
 4. It installs Chromium, Firefox and WebKit for the browser tests. Add `--no-browsers` to skip about 500 MB of downloads. On Linux, the browsers can also need system libraries: `pnpm exec playwright install-deps`.
 5. It builds every package. `pnpm dev` and the browser tests need that build.

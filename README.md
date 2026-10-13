@@ -68,6 +68,8 @@ You need Node 22.18 or later, and Python 3.10 or later with fontTools:
 python3 -m pip install fonttools uharfbuzz brotli
 ```
 
+If your Python refuses a global install, as Homebrew's does, install them into a `.venv` in your project instead, and Furifont uses it from there. `FURIFONT_PYTHON` points it at any other Python.
+
 From the command line:
 
 ```sh
