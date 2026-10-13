@@ -89,12 +89,17 @@
     "cliDev": "the studio: tune, preview, build"
   },
   "anyPage": {
-    "body": "Set any website in Furifont. Lines with kanji get room for their ruby. The font loads from this site, about 5 MB the first time.",
+    "body": "Set any website in Furifont. Lines with kanji get room for their ruby. Furifont installed on your computer needs no download; otherwise the font loads from this site, about 5 MB the first time.",
     "bookmarklet": "Bookmarklet",
-    "bookmarkletHint": "Drag it to your bookmarks bar. On any page, click it to turn Furifont on, and again to turn it off. Sites that block fonts from other sites, such as X and GitHub, stop it.",
+    "bookmarkletHint": "Drag it to your bookmarks bar. On any page, click it to turn Furifont on, and again to turn it off. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed on your computer.",
     "userscript": "Userscript",
     "install": "Install the userscript",
-    "userscriptHint": "For Tampermonkey or Violentmonkey. It turns Furifont on by itself on Japanese pages, also on sites that stop the bookmarklet. Its menu switches the family or turns it off."
+    "userscriptHint": "For Tampermonkey or Violentmonkey. It turns Furifont on by itself on Japanese pages, also on sites that block fonts from other sites. Its menu switches the family or turns it off.",
+    "toast": {
+      "message": "Furifont could not load its font on this page. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed on your computer.",
+      "download": "Download the fonts",
+      "close": "Close"
+    }
   },
   "reference": {
     "eyebrow": "Reference",

@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const { face, script, family, faces, scripts } = useFamilyPicker()
-const bookmarklet = computed(() =>
-  `javascript:${encodeURIComponent(`void (${toggleFurifont})(${JSON.stringify(family.value)},${JSON.stringify(siteFontUrl(family.value))})`)}`)
+const bookmarklet = computed(() => {
+  const toast = { message: t('anyPage.toast.message'), download: t('anyPage.toast.download'), close: t('anyPage.toast.close') } satisfies Toast
+  return `javascript:${encodeURIComponent(`void (${toggleFurifont})(${JSON.stringify(family.value)},${JSON.stringify(siteFontUrl(family.value))},${JSON.stringify(toast)})`)}`
+})
 const userscript = `${useRuntimeConfig().app.baseURL}furifont.user.js`
 </script>
 

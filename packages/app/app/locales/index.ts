@@ -1,4 +1,4 @@
-import type { Locale } from '../utils/locale'
+import type { Locale } from '../../shared/utils/locale'
 import enMessages from './en.json'
 
 export const en = enMessages

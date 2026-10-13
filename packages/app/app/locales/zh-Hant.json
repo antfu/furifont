@@ -89,12 +89,17 @@
     "cliDev": "工作室：調整、預覽、建置"
   },
   "anyPage": {
-    "body": "將任何網站改以 Furifont 顯示。含漢字的行會加大行距，留出振假名的位置。字型從本站載入，首次約 5 MB。",
+    "body": "將任何網站改以 Furifont 顯示。含漢字的行會加大行距，留出振假名的位置。電腦上已安裝 Furifont 時無需下載，否則字型從本站載入，首次約 5 MB。",
     "bookmarklet": "書籤小工具",
-    "bookmarkletHint": "把它拖到書籤列。在任何網頁上點一下即可開啟 Furifont，再點一次關閉。X、GitHub 等禁止載入外部字型的網站上無法使用。",
+    "bookmarkletHint": "把它拖到書籤列。在任何網頁上點一下即可開啟 Furifont，再點一次關閉。在 X、GitHub 等禁止載入外部字型的網站上，需要先在電腦上安裝 Furifont。",
     "userscript": "使用者腳本",
     "install": "安裝使用者腳本",
-    "userscriptHint": "適用於 Tampermonkey 或 Violentmonkey。在日文網頁上自動開啟，在書籤小工具無法使用的網站上也能用。可在選單中切換字型家族或關閉。"
+    "userscriptHint": "適用於 Tampermonkey 或 Violentmonkey。在日文網頁上自動開啟，在禁止載入外部字型的網站上也能用。可在選單中切換字型家族或關閉。",
+    "toast": {
+      "message": "Furifont 無法在此頁面載入字型。在 X、GitHub 等禁止載入外部字型的網站上，需要先在電腦上安裝 Furifont。",
+      "download": "下載字型",
+      "close": "關閉"
+    }
   },
   "reference": {
     "eyebrow": "參考",

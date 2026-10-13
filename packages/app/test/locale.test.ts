@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { detectLocale } from '../app/utils/locale'
+import { detectLocale } from '../shared/utils/locale'
 
 describe('detectLocale', () => {
   it.each([
