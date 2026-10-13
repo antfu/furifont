@@ -1,4 +1,6 @@
 import type { NuxtConfig } from 'nuxt/schema'
+import { createRequire } from 'node:module'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { addVitePlugin } from '@nuxt/kit'
 
@@ -8,6 +10,10 @@ import { addVitePlugin } from '@nuxt/kit'
  * app is static: the CLI serves it with the same RPC, the demo site without any.
  */
 const DEV_STUDIO_BASE = '/__furifont/'
+
+function source(pkg: string): string {
+  return fileURLToPath(new URL(`../${pkg}/src/index.ts`, import.meta.url))
+}
 
 const studioBridge: NonNullable<NuxtConfig['modules']>[number] = async (_, nuxt) => {
   if (!nuxt.options.dev)
@@ -25,7 +31,14 @@ export default defineNuxtConfig({
   modules: ['@unocss/nuxt', studioBridge],
   alias: {
     // Types only: the studio's wire contract lives with its implementation.
-    furifont: fileURLToPath(new URL('../cli/src/index.ts', import.meta.url)),
+    'furifont': source('cli'),
+    // Bundled from source: the playground writes verb selectors in the browser.
+    '@furifont/annotate': source('annotate'),
+    '@furifont/core': source('core'),
+  },
+  nitro: {
+    // kuromoji's dictionary, fetched once when the playground first annotates.
+    publicAssets: [{ dir: join(dirname(createRequire(import.meta.url).resolve('@patdx/kuromoji')), '../dict'), baseURL: 'kuromoji' }],
   },
   router: {
     options: { hashMode: true },

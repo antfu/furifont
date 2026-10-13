@@ -4,6 +4,7 @@ import type { FurifontConfig, FurifontConfigInput } from './config'
 import { Buffer } from 'node:buffer'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { dictionaryDir } from '@furifont/annotate/node'
 import { checkPython, SOURCE_HAN_SANS_JP_WEIGHTS } from '@furifont/compiler'
 import { formatNotation, hanRuns, parseFurigana } from '@furifont/core'
 import { defineRpcFunction } from 'devframe'
@@ -85,6 +86,7 @@ export async function setupStudio(ctx: DevframeNodeContext): Promise<void> {
   const outDir = join(ctx.cwd, 'fonts')
   await mkdir(outDir, { recursive: true })
   ctx.views.hostStatic(FONTS_PATH, outDir)
+  ctx.views.hostStatic('/kuromoji/', dictionaryDir())
   const channel = scope.rpc.streaming.create<BuildEvent>(BUILD_CHANNEL, { replayWindow: 256 })
   // Devframe passes arguments through as sent: every handler parses its own.
   const parse = (input: FurifontConfigInput): FurifontConfig => v.parse(FurifontConfigSchema, input)

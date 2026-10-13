@@ -368,6 +368,12 @@ importers:
 
   packages/app:
     dependencies:
+      '@furifont/annotate':
+        specifier: workspace:*
+        version: link:../annotate
+      '@patdx/kuromoji':
+        specifier: catalog:prod
+        version: 1.0.4
       devframe:
         specifier: catalog:prod
         version: 1.2.3(cac@7.1.0)(srvx@1.0.5)
