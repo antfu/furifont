@@ -29,7 +29,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "typecheck": "tsc && pnpm -F @furifont/app run typecheck",
-    "ci": "pnpm run lint && pnpm run typecheck && pnpm run knip && pnpm run build && pnpm run test",
+    "ci": "pnpm run lint && pnpm run build && pnpm run typecheck && pnpm run knip && pnpm run test",
     "prepare": "git config core.hooksPath .githooks && simple-git-hooks && skills-npm"
   },
   "scripts-info": {

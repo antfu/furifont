@@ -25,9 +25,10 @@ jobs:
       - run: python -m pip install -r packages/compiler/python/requirements.txt
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      # The app's types come from the packages' builds.
+      - run: pnpm build
       - run: pnpm typecheck
       - run: pnpm knip
-      - run: pnpm build
       - run: pnpm test
 
   e2e:
