@@ -17,8 +17,11 @@ export default {
   footer: {
     fonts: '字型衍生自 Adobe 思源黑體（Source Han Sans）與思源宋體（Source Han Serif），採用 {license}。',
     data: '讀音資料來自 JMdict、JMnedict、KANJIDIC2（EDRDG）與 JmdictFurigana，採用 CC BY-SA 4.0。',
-    code: '工具採用 MIT 授權。{source}。',
+    code: '工具採用 MIT 授權。',
     source: 'GitHub 上的原始碼',
+    made: '作者：{author}',
+    supported: '由 {vercel} 和{sponsors}支持',
+    sponsors: '贊助者',
   },
   copied: '已複製',
   editable: '可編輯的範例文字',

@@ -15,8 +15,11 @@ export default {
   footer: {
     fonts: 'Fonts under the {license}, derived from Source Han Sans and Source Han Serif by Adobe.',
     data: 'Readings from JMdict, JMnedict and KANJIDIC2 (EDRDG) and JmdictFurigana, under CC BY-SA 4.0.',
-    code: 'Tooling under MIT. {source}.',
+    code: 'Tooling under MIT.',
     source: 'Source on GitHub',
+    made: 'Made by {author}',
+    supported: 'Supported by {vercel} and {sponsors}',
+    sponsors: 'sponsors',
   },
   copied: 'Copied',
   editable: 'Sample text, editable',
