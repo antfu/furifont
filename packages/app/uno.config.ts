@@ -14,13 +14,6 @@ export default defineConfig({
       furi: '"Furifont Sans JP", ui-sans-serif, system-ui, sans-serif',
     },
   },
-  rules: [
-    ['bg-grid', {
-      'background-image': 'linear-gradient(var(--ff-line) 1px, transparent 1px), linear-gradient(90deg, var(--ff-line) 1px, transparent 1px)',
-      'background-size': '32px 32px',
-      'background-position': '-1px -1px',
-    }],
-  ],
   shortcuts: {
     'bg-base': 'bg-[var(--ff-bg)]',
     'bg-inverse': 'bg-[var(--ff-fg)]',

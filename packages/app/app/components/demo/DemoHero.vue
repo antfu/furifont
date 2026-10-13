@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const emit = defineEmits<{ download: [] }>()
+const size = 44
 </script>
 
 <template>
@@ -21,9 +22,12 @@ const emit = defineEmits<{ download: [] }>()
         </UiButton>
       </div>
     </div>
-    <div class="relative flex flex-col justify-center gap-4 border-t border-base bg-grid px-6 py-12 lg:border-t-0">
-      <FuriText text="今日は&#10;日本語の勉強を&#10;します。" :size="44" />
-      <span class="label">Furifont Sans JP Regular / 44px</span>
+    <div class="relative isolate flex flex-col justify-center gap-4 overflow-hidden border-t border-base px-6 py-12 lg:border-t-0">
+      <div class="relative">
+        <UiTypeGrid :size />
+        <FuriText text="今日は&#10;日本語の勉強を&#10;します。" :size />
+      </div>
+      <span class="label">Furifont Sans JP Regular / {{ size }}px</span>
     </div>
   </div>
 </template>
