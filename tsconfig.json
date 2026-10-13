@@ -5,6 +5,8 @@
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "paths": {
+      "@furifont/annotate": ["./packages/annotate/src/index.ts"],
+      "@furifont/annotate/node": ["./packages/annotate/src/node.ts"],
       "@furifont/core": ["./packages/core/src/index.ts"],
       "@furifont/compiler": ["./packages/compiler/src/index.ts"],
       "@furifont/dictionary": ["./packages/dictionary/src/index.ts"]
