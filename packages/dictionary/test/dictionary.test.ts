@@ -1,6 +1,7 @@
 import { createFontPlanner, resolveOptions } from '@furifont/core'
 import { describe, expect, it } from 'vitest'
 import { loadDictionary } from '../src'
+import { OKURIGANA } from '../src/okurigana'
 
 const dictionary = await loadDictionary()
 const coverage = new Set(dictionary.entries.flatMap(e => [...e.form, ...e.furigana]).map(c => c.codePointAt(0)!))
@@ -38,5 +39,22 @@ describe('compiled dictionary', () => {
     expect(words).toBeLessThan(10_000)
     expect(report.ivs.kanji['来']).toEqual(expect.arrayContaining(['く', 'き']))
     expect(report.ivs.kanji['桜']).toEqual(['さくら'])
+  })
+
+  it('reads a kanji with its okurigana as one word', () => {
+    expect(OKURIGANA.get('来ない')).toBe('こ')
+    expect(OKURIGANA.get('来ます')).toBe('き')
+    expect(OKURIGANA.get('行く')).toBe('い')
+    expect(OKURIGANA.get('行い')).toBe('おこな')
+    expect(OKURIGANA.get('下りた')).toBe('お')
+    expect(OKURIGANA.get('強い')).toBe('つよ')
+    expect(OKURIGANA.get('美味し')).toBe('おい')
+  })
+
+  it('marks pairs that read two ways, and stems that only repeat a shorter key', () => {
+    expect(OKURIGANA.get('行って')).toBeNull()
+    expect(OKURIGANA.get('開く')).toBeNull()
+    expect(OKURIGANA.has('読まない')).toBe(false)
+    expect(OKURIGANA.get('読ま')).toBe('よ')
   })
 })
