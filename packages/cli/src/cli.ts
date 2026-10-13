@@ -48,6 +48,7 @@ cli
 const ReferenceSchema = v.object({
   kanji: v.record(v.string(), v.array(v.string())),
   words: v.record(v.string(), v.array(v.string())),
+  lone: v.record(v.string(), v.string()),
 })
 
 async function readInput(file: string | undefined): Promise<string> {

@@ -50,6 +50,7 @@ describe('planner', () => {
     expect(p.fea).not.toMatch(/sub uni66F8 by .* # isolated/)
     expect(report.ivs.kanji['書']).toEqual(['か', 'しょ'])
     expect(report.ivs.kanji['来']).toHaveLength(3)
+    expect(report.ivs.lone).toEqual({ 桜: 'さくら' })
     expect(report.stats.isolated).toBe(1)
   })
 
