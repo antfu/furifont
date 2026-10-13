@@ -107,7 +107,10 @@ export default {
       eyebrow: 'Studio / offline',
       title: 'Build your own Furifont',
       body: 'The studio runs on your machine: it compiles fonts with Python and fontTools, which a static site cannot do. Start it in any folder and this page opens connected, with a live preview, the dictionary, and a build button. Builds land in {folder}.',
-      needs: 'Needs Node 22+ and Python 3.10+ with {command}.',
+      needs: 'Needs Node 22.18+ and Python 3.10+.',
+      install: '1. Install the font libraries',
+      run: '2. Start the studio in any folder',
+      venv: 'If your Python refuses a global install, as Homebrew does, use a .venv in your project: it is picked up from there. FURIFONT_PYTHON points to any other Python.',
     },
     auth: {
       eyebrow: 'Studio / locked',
