@@ -33,7 +33,7 @@ function toggle(source: Source): void {
 <template>
   <form class="flex flex-col gap-5 p-6" @submit.prevent>
     <UiField :label="$t('studio.options.family')">
-      <input v-model="config.family" class="input" placeholder="Furifont Sans JP">
+      <input v-model="config.family" class="input" placeholder="Furifont Sans">
     </UiField>
     <UiField :label="$t('studio.options.base')" :hint="$t('studio.options.baseHint')">
       <input v-model="config.base" class="input" list="studio-base-fonts" placeholder="Source Han Sans JP Regular">

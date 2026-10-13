@@ -31,7 +31,7 @@ const size = 44
         <FuriText v-model:text="text" :size />
       </div>
       <span v-if="author" class="label [font-feature-settings:'ss01'] absolute right-3 bottom-3 border border-base bg-base px-2 py-1">⁄ {{ author }}</span>
-      <span class="label absolute bottom-3 left-3 border border-base bg-base px-2 py-1">Furifont Sans JP Regular / {{ size }}px</span>
+      <span class="label absolute bottom-3 left-3 border border-base bg-base px-2 py-1">Furifont Sans Regular / {{ size }}px</span>
     </div>
   </div>
 </template>

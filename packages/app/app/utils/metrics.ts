@@ -5,7 +5,7 @@ const { rubyScale, rubyGap } = resolveOptions().metrics
 /** Line height of the previews: below about 1.6 the ruby starts to clip. */
 export const LINE_HEIGHT = 1.75
 
-// Furifont Sans JP, in em: Source Han Sans JP's ideographic em box (BASE `ideo`)
+// Furifont Sans, in em: Source Han Sans JP's ideographic em box (BASE `ideo`)
 // and descent, with the ascent the compiler raises to the top of the ruby.
 const EM_TOP = 0.88
 const EM_BOTTOM = 0.12
