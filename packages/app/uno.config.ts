@@ -11,7 +11,7 @@ export default defineConfig({
   ],
   theme: {
     font: {
-      furi: '"Furifont Sans JP", ui-sans-serif, system-ui, sans-serif',
+      furi: '"Furifont Sans", ui-sans-serif, system-ui, sans-serif',
     },
   },
   shortcuts: {

@@ -8,10 +8,10 @@ export interface Family {
 
 /** The prebuilt fonts: hiragana and romaji ruby on Source Han Sans and Serif. */
 export const FAMILIES: Family[] = [
-  { family: 'Furifont Sans JP', stem: 'FurifontSansJP', face: 'sans', script: 'hiragana' },
-  { family: 'Furifont Sans JP Romaji', stem: 'FurifontSansJPRomaji', face: 'sans', script: 'hepburn' },
-  { family: 'Furifont Serif JP', stem: 'FurifontSerifJP', face: 'serif', script: 'hiragana' },
-  { family: 'Furifont Serif JP Romaji', stem: 'FurifontSerifJPRomaji', face: 'serif', script: 'hepburn' },
+  { family: 'Furifont Sans', stem: 'FurifontSans', face: 'sans', script: 'hiragana' },
+  { family: 'Furifont Sans Romaji', stem: 'FurifontSansRomaji', face: 'sans', script: 'hepburn' },
+  { family: 'Furifont Serif', stem: 'FurifontSerif', face: 'serif', script: 'hiragana' },
+  { family: 'Furifont Serif Romaji', stem: 'FurifontSerifRomaji', face: 'serif', script: 'hepburn' },
 ]
 
 /** Weights on the release; the site serves Regular only. */

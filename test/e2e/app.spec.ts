@@ -32,7 +32,7 @@ test.beforeAll(async () => {
   await writeFile(join(cwd, 'furifont.config.json'), JSON.stringify({ base: FIXTURE_FONT }))
   // The reading lists of a font already built, which the playground's selectors index into.
   await mkdir(join(cwd, 'fonts'))
-  await writeFile(join(cwd, 'fonts', 'FurifontSansJP-Regular.ivs.json'), JSON.stringify({ kanji: { 来: ['き', 'こ'] }, words: {}, lone: {} }))
+  await writeFile(join(cwd, 'fonts', 'FurifontSans-Regular.ivs.json'), JSON.stringify({ kanji: { 来: ['き', 'こ'] }, words: {}, lone: {} }))
   const port = await freePort()
   studio = spawn(process.execPath, [CLI, 'dev', '--no-open', '--no-auth', '--port', String(port)], { cwd })
   url = await new Promise((resolve, reject) => {
@@ -124,14 +124,14 @@ test('sets another site in Furifont from the bookmarklet, and a second click tur
   await page.goto(new URL('/#/', url).href)
   const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
   await section.getByRole('radio', { name: 'Serif' }).click()
-  const href = await section.getByRole('link', { name: 'Furifont Serif JP', exact: true }).getAttribute('href')
+  const href = await section.getByRole('link', { name: 'Furifont Serif', exact: true }).getAttribute('href')
   const click = (): Promise<void> => page.evaluate(decodeURIComponent(href!.replace(/^javascript:/, '')))
 
   await openElsewhere(page, 'en')
   await click()
-  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: '"Furifont Serif JP", serif', lineHeight: 'normal' })
-  expect(await styleOf(page, 'latin')).toEqual({ fontFamily: '"Furifont Serif JP", serif', lineHeight: '24px' })
-  await expect.poll(() => hasLoaded(page, 'Furifont Serif JP')).toBe(true)
+  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: '"Furifont Serif", serif', lineHeight: 'normal' })
+  expect(await styleOf(page, 'latin')).toEqual({ fontFamily: '"Furifont Serif", serif', lineHeight: '24px' })
+  await expect.poll(() => hasLoaded(page, 'Furifont Serif')).toBe(true)
 
   await page.evaluate(() => document.body.insertAdjacentHTML('beforeend', '<p id="later">東京</p>'))
   await expect.poll(async () => (await styleOf(page, 'later')).lineHeight).toBe('normal')
@@ -163,15 +163,15 @@ test('turns the userscript on by itself on Japanese pages, and its menu switches
 
   await openElsewhere(page, 'ja-JP')
   await page.evaluate(userscript)
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Sans JP", sans-serif')
-  await expect.poll(() => hasLoaded(page, 'Furifont Sans JP')).toBe(true)
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Sans", sans-serif')
+  await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
 
-  await page.getByRole('button', { name: 'Furifont Serif JP Romaji' }).click()
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Serif JP Romaji", serif')
+  await page.getByRole('button', { name: 'Furifont Serif Romaji' }).click()
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Serif Romaji", serif')
   await page.reload()
   await page.evaluate(userscript)
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Serif JP Romaji", serif')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Serif Romaji", serif')
 
-  await page.getByRole('button', { name: 'Furifont Serif JP Romaji' }).click()
+  await page.getByRole('button', { name: 'Furifont Serif Romaji' }).click()
   expect((await styleOf(page, 'kanji')).fontFamily).toBe('monospace')
 })

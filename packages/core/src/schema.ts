@@ -18,7 +18,7 @@ const RubyMetricsSchema = v.object({
 export type RubyMetrics = v.InferOutput<typeof RubyMetricsSchema>
 
 export const PlanOptionsSchema = v.object({
-  family: v.optional(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.check(name => !/source/i.test(name), 'Source is a reserved font name of the base font')), 'Furifont Sans JP'),
+  family: v.optional(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.check(name => !/source/i.test(name), 'Source is a reserved font name of the base font')), 'Furifont Sans'),
   rubyScript: v.optional(v.picklist(RUBY_SCRIPTS), 'hiragana'),
   /** Words whose newspaper frequency bucket is at most this are annotated. */
   nfMax: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(48)), 30),
