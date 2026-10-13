@@ -1,0 +1,11 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      // The build also generates the app and copies it into dist/client, so those count as inputs.
+      "inputs": ["$TURBO_DEFAULT$", "../app/app/**", "../app/public/**", "../app/nuxt.config.ts", "../app/uno.config.ts", "../../fonts/**"],
+      "outputs": ["dist/**", "../app/.output/**"]
+    }
+  }
+}
