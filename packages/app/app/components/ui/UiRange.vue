@@ -17,7 +17,7 @@ const model = defineModel<number>({ required: true })
       <span>{{ label }}</span>
       <span class="color-base tabular-nums">{{ display }}</span>
     </span>
-    <input v-model.number="model" type="range" :min :max :step class="w-full accent-[var(--ff-fg)]">
+    <UiSlider v-model="model" :min :max :step />
     <span v-if="hint" class="text-xs color-muted">{{ hint }}</span>
   </label>
 </template>
