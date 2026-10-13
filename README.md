@@ -54,13 +54,13 @@ Selectors are invisible, survive copy and paste, and need no markup. The [refere
 
 ### Verbs
 
-The font cannot tell 来る from 来ない, because it never sees the kana after the kanji. `furifont annotate` reads the text with a morphological analyzer ([kuromoji](https://github.com/patdx/kuromoji.js)). After each verb or adjective, it writes the selector for that word's reading:
+The font cannot tell 来る from 来ない, because it never sees the kana after the kanji. `furifont annotate` reads each kanji together with the kana after it, as one word: 来ない, 来ます, 行かない and 読み are pairs in a table compiled from JMdict, with every conjugated form. It writes the selector for that reading:
 
 ```sh
 echo '明日は来ない。' | npx furifont annotate --reference FurifontSansJP-Regular.ivs.json
 ```
 
-When the font has no ruby for a reading, the kanji gets VS225 and stays bare. The playground on the demo site does the same in your browser, and [`@furifont/annotate`](packages/annotate) does it in your own code.
+It writes a selector only where the font would not already show that reading. A pair that reads two ways, such as 行った (行く or 行う), or a reading the font has no ruby for, leaves the kanji bare. The playground on the demo site does the same in your browser, and [`@furifont/annotate`](packages/annotate) does it in your own code.
 
 ## Build your own
 
@@ -121,7 +121,7 @@ These are the settings:
 | [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary. It reads no fonts. |
 | [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font with fontTools and compiles the rules |
 | [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary and the script that updates it |
-| [`@furifont/annotate`](packages/annotate) | Writes the selectors for verbs into a text, with kuromoji |
+| [`@furifont/annotate`](packages/annotate) | Writes the selectors that okurigana decide into a text |
 | [`packages/app`](packages/app) | The demo site and the studio (Nuxt) |
 
 [docs/design.md](docs/design.md) explains how it works.
@@ -142,4 +142,3 @@ pnpm dev            # the app, with a live studio
 - **Code:** [MIT](LICENSE.md).
 - **Fonts:** [SIL Open Font License 1.1](OFL.txt), as derivatives of Source Han Sans by Adobe. "Source" is a Reserved Font Name and does not appear in Furifont's names.
 - **Dictionary data and the reading rules in the fonts:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict, JMnedict and KANJIDIC2 (EDRDG) and JmdictFurigana.
-- **Morphological analysis** in `furifont annotate` and the playground: kuromoji (Apache 2.0) with its IPADIC dictionary. Neither is part of the fonts.
