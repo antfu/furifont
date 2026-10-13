@@ -18,7 +18,7 @@ const cli = cac('furifont')
 cli
   .command('build', 'Build a font into --out')
   .option('--config <file>', `Config file`, { default: CONFIG_FILE })
-  .option('--base <font>', 'A Source Han Sans JP weight (Regular, Bold, ...) or a font file')
+  .option('--base <font>', 'A font to download, such as "Source Han Serif JP Bold", or a font file')
   .option('--family <name>', 'Font family name')
   .option('--script <script>', `Ruby script: ${RUBY_SCRIPTS.join(', ')}`)
   .option('--nf <bucket>', 'Annotate words up to this newspaper frequency bucket (1-48)')

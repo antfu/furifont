@@ -36,9 +36,9 @@ function toggle(source: Source): void {
       <input v-model="config.family" class="input" placeholder="Furifont Sans JP">
     </UiField>
     <UiField :label="$t('studio.options.base')" :hint="$t('studio.options.baseHint')">
-      <input v-model="config.base" class="input" list="studio-weights" placeholder="Regular">
-      <datalist id="studio-weights">
-        <option v-for="w in state?.weights" :key="w" :value="w" />
+      <input v-model="config.base" class="input" list="studio-base-fonts" placeholder="Source Han Sans JP Regular">
+      <datalist id="studio-base-fonts">
+        <option v-for="name in state?.baseFonts" :key="name" :value="name" />
       </datalist>
     </UiField>
     <UiField :label="$t('studio.options.script')">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const commands = [
-  { command: 'npx furifont build --base Bold', note: 'downloads.cliBuild' },
+  { command: 'npx furifont build --base "Source Han Serif JP Bold"', note: 'downloads.cliBuild' },
   { command: 'npx furifont dev', note: 'downloads.cliDev' },
 ] as const
 const { copied, copy } = useCopy()

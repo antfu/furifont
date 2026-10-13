@@ -6,7 +6,7 @@ import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
-import { compileFont, fetchBaseFont, readFontInfo, SOURCE_HAN_SANS_JP_WEIGHTS } from '@furifont/compiler'
+import { BASE_FONTS, compileFont, fetchBaseFont, readFontInfo } from '@furifont/compiler'
 import { createFontPlanner } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
 
@@ -25,10 +25,10 @@ function cacheDir(): string {
   return join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'furifont')
 }
 
-/** The base font's path: a Source Han Sans JP weight is downloaded once into the cache. */
+/** The base font's path: a named one, such as Source Han Serif JP Bold, is downloaded once into the cache. */
 function resolveBase(base: string, cwd: string): Promise<string> {
-  const weight = SOURCE_HAN_SANS_JP_WEIGHTS.find(w => w === base)
-  return weight ? fetchBaseFont(weight, cacheDir()) : Promise.resolve(resolve(cwd, base))
+  const known = BASE_FONTS.find(f => f.name === base)
+  return known ? fetchBaseFont(known, cacheDir()) : Promise.resolve(resolve(cwd, base))
 }
 
 let dictionary: Promise<Dictionary> | undefined

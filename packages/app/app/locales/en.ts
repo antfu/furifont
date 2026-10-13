@@ -123,7 +123,7 @@ export default {
     options: {
       family: 'Family name',
       base: 'Base font',
-      baseHint: 'A Source Han Sans JP weight, or the path of another font.',
+      baseHint: 'A font to download, such as Source Han Serif JP Bold, or the path of another font.',
       script: 'Ruby script',
       hiragana: 'Hiragana',
       katakanaOn: 'Kata on',
