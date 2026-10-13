@@ -40,16 +40,15 @@ if (!python)
   fail('Python 3.10 or later was not found. Install it, or point FURIFONT_PYTHON at one.')
 
 const hasFontLibraries = (interpreter: string): boolean => succeeds(interpreter, ['-c', 'import fontTools, uharfbuzz, brotli'])
-let fontPython = python
 if (!hasFontLibraries(python) && !run(python, ['-m', 'pip', 'install', '-r', REQUIREMENTS])) {
   // Systems that manage their own Python (PEP 668) refuse a global install: use a virtual environment.
   if (!existsSync(VENV_PYTHON) && !run(python, ['-m', 'venv', VENV])) {
     rmSync(VENV, { recursive: true, force: true })
     fail(`Could not create ${VENV} (see above). Or install the font libraries yourself: ${python} -m pip install -r ${REQUIREMENTS}`)
   }
+  // The compiler finds this .venv on its own.
   if (!run(VENV_PYTHON, ['-m', 'pip', 'install', '-r', REQUIREMENTS]))
     fail(`Installing ${REQUIREMENTS} into ${VENV} failed.`)
-  fontPython = VENV_PYTHON
 }
 
 if (!run('pnpm', ['install']))
@@ -60,7 +59,3 @@ if (!run('pnpm', ['build']))
   fail('The first build failed.')
 
 console.log('\nReady. Try `pnpm test`, `pnpm test:e2e` or `pnpm dev`.')
-if (fontPython === VENV_PYTHON) {
-  const activate = process.platform === 'win32' ? `${VENV}\\Scripts\\activate` : `source ${VENV}/bin/activate`
-  console.log(`The font libraries are in ${VENV}: run \`${activate}\` first, or set FURIFONT_PYTHON=${VENV_PYTHON}.`)
-}

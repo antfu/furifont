@@ -1,4 +1,5 @@
 import type { Dictionary, Plan } from '@furifont/core'
+import { execFileSync } from 'node:child_process'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -107,5 +108,19 @@ describe.skipIf(!python.ok)('compileFont', () => {
     const info = await readFontInfo(join(dir, 'out.otf'))
     expect(info.family).toBe('Furifont Sans JP')
     expect(info.codepoints).toContain('桜'.codePointAt(0))
+  })
+})
+
+describe.skipIf(!python.ok)('without the font libraries', () => {
+  it('says which Python lacks them and how to install them', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'furifont-venv-'))
+    try {
+      execFileSync('python3', ['-m', 'venv', '--without-pip', dir])
+      const error = await readFontInfo(BASE, { python: join(dir, 'bin', 'python') }).catch((e: Error) => e)
+      expect(String(error)).toMatch(/^Error: brotli is not installed for \S+python\. Run: \S+python -m pip install fonttools uharfbuzz brotli, or install them into a \.venv in your project, which Furifont uses\.$/)
+    }
+    finally {
+      await rm(dir, { recursive: true, force: true })
+    }
   })
 })

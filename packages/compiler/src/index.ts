@@ -1,9 +1,10 @@
 import type { Plan } from '@furifont/core'
 import type { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { PlanSchema } from '@furifont/core'
@@ -13,10 +14,9 @@ export { fetchBaseFont, SOURCE_HAN_SANS_JP_WEIGHTS } from './base-fonts'
 export type { SourceHanSansWeight } from './base-fonts'
 
 const SCRIPT = fileURLToPath(new URL('../python/furifont.py', import.meta.url))
-const INSTALL_HINT = 'python3 -m pip install fonttools uharfbuzz brotli'
 
 export interface PythonOptions {
-  /** Python executable; defaults to `$FURIFONT_PYTHON`, then `python3`. */
+  /** Python executable; defaults to `$FURIFONT_PYTHON`, then a `.venv` above this package, then `python3`. */
   python?: string
 }
 
@@ -69,9 +69,20 @@ const MessageSchema = v.union([
   v.object({ error: v.string() }),
 ])
 
-function pythonPath(options: PythonOptions): string {
-  return options.python ?? process.env.FURIFONT_PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3')
+/** The `.venv` of the checkout or project this package sits in, where Pythons that refuse global installs keep the font libraries. */
+function projectVenv(): string | undefined {
+  const python = process.platform === 'win32' ? join('.venv', 'Scripts', 'python.exe') : join('.venv', 'bin', 'python')
+  for (let dir = fileURLToPath(new URL('..', import.meta.url)); dir !== dirname(dir); dir = dirname(dir)) {
+    if (existsSync(join(dir, python)))
+      return join(dir, python)
+  }
 }
+
+function pythonPath(options: PythonOptions): string {
+  return options.python ?? process.env.FURIFONT_PYTHON ?? projectVenv() ?? (process.platform === 'win32' ? 'python' : 'python3')
+}
+
+const installHint = (python: string): string => `${python} -m pip install fonttools uharfbuzz brotli`
 
 function parseMessage(line: string): v.InferOutput<typeof MessageSchema> | undefined {
   try {
@@ -104,7 +115,7 @@ function run(args: string[], options: PythonOptions, onProgress?: (p: CompilePro
           onProgress?.(message)
       }
     })
-    child.on('error', error => reject(new Error(`Could not run ${pythonPath(options)}: ${error.message}. Furifont needs Python 3.10+ with: ${INSTALL_HINT}`)))
+    child.on('error', error => reject(new Error(`Could not run ${pythonPath(options)}: ${error.message}. Furifont needs Python 3.10+ with: ${installHint('python3')}`)))
     child.on('close', (code) => {
       if (code === 0)
         resolve(stdout)
@@ -117,9 +128,10 @@ function run(args: string[], options: PythonOptions, onProgress?: (p: CompilePro
 /** Whether Python and the font libraries are installed, with a hint when they are not. */
 export async function checkPython(options: PythonOptions = {}): Promise<{ ok: true } | { ok: false, message: string }> {
   return new Promise((resolve) => {
-    const child = spawn(pythonPath(options), ['-c', 'import fontTools, uharfbuzz, brotli'], { stdio: 'ignore' })
-    child.on('error', () => resolve({ ok: false, message: `${pythonPath(options)} not found. Install Python 3.10+, then: ${INSTALL_HINT}` }))
-    child.on('close', code => resolve(code === 0 ? { ok: true } : { ok: false, message: `Missing Python packages. Run: ${INSTALL_HINT}` }))
+    const python = pythonPath(options)
+    const child = spawn(python, ['-c', 'import fontTools, uharfbuzz, brotli'], { stdio: 'ignore' })
+    child.on('error', () => resolve({ ok: false, message: `${python} not found. Install Python 3.10+, then: ${installHint('python3')}` }))
+    child.on('close', code => resolve(code === 0 ? { ok: true } : { ok: false, message: `Missing Python packages. Run: ${installHint(python)}` }))
   })
 }
 
