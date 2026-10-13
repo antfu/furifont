@@ -33,7 +33,7 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 | `pnpm test:e2e` | Rendering in Chromium, Firefox and WebKit, and the studio. Run `pnpm build` first. |
 | `pnpm fonts` | All eight prebuilt fonts, OpenType and WOFF2, into `dist/fonts`, as the release builds them. It takes about 2 minutes. |
 | `node packages/cli/bin.mjs dev` | The studio as users get it, built from your checkout. |
-| `pnpm dict:update` | Downloads JMdict, JMnedict, JmdictFurigana and KANJIDIC2 and recompiles the dictionary and the place names. |
+| `pnpm dict:update` | Downloads JMdict, JMnedict, JmdictFurigana and KANJIDIC2 and recompiles the dictionary, the place names and the okurigana pairs. |
 
 ## How it fits together
 
@@ -41,7 +41,7 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 
 - **`@furifont/core` reads no fonts, and `@furifont/compiler` decides no readings.** The plan (`PlanSchema`) is the only thing passed between them. A change to which words get ruby, or how, belongs in core. A change to how glyphs are drawn or compiled belongs in the compiler.
 - **Browsers shape one script at a time.** A rule can only see a run of kanji, never the kana around it. HarfBuzz on a whole string matches rules that no browser does. So check any change to rendering with `pnpm test:e2e`, not with HarfBuzz alone.
-- **Never edit `packages/dictionary/data/dictionary.json` or `places.json` by hand.** Regenerate it with `pnpm dict:update`. To fix a wrong default reading, add the word to `packages/dictionary/src/defaults.ts`, with a comment that says why.
+- **Never edit `packages/dictionary/data/dictionary.json`, `places.json` or `okurigana.json` by hand.** Regenerate it with `pnpm dict:update`. To fix a wrong default reading, add the word to `packages/dictionary/src/defaults.ts`, with a comment that says why.
 
 The app uses Nuxt and UnoCSS. Colors come only from the `--ff-*` tokens in `packages/app/uno.config.ts`. Corners are square, and SFCs have no `<style>` blocks.
 
