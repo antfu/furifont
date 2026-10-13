@@ -13,7 +13,7 @@ export default {
     language: 'Language',
   },
   footer: {
-    fonts: 'Fonts under the {license}, derived from Source Han Sans by Adobe.',
+    fonts: 'Fonts under the {license}, derived from Source Han Sans and Source Han Serif by Adobe.',
     data: 'Readings from JMdict, JMnedict and KANJIDIC2 (EDRDG) and JmdictFurigana, under CC BY-SA 4.0.',
     code: 'Tooling under MIT. {source}.',
     source: 'Source on GitHub',
@@ -22,8 +22,11 @@ export default {
   editable: 'Sample text, editable',
   scripts: {
     hiragana: 'Hiragana',
-    katakanaOn: 'Katakana on\'yomi',
     hepburn: 'Romaji',
+  },
+  faces: {
+    sans: 'Sans',
+    serif: 'Serif',
   },
   hero: {
     title1: 'Furigana,',
@@ -40,7 +43,7 @@ export default {
   },
   playground: {
     script: 'Ruby script',
-    weight: 'Weight',
+    face: 'Typeface',
     size: 'Size / {size}px',
     ruby: 'Ruby',
     rubyNote: '(ss01 when off)',
