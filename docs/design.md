@@ -107,7 +107,7 @@ run whose kanji are not all annotated is dropped, and so is one whose
 annotation crosses a kana. Runs of two or more kanji become **patterns** when
 their entry is selected:
 
-- its form has a newspaper bucket of at most `nfMax` (default 10), or
+- its form has a newspaper bucket of at most `nfMax` (default 30), or
 - it has a priority tag in `selectTags` (default `spec1`).
 
 `spec1` is needed because 日本 ranks `nf25`.

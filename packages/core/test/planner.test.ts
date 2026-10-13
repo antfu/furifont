@@ -25,7 +25,7 @@ describe('planner', () => {
 
   it('selects words by frequency bucket or priority tag', () => {
     expect(drawn(plan().plan)).toContain('京:きょう')
-    expect(drawn(plan({ selectTags: [] }).plan)).not.toContain('京:きょう')
+    expect(drawn(plan({ selectTags: [], nfMax: 10 }).plan)).not.toContain('京:きょう')
     expect(drawn(plan({ nfMax: 2 }).plan)).not.toContain('大人:おとな')
   })
 
