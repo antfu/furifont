@@ -5,9 +5,9 @@ import type { InjectionKey } from 'vue'
 const STUDIO_ID: typeof StudioId = 'furifont'
 const DEBOUNCE = 350
 
-export type StudioStatus = 'connecting' | 'unavailable' | 'locked' | 'ready'
+type StudioStatus = 'connecting' | 'unavailable' | 'locked' | 'ready'
 
-export interface BuildProgress {
+interface BuildProgress {
   running: boolean
   step?: string
   done?: number | null
@@ -16,7 +16,7 @@ export interface BuildProgress {
   error?: string
 }
 
-export interface PreviewState {
+interface PreviewState {
   /** Family name of the latest preview font loaded into the page. */
   family?: string
   ms?: number

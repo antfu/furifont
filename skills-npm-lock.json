@@ -1,6 +1,12 @@
 {
   "version": 3,
-  "skills": {},
+  "skills": {
+    "taze": {
+      "package": "taze",
+      "version": "21.3.0",
+      "skillPath": "skills/taze/SKILL.md"
+    }
+  },
   "remote": {
     "agent-browser": {
       "package": "@antfu/skills",

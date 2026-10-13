@@ -13,7 +13,10 @@ temp
 .eslintcache
 .agents/skills
 .nuxt
+.turbo
 .output
+.env
+.venv
 test/e2e/.cache
 test-results
 playwright-report
