@@ -1,5 +1,6 @@
 import type { PlanReport } from '@furifont/core'
 import type { DevframeNodeContext } from 'devframe'
+import type { SizeEstimate } from './build'
 import type { FurifontConfig, FurifontConfigInput } from './config'
 import { Buffer } from 'node:buffer'
 import { mkdir, writeFile } from 'node:fs/promises'
@@ -8,7 +9,7 @@ import { BASE_FONTS } from '@furifont/compiler'
 import { formatNotation, hanRuns, parseFurigana } from '@furifont/core'
 import { defineRpcFunction } from 'devframe'
 import * as v from 'valibot'
-import { buildFont, getDictionary, planWithBase, previewFont } from './build'
+import { buildFont, estimateFont, getDictionary, planWithBase, previewFont } from './build'
 import { CONFIG_FILE, FurifontConfigSchema, loadConfig } from './config'
 
 /** The RPC namespace the app's studio calls into. */
@@ -49,6 +50,7 @@ export interface StudioFunctions {
   'furifont:state': () => Promise<StudioState>
   'furifont:report': (config: FurifontConfigInput) => Promise<PlanReport>
   'furifont:preview': (config: FurifontConfigInput, text: string) => Promise<PreviewResult>
+  'furifont:estimate': (config: FurifontConfigInput) => Promise<SizeEstimate>
   'furifont:build': (config: FurifontConfigInput) => { streamId: string }
   'furifont:save': (config: FurifontConfigInput) => Promise<string>
   'furifont:search': (query: string) => Promise<WordMatch[]>
@@ -119,6 +121,12 @@ export async function setupStudio(ctx: DevframeNodeContext): Promise<void> {
         const { font, report } = await previewFont(parse(options), v.parse(Text, text), ctx.cwd)
         return { font: Buffer.from(font).toString('base64'), stats: report.stats, ms: Math.round(performance.now() - started) }
       },
+    }),
+    defineRpcFunction({
+      name: 'estimate',
+      type: 'query',
+      jsonSerializable: true,
+      handler: (options: FurifontConfigInput): Promise<SizeEstimate> => estimateFont(parse(options), ctx.cwd),
     }),
     defineRpcFunction({
       name: 'build',

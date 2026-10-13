@@ -40,17 +40,17 @@ The repository is a pnpm monorepo. Each package has one job:
 
 | Package | Language | Job |
 | --- | --- | --- |
-| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana and KANJIDIC2 into committed JSON. It also holds a short list of curated default readings. |
+| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT word lists into committed JSON. It also holds a short list of curated default readings. |
 | `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
 | `@furifont/compiler` | TS | Draws the plan into the base font, compiles the rules and checks the output with HarfBuzz (harfbuzzjs, WebAssembly). |
 | `furifont` | TS | The CLI (`furifont build`, `furifont dev`) and the studio's Devframe definition and RPC functions. |
 | `packages/app` | Nuxt | The demo site and the studio, as one static SPA. The CLI ships it as its Devframe client. |
 
 ```
-JMdict + JMnedict + JmdictFurigana + KANJIDIC2
+JMdict + JMnedict + JmdictFurigana + KANJIDIC2 + JLPT lists
         | dict:update (maintainers, network)
         v
-packages/dictionary/data/{dictionary,places,okurigana}.json (committed, one entry per line)
+packages/dictionary/data/{dictionary,places,okurigana,jlpt}.json (committed, one entry per line)
         |
         v
 createFontPlanner(dictionary)(options, coverage[, previewText]) -> { plan, report }
@@ -107,10 +107,23 @@ run whose kanji are not all annotated is dropped, and so is one whose
 annotation crosses a kana. Runs of two or more kanji become **patterns** when
 their entry is selected:
 
-- its form has a newspaper bucket of at most `nfMax` (default 30), or
+- its form has a newspaper bucket from `nfMin` (default 1) to `nfMax`
+  (default 30), or
 - it has a priority tag in `selectTags` (default `spec1`).
 
 `spec1` is needed because 日本 ranks `nf25`.
+
+A reader who knows the most common words can skip them. A run is **skipped**
+whole when any of its readings ranks below `nfMin`, or is on the JLPT lists up
+to `skipJlpt` (`N4` covers N5 and N4). Dropping only the known reading would
+leave another one as the default: 今日 would show こんにち. Tags don't bring a
+skipped word back, and neither do the curated defaults; the user's own words
+do. A skipped run stays bare: no place name claims it, it gets no selectors,
+and protection gives it no reading.
+
+The JLPT levels come from Jonathan Waller's lists, which stephenmk's
+yomitan-jlpt-vocab ties to JMdict entries. A level applies to the form and
+reading the list writes, so 会う (N5) says nothing of 遭う.
 
 The default preset gives about 4,800 patterns from about 6,400 forms.
 
@@ -155,13 +168,19 @@ stands alone. 来る counts as く, き and こ equally, because its reading cha
 as it conjugates. About 1,500 kanji pass, such as 桜, 駅, 私 and 見. Common verb
 kanji such as 書, 行, 生 and 出 stay bare.
 
+A lone kanji is skipped like a word when its dominant reading is: 私 わたし
+ranks `nf01` and is on the N5 list. `nfMax` doesn't limit lone kanji. With
+`isolated` off, no lone kanji gets ruby, and a pinned one only orders its
+readings.
+
 The rule is class-based: no lone-kanji reading applies when a Han glyph comes
 right before or after it. That includes ruby and variant glyphs.
 
 Every kanji also gets an ordered list of its readings for the selectors: each
 reading with at least 2% of the evidence, then the readings it has before
 okurigana in untagged words (奉 たてまつ, for 奉る). These last ones give
-selectors a reading to pick for verbs too rare to rank.
+selectors a reading to pick for verbs too rare to rank. A skipped lone kanji
+gets no list.
 
 ### Protection
 
@@ -329,14 +348,22 @@ progress while it builds.
 ## Studio
 
 `furifont dev` serves the app's static build together with the studio's RPC
-(`furifont:state`, `report`, `preview`, `build`, `save`, `search`) through
-Devframe's dev server.
+(`furifont:state`, `report`, `preview`, `estimate`, `build`, `save`,
+`search`) through Devframe's dev server.
 
 - **Authentication.** It is gated by Devframe's one-time code. `--no-auth` is
   for trusted machines.
 - **Preview.** Fonts are subsets, sent as base64 and loaded with `FontFace`.
+- **Size.** After the stats and the preview, `estimate` compiles the whole
+  OpenType font. Its WOFF2 would take half a minute, so Brotli at quality 8
+  stands in for it, scaled by a measured ratio: within 2% from a test subset to
+  full fonts with place names.
 - **Builds.** They stream progress and land in `./fonts`, which the studio
   serves for download.
+- **Settings.** The browser keeps the changes made to the loaded config, per
+  config path, until they are saved to it. A stored change that no longer
+  validates drops them all. Reset returns to the loaded config but keeps the
+  user's words.
 - **Typed calls.** The wire contract (`StudioFunctions`) lives with the
   implementation, and the app imports it as types only.
 
@@ -352,8 +379,8 @@ own mount.
 ## Testing
 
 - **core** (vitest): kana and romaji conversion, runs, notation, selection,
-  defaults, pins, lone kanji, protection, preview filtering, and a snapshot of
-  the feature file.
+  skipping, defaults, pins, lone kanji, protection, preview filtering, and a
+  snapshot of the feature file.
 - **dictionary**: the compiled data plans sensible defaults (今日 きょう,
   明日 あした, 出来 でき), reads places (新宿 しんじゅく) and pairs (来ない こ,
   下りた お, 行って null).
@@ -361,7 +388,7 @@ own mount.
   JP: CID-keyed CFF, and name-keyed CFF and TrueType without GSUB. It shapes
   with harfbuzzjs and checks words, protection, lone kanji, selectors, `ss01`,
   metrics, the WOFF2 and a subset preview.
-- **cli**: config loading, and a real `buildFont`.
+- **cli**: config loading, and a real `buildFont` at the size estimated.
 - **e2e** (Playwright, on Chromium, Firefox and WebKit, with the font as
   WOFF2):
   - ruby differs from `ss01`;
@@ -370,7 +397,8 @@ own mount.
   - ruby is not clipped at `line-height: normal`;
   - wrapped lines do not overlap.
 
-  In Chromium, the studio previews, plans and builds a font.
+  In Chromium, the studio previews, plans, estimates and builds a font, and
+  keeps its settings across reloads.
 
 ## Release
 
@@ -396,7 +424,8 @@ site only with the next release.
 
 - **Code:** MIT.
 - **Dictionary data and the rules compiled from it:** CC BY-SA 4.0 (EDRDG,
-  JmdictFurigana). Each font's name table records the source versions.
+  JmdictFurigana, yomitan-jlpt-vocab after Jonathan Waller's CC BY lists).
+  Each font's name table records the source versions.
 - **Fonts:** SIL OFL 1.1, as derivatives of Source Han Sans and Source Han
   Serif. They carry Adobe's copyright, and none of their names contains the
   Reserved Font Name "Source".

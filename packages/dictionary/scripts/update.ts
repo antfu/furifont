@@ -1,7 +1,8 @@
 /**
- * Downloads JMdict, JMnedict, their JmdictFurigana alignments and KANJIDIC2, and
- * compiles them into data/dictionary.json, data/places.json and
- * data/okurigana.json, one entry per line so updates diff well.
+ * Downloads JMdict, JMnedict, their JmdictFurigana alignments, KANJIDIC2 and
+ * the JLPT word lists, and compiles them into data/dictionary.json,
+ * data/places.json, data/okurigana.json and data/jlpt.json, one entry per line
+ * so updates diff well.
  *
  *   node scripts/update.ts
  */
@@ -13,9 +14,13 @@ const JMDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz'
 const JMNEDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMnedict.xml.gz'
 const KANJIDIC2 = 'http://www.edrdg.org/kanjidic/kanjidic2.xml.gz'
 const FURIGANA_RELEASE = 'https://api.github.com/repos/Doublevil/JmdictFurigana/releases/latest'
+/** Jonathan Waller's JLPT lists, tied to JMdict entries; pinned, as the lists no longer change. */
+const JLPT_VOCAB = '2025.08.01.0'
+const JLPT_LEVELS = [5, 4, 3, 2, 1]
 const OUTPUT = new URL('../data/dictionary.json', import.meta.url)
 const PLACES = new URL('../data/places.json', import.meta.url)
 const OKURIGANA = new URL('../data/okurigana.json', import.meta.url)
+const JLPT = new URL('../data/jlpt.json', import.meta.url)
 
 const HAN = /\p{Script=Han}/u
 const ALL_HAN = /^\p{Script=Han}{2,}$/u
@@ -56,15 +61,37 @@ interface Word {
   classes: string[]
 }
 
+type JlptEntry = [form: string, furigana: string, level: number]
+
+/**
+ * `jmdict_seq,kana,kanji,definition` rows of each level, as `seq|kanji|kana` to
+ * the easiest level listing it. A learner knows the word as the list writes
+ * it: words listed in kana and the entry's other spellings (遭う for 会う) are left out.
+ */
+function parseJlpt(lists: string[]): Map<string, number> {
+  const levels = new Map<string, number>()
+  lists.forEach((csv, i) => {
+    for (const line of csv.trim().split('\n').slice(1)) {
+      const [seq, kana, kanji] = line.split(',')
+      const key = `${seq}|${kanji}|${kana}`
+      if (kanji)
+        levels.set(key, Math.max(levels.get(key) ?? 0, JLPT_LEVELS[i]!))
+    }
+  })
+  return levels
+}
+
 /**
  * A (form, reading) pair is common only when the form itself is: a reading's
  * priority tags count when the written form also carries some, and a form's
  * own tags pass to its reading when it has no other.
  */
-function parseJmdict(xml: string, furigana: Map<string, string>): { entries: Entry[], words: Word[] } {
+function parseJmdict(xml: string, furigana: Map<string, string>, jlptLevels: Map<string, number>): { entries: Entry[], words: Word[], jlpt: JlptEntry[] } {
   const entries: Entry[] = []
   const words: Word[] = []
+  const jlpt: JlptEntry[] = []
   for (const [entry, [, body]] of [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].entries()) {
+    const seq = all(body!, 'ent_seq')[0]
     const conjugatesReading = body!.includes('<pos>&vk;</pos>')
     const classes = [...new Set(all(body!, 'pos').map(pos => pos.slice(1, -1)))]
     const readings = all(body!, 'r_ele').filter(r => !r.includes('<re_nokanji/>') && !r.includes('&sk;'))
@@ -89,10 +116,13 @@ function parseJmdict(xml: string, furigana: Map<string, string>): { entries: Ent
           row.push(1)
         entries.push(row)
         words.push({ entry, form, furigana: aligned, order, common: tags.length > 0, classes })
+        const level = jlptLevels.get(`${seq}|${form}|${reading}`)
+        if (level)
+          jlpt.push([form, aligned, level])
       })
     }
   }
-  return { entries, words }
+  return { entries, words, jlpt }
 }
 
 const GODAN_ROWS: Record<string, string> = { う: 'わいうえお', く: 'かきくけこ', ぐ: 'がぎぐげご', す: 'さしすせそ', つ: 'たちつてと', ぬ: 'なにぬねの', ぶ: 'ばびぶべぼ', む: 'まみむめも', る: 'らりるれろ' }
@@ -304,16 +334,17 @@ function assetUrl(name: string): string {
   return asset.browser_download_url
 }
 
-console.log('Downloading JMdict, JMnedict, JmdictFurigana and KANJIDIC2...')
-const [jmdict, jmnedict, furigana, namesFurigana, kanjidic] = await Promise.all([
+console.log('Downloading JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT lists...')
+const [jmdict, jmnedict, furigana, namesFurigana, kanjidic, ...jlptLists] = await Promise.all([
   download(JMDICT, true),
   download(JMNEDICT, true),
   download(assetUrl('JmdictFurigana.txt')),
   download(assetUrl('JmnedictFurigana.txt')),
   download(KANJIDIC2, true),
+  ...JLPT_LEVELS.map(n => download(`https://raw.githubusercontent.com/stephenmk/yomitan-jlpt-vocab/${JLPT_VOCAB}/original_data/n${n}.csv`)),
 ])
 
-const { entries, words } = parseJmdict(jmdict, parseAlignments(furigana))
+const { entries, words, jlpt } = parseJmdict(jmdict, parseAlignments(furigana), parseJlpt(jlptLists))
 const okurigana = compileOkurigana(words)
 const places = parseJmnedict(jmnedict, parseAlignments(namesFurigana))
 const onyomi = parseKanjidic(kanjidic)
@@ -323,6 +354,7 @@ const sources = {
   JMnedict: /JMnedict created: ([\d-]+)/.exec(jmnedict)?.[1] ?? 'unknown',
   JmdictFurigana: release.tag_name,
   KANJIDIC2: /<date_of_creation>([\d-]+)</.exec(kanjidic)?.[1] ?? 'unknown',
+  JLPT: `yomitan-jlpt-vocab ${JLPT_VOCAB}`,
 }
 
 const lines = [
@@ -337,4 +369,5 @@ const lines = [
 await writeFile(OUTPUT, `${lines.join('\n')}\n`)
 await writeFile(PLACES, `[\n${places.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
 await writeFile(OKURIGANA, `[\n${okurigana.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
-console.log(`Wrote ${entries.length} entries, ${places.length} places, ${okurigana.length} okurigana pairs, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)
+await writeFile(JLPT, `[\n${jlpt.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
+console.log(`Wrote ${entries.length} entries, ${places.length} places, ${okurigana.length} okurigana pairs, ${jlpt.length} JLPT words, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)

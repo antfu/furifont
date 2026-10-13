@@ -37,7 +37,7 @@
     "build": "Build every package, in dependency order, skipping what is cached",
     "dev": "Run the app with a live studio (build the packages first)",
     "fonts": "Build every prebuilt font, OpenType and WOFF2, into dist/fonts",
-    "dict:update": "Download JMdict, JmdictFurigana and KANJIDIC2 and recompile the dictionary",
+    "dict:update": "Download JMdict, JmdictFurigana, KANJIDIC2 and the JLPT lists and recompile the dictionary",
     "knip": "Find unused files, exports and dependencies",
     "lint": "Check for code style issues",
     "release": "Bump every package and commit the site's fonts with it, rebuilt into fonts/",

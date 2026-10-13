@@ -1,9 +1,13 @@
 import type { DevframeRpcClient, DevframeScopedClientRpc } from 'devframe/client'
-import type { BuildEvent, FurifontConfigInput, PlanReport, STUDIO_ID as StudioId, StudioState, WordMatch } from 'furifont'
+import type { BuildEvent, FurifontConfigInput, PlanReport, SizeEstimate, STUDIO_ID as StudioId, StudioState, WordMatch } from 'furifont'
 import type { InjectionKey } from 'vue'
+import { PlanOptionsSchema, withNfWindow } from '@furifont/core'
+import * as v from 'valibot'
 
 const STUDIO_ID: typeof StudioId = 'furifont'
 const DEBOUNCE = 350
+/** Followed by the project's config path: each project keeps its own changes. */
+const STORAGE_KEY = 'furifont:studio:'
 
 type StudioStatus = 'connecting' | 'unavailable' | 'locked' | 'ready'
 
@@ -33,8 +37,65 @@ function debounce(fn: () => void, ms: number): () => void {
   }
 }
 
+interface EstimateState {
+  size?: SizeEstimate
+  loading: boolean
+}
+
 function message(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
+}
+
+type Json = string | number | boolean | null | undefined | Json[] | { [key: string]: Json }
+interface JsonObject { [key: string]: Json }
+
+const isObject = (value: Json): value is JsonObject => typeof value === 'object' && value !== null && !Array.isArray(value)
+
+/** What `config` changes from `base`, nested objects key by key; null where it drops a key. */
+function changes(config: JsonObject, base: JsonObject): JsonObject {
+  const out: JsonObject = {}
+  for (const key of new Set([...Object.keys(config), ...Object.keys(base)])) {
+    const [value, original] = [config[key], base[key]]
+    if (isObject(value) && isObject(original)) {
+      const inner = changes(value, original)
+      if (Object.keys(inner).length)
+        out[key] = inner
+    }
+    else if (JSON.stringify(value) !== JSON.stringify(original)) {
+      out[key] = value ?? null
+    }
+  }
+  return out
+}
+
+function applyChanges(base: JsonObject, changed: JsonObject): JsonObject {
+  const out = { ...base }
+  for (const [key, value] of Object.entries(changed)) {
+    const original = out[key]
+    if (value === null)
+      delete out[key]
+    else
+      out[key] = isObject(value) && isObject(original) ? applyChanges(original, value) : value
+  }
+  return out
+}
+
+// The server's config schema again: the app cannot bundle the CLI's, which reads files.
+const SavedSchema = withNfWindow(v.object({ ...PlanOptionsSchema.entries, base: v.pipe(v.string(), v.nonEmpty()) }))
+
+/** The loaded config with the changes saved for it; all of them dropped when any no longer applies. */
+function restore(key: string, base: FurifontConfigInput): FurifontConfigInput {
+  let result: v.SafeParseResult<typeof SavedSchema> | undefined
+  try {
+    result = v.safeParse(SavedSchema, applyChanges(base, JSON.parse(localStorage.getItem(key) ?? '{}')))
+  }
+  catch {
+    // Not a JSON object: dropped like any stale entry.
+  }
+  if (result?.success)
+    return result.output
+  localStorage.removeItem(key)
+  return structuredClone(base)
 }
 
 /**
@@ -49,6 +110,7 @@ function createStudio() {
   const report = shallowRef<PlanReport>()
   const text = ref(SAMPLES[0]!.text)
   const preview = reactive<PreviewState>({ loading: false })
+  const estimate = reactive<EstimateState>({ loading: false })
   const build = reactive<BuildProgress>({ running: false, files: [] })
   const savedTo = ref<string>()
 
@@ -56,9 +118,21 @@ function createStudio() {
   let rpc: DevframeScopedClientRpc<typeof STUDIO_ID> | undefined
   let face: FontFace | undefined
   let previews = 0
+  let refreshes = 0
+  let estimates = 0
+  /** What the server loaded, or last saved: the studio stores only its changes to it. */
+  let loaded: FurifontConfigInput = {}
+  let storageKey = ''
 
   async function refreshReport(): Promise<void> {
     report.value = await rpc!.call('report', toRaw(config.value)).catch(() => report.value)
+  }
+
+  async function refreshEstimate(): Promise<void> {
+    const id = ++estimates
+    const size = await rpc!.call('estimate', toRaw(config.value)).catch(() => undefined)
+    if (id === estimates)
+      Object.assign(estimate, { size, loading: false })
   }
 
   async function refreshPreview(): Promise<void> {
@@ -87,12 +161,25 @@ function createStudio() {
     }
   }
 
-  const refresh = debounce(() => {
-    refreshReport()
-    refreshPreview()
+  // The estimate compiles the whole font: it waits for the stats and the preview, which it would hold up.
+  const refresh = debounce(async () => {
+    const id = ++refreshes
+    estimate.loading = true
+    await Promise.all([refreshReport(), refreshPreview()])
+    if (id === refreshes)
+      refreshEstimate()
   }, DEBOUNCE)
   watch(config, refresh, { deep: true })
   watch(text, debounce(refreshPreview, DEBOUNCE))
+
+  function persist(): void {
+    const changed = changes(toRaw(config.value), loaded)
+    if (Object.keys(changed).length)
+      localStorage.setItem(storageKey, JSON.stringify(changed))
+    else
+      localStorage.removeItem(storageKey)
+  }
+  watch(config, persist, { deep: true })
 
   async function connect(): Promise<void> {
     try {
@@ -120,9 +207,16 @@ function createStudio() {
 
   async function start(): Promise<void> {
     state.value = await rpc!.call('state')
-    config.value = structuredClone(state.value.config)
+    loaded = state.value.config
+    storageKey = STORAGE_KEY + state.value.configPath
+    config.value = restore(storageKey, loaded)
     status.value = 'ready'
     refresh()
+  }
+
+  /** Back to the loaded config, keeping the user's words. */
+  function reset(): void {
+    config.value = { ...structuredClone(loaded), words: toRaw(config.value.words) }
   }
 
   async function runBuild(): Promise<void> {
@@ -148,6 +242,8 @@ function createStudio() {
 
   async function save(): Promise<void> {
     savedTo.value = await rpc!.call('save', toRaw(config.value))
+    loaded = structuredClone(toRaw(config.value))
+    persist()
   }
 
   function search(query: string): Promise<WordMatch[]> {
@@ -167,7 +263,7 @@ function createStudio() {
       document.fonts.delete(face)
   })
 
-  return { status, state, config, report, text, preview, build, savedTo, unlock, runBuild, save, search, toggleWord }
+  return { status, state, config, report, text, preview, estimate, build, savedTo, unlock, runBuild, save, reset, search, toggleWord }
 }
 
 export type Studio = ReturnType<typeof createStudio>

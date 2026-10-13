@@ -16,7 +16,7 @@ const { copied, copy } = useCopy()
         <UiSegmented v-model="face" :label="$t('playground.face')" :options="faces" />
       </UiField>
       <UiField :label="$t('playground.size', { size })">
-        <input v-model.number="size" type="range" min="16" max="64" class="accent-[var(--ff-fg)]">
+        <UiSlider v-model="size" :min="16" :max="64" />
       </UiField>
       <UiToggle v-model="ruby">
         {{ $t('playground.ruby') }} <span class="font-mono text-xs color-muted">{{ $t('playground.rubyNote') }}</span>

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { buildFont, loadConfig } from '../src'
+import { buildFont, estimateFont, loadConfig } from '../src'
 
 const BASE = fileURLToPath(new URL('../../compiler/test/fixtures/SourceHanSansJP-Subset.otf', import.meta.url))
 
@@ -26,12 +26,14 @@ describe('loadConfig', () => {
 })
 
 describe('buildFont', () => {
-  it('writes the font, its WOFF2 and the selector reference', async () => {
-    const config = await loadConfig(cwd)
-    const { files, report } = await buildFont({ ...config, base: BASE }, { cwd, outDir: join(cwd, 'fonts') })
+  it('writes the font, its WOFF2 and the selector reference, at the sizes estimated', async () => {
+    const config = { ...await loadConfig(cwd), base: BASE }
+    const [{ files, report }, estimate] = await Promise.all([buildFont(config, { cwd, outDir: join(cwd, 'fonts') }), estimateFont(config, cwd)])
     expect(files.map(f => f.name)).toEqual(['FurifontSans-Regular.otf', 'FurifontSans-Regular.woff2', 'FurifontSans-Regular.ivs.json'])
     const ivs = JSON.parse(await readFile(files[2]!.path, 'utf8'))
     expect(ivs.words['今日'][0]).toBe('今日[きょう]')
     expect(report.stats.patterns).toBeGreaterThan(0)
+    expect(estimate.otf).toBe(files[0]!.bytes)
+    expect(estimate.woff2 / files[1]!.bytes).toBeCloseTo(1, 1)
   })
 })

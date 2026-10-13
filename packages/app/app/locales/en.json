@@ -149,8 +149,13 @@
       "hiragana": "Hiragana",
       "katakanaOn": "Kata on",
       "hepburn": "Romaji",
-      "nfMax": "Word list size",
-      "nfMaxHint": "Furifont adds ruby to words from a newspaper word list, sorted by how often the words appear. The steps go from nf01 (the 500 most common words) to nf48 (the 24,000 most common words). A higher number adds ruby to more words.",
+      "skip": "Skip the most common words",
+      "skipHint": "These words get no ruby, because a reader already knows them. The newspaper word list is sorted by how often the words appear, in steps of 500 words.",
+      "words": "Then add ruby to",
+      "wordsHint": "The next words in the list. With the word lists below, {count} words get ruby.",
+      "jlpt": "Skip JLPT words",
+      "jlptHint": "Words on the JLPT lists (for the Japanese-Language Proficiency Test) up to this level get no ruby. N5 is the easiest level.",
+      "none": "None",
       "sources": "Also include words from",
       "source": {
         "spec1": {
@@ -174,12 +179,15 @@
           "hint": "JMnedict: stations and places. Furifont uses them where no common word matches the text."
         }
       },
+      "isolated": "Ruby on single kanji",
       "share": "Single kanji: how sure",
       "shareHint": "A single kanji gets ruby only when one reading makes up at least this share of its uses in the dictionary. Use a number from 0.5 to 1. A higher number gives ruby to fewer kanji.",
       "rubyScale": "Ruby size (× kanji)",
       "rubyGap": "Space above kanji (em)",
       "squeeze": "Narrowest squeeze (× normal)",
-      "maxWidth": "Widest ruby (em)"
+      "maxWidth": "Widest ruby (em)",
+      "reset": "Reset to defaults",
+      "resetHint": "Go back to the settings that the studio loaded. Your words stay."
     },
     "preview": {
       "compiling": "Making a preview",
@@ -195,6 +203,8 @@
       "glyphs": "Ruby glyphs",
       "rules": "Rules",
       "planning": "Planning",
+      "estimate": "≈ {woff2} WOFF2 · {otf} OTF",
+      "estimating": "Estimating the size",
       "run": "Build font",
       "save": "Save settings"
     },
