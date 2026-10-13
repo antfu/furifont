@@ -16,7 +16,7 @@ export default {
   },
   footer: {
     fonts: 'フォントは Adobe の源ノ角ゴシック（Source Han Sans）の派生物で、{license} で提供しています。',
-    data: '読みは JMdict・KANJIDIC2（EDRDG）と JmdictFurigana に基づき、CC BY-SA 4.0 で提供しています。',
+    data: '読みは JMdict・JMnedict・KANJIDIC2（EDRDG）と JmdictFurigana に基づき、CC BY-SA 4.0 で提供しています。',
     code: 'ツールは MIT ライセンスです。{source}。',
     source: 'GitHub のソースコード',
   },
