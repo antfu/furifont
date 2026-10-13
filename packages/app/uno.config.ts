@@ -14,6 +14,10 @@ export default defineConfig({
       furi: '"Furifont Sans", ui-sans-serif, system-ui, sans-serif',
     },
   },
+  rules: [
+    // `ss01` is Furifont's own switch back to plain kanji, for text that must not carry ruby.
+    ['no-ruby', { 'font-feature-settings': '"ss01"', 'line-height': '1' }],
+  ],
   shortcuts: {
     'bg-base': 'bg-[var(--ff-bg)]',
     'bg-inverse': 'bg-[var(--ff-fg)]',

@@ -30,7 +30,7 @@ const size = 44
         <UiTypeGrid :size />
         <FuriText v-model:text="text" :size />
       </div>
-      <span v-if="author" class="label [font-feature-settings:'ss01'] absolute right-3 bottom-3 border border-base bg-base px-2 py-1">⁄ {{ author }}</span>
+      <span v-if="author" class="label no-ruby absolute right-3 bottom-3 border border-base bg-base px-2 py-1">⁄ {{ author }}</span>
       <span class="label absolute bottom-3 left-3 border border-base bg-base px-2 py-1">Furifont Sans Regular / {{ size }}px</span>
     </div>
   </div>

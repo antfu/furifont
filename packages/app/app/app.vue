@@ -10,7 +10,7 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen overflow-x-clip bg-base font-sans color-base">
+  <div class="min-h-screen overflow-x-clip bg-base color-base">
     <AppHeader />
     <main class="mx-auto max-w-6xl border-x border-base">
       <NuxtPage />
