@@ -130,6 +130,7 @@ export default {
       nfMax: '词频档位上限',
       nfMaxHint: 'nf01 包含报纸中最常见的 500 个词，nf48 到第 24,000 个。',
       tags: '同时收录带以下标签的词',
+      places: '地名（JMnedict 的站名与地名）',
       share: '单独汉字所需占比',
       shareHint: '当某个读音的占比达到该值时，单独的汉字才会标注。',
       rubyScale: '振假名缩放',
@@ -144,6 +145,7 @@ export default {
     },
     build: {
       words: '词语',
+      places: '地名',
       ambiguous: '多读音',
       lone: '单独汉字',
       protected: '受保护',
