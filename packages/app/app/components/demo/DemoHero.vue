@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const emit = defineEmits<{ download: [] }>()
-const text = ref(SAMPLES[0]!)
+const text = ref(SAMPLES[0]!.text)
+const author = computed(() => SAMPLES.find(s => s.text === text.value)?.author)
 const size = 44
 </script>
 
@@ -24,11 +25,12 @@ const size = 44
       </div>
     </div>
     <div class="relative isolate flex flex-col justify-center gap-4 overflow-hidden border-t border-base px-6 py-12 lg:border-t-0">
-      <UiButton icon="i-ph-shuffle" class="absolute right-3 top-3 w-9 bg-base px-0" :aria-label="$t('shuffle')" :title="$t('shuffle')" @click="text = otherSample(text)" />
+      <UiButton icon="i-ph-shuffle" class="absolute right-3 top-3 w-9 bg-base px-0" :aria-label="$t('shuffle')" :title="$t('shuffle')" @click="text = otherSample(text).text" />
       <div class="relative">
         <UiTypeGrid :size />
         <FuriText v-model:text="text" :size />
       </div>
+      <span v-if="author" class="label [font-feature-settings:'ss01'] absolute right-3 bottom-3 border border-base bg-base px-2 py-1">⁄ {{ author }}</span>
       <span class="label absolute bottom-3 left-3 border border-base bg-base px-2 py-1">Furifont Sans JP Regular / {{ size }}px</span>
     </div>
   </div>
