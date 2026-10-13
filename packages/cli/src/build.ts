@@ -1,11 +1,13 @@
 import type { CompileProgress } from '@furifont/compiler'
-import type { Dictionary, PlanReport, PlanResult } from '@furifont/core'
+import type { Dictionary, Plan, PlanReport, PlanResult } from '@furifont/core'
 import type { FurifontConfig } from './config'
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
+import { promisify } from 'node:util'
+import { brotliCompress, constants } from 'node:zlib'
 import { BASE_FONTS, compileFont, fetchBaseFont, readFontInfo } from '@furifont/compiler'
 import { createFontPlanner } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
@@ -20,6 +22,8 @@ export interface BuildResult {
   files: BuiltFile[]
   report: PlanReport
 }
+
+const brotli = promisify(brotliCompress)
 
 function cacheDir(): string {
   return join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'furifont')
@@ -81,15 +85,46 @@ export async function buildFont(config: FurifontConfig, options: { cwd: string, 
   }
 }
 
-/** Compiles a small font covering only `text`, for a live preview. */
-export async function previewFont(config: FurifontConfig, text: string, cwd: string): Promise<{ font: Uint8Array, report: PlanReport }> {
-  const { plan, report, base } = await planWithBase(config, cwd, text)
-  const output = join(tmpdir(), `furifont-preview-${process.pid}-${Date.now()}.otf`)
+async function compileOpenType({ plan, base }: { plan: Plan, base: string }): Promise<Uint8Array> {
+  const output = join(tmpdir(), `furifont-${process.pid}-${randomUUID()}.otf`)
   try {
     await compileFont({ plan, base, output })
-    return { font: new Uint8Array(await readFile(output)), report }
+    return new Uint8Array(await readFile(output))
   }
   finally {
     await rm(output, { force: true })
   }
+}
+
+/** Compiles a small font covering only `text`, for a live preview. */
+export async function previewFont(config: FurifontConfig, text: string, cwd: string): Promise<{ font: Uint8Array, report: PlanReport }> {
+  const planned = await planWithBase(config, cwd, text)
+  return { font: await compileOpenType(planned), report: planned.report }
+}
+
+/** Bytes of the fonts a build would write. */
+export interface SizeEstimate {
+  otf: number
+  woff2: number
+}
+
+/**
+ * Brotli quality 8 takes under a second where the WOFF2's quality 11 takes
+ * half a minute, and its output is this much larger: within 2% from a test
+ * subset to full fonts with place names. Lower qualities drift with size.
+ */
+const FAST_WOFF2_RATIO = 0.885
+
+/** Compiles the OpenType font `config` builds, and estimates its WOFF2 from a fast Brotli pass. */
+export async function estimateFont(config: FurifontConfig, cwd: string): Promise<SizeEstimate> {
+  const otf = await compileOpenType(await planWithBase(config, cwd))
+  const fast = await brotli(otf, {
+    params: {
+      [constants.BROTLI_PARAM_MODE]: constants.BROTLI_MODE_FONT,
+      [constants.BROTLI_PARAM_QUALITY]: 8,
+      [constants.BROTLI_PARAM_LGWIN]: constants.BROTLI_MAX_WINDOW_BITS,
+      [constants.BROTLI_PARAM_SIZE_HINT]: otf.length,
+    },
+  })
+  return { otf: otf.length, woff2: Math.round(fast.length * FAST_WOFF2_RATIO) }
 }

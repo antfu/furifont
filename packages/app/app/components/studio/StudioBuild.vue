@@ -2,7 +2,9 @@
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const { report, build, savedTo, runBuild, save } = useStudio()
+const { report, estimate, build, savedTo, runBuild, save } = useStudio()
+
+const megabytes = (bytes: number): string => `${(bytes / 1024 / 1024).toFixed(2)} MB`
 
 const stats = computed(() => {
   const s = report.value?.stats
@@ -27,6 +29,10 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
       <UiStat v-for="s in stats" :key="s.label" v-bind="s" class="border-r border-base last:border-r-0" />
       <span v-if="!stats.length" class="label col-span-full px-6 py-4">{{ $t('studio.build.planning') }}</span>
     </div>
+    <p v-if="estimate.size || estimate.loading" class="flex flex-wrap gap-3 px-6 pt-4 font-mono text-xs color-muted tabular-nums">
+      <span v-if="estimate.size">{{ $t('studio.build.estimate', { woff2: megabytes(estimate.size.woff2), otf: megabytes(estimate.size.otf) }) }}</span>
+      <span v-if="estimate.loading">{{ $t('studio.build.estimating') }}</span>
+    </p>
     <div class="flex flex-wrap items-center gap-3 px-6 py-4">
       <button type="button" class="btn-solid focus-ring" :disabled="build.running" @click="runBuild">
         <span :class="build.running ? 'i-ph-circle-notch animate-spin' : 'i-ph-hammer'" />
@@ -44,7 +50,7 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
     <ul v-if="build.files.length" class="border-t border-base">
       <li v-for="file in build.files" :key="file.name" class="flex items-center gap-4 border-b border-base px-6 py-2 last:border-b-0">
         <a :href="file.url" download class="focus-ring font-mono text-sm underline underline-offset-3">{{ file.name }}</a>
-        <span class="font-mono text-xs color-muted tabular-nums">{{ (file.bytes / 1024 / 1024).toFixed(2) }} MB</span>
+        <span class="font-mono text-xs color-muted tabular-nums">{{ megabytes(file.bytes) }}</span>
       </li>
     </ul>
   </div>

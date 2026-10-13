@@ -8,7 +8,7 @@ A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>`
 <p style="font-family: 'Furifont Sans'; line-height: 1.7">今日は日本語の勉強をします。</p>
 ```
 
-Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and [Source Han Serif JP](https://github.com/adobe-fonts/source-han-serif), and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JMnedict](https://www.edrdg.org/enamdict/enamdict_doc.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). The tools that build it work with other base fonts and other word lists.
+Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and [Source Han Serif JP](https://github.com/adobe-fonts/source-han-serif), and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JMnedict](https://www.edrdg.org/enamdict/enamdict_doc.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project), with JLPT levels from [yomitan-jlpt-vocab](https://github.com/stephenmk/yomitan-jlpt-vocab). The tools that build it work with other base fonts and other word lists.
 
 ## Fonts
 
@@ -65,7 +65,7 @@ You need Node 22.18 or later. From the command line:
 npx furifont build --base "Source Han Serif JP Bold" --script hepburn --family "My Furigana"
 ```
 
-Or open the studio. It runs in your browser with a live preview, the dictionary, your own words, and a build button:
+Or open the studio. It runs in your browser with a live preview, the size of the font it would build, the dictionary, your own words, and a build button. It keeps your changes in the browser until you save them:
 
 ```sh
 npx furifont dev
@@ -78,8 +78,11 @@ Both commands read `furifont.config.json` from the current folder, and the studi
   "base": "Source Han Sans JP Regular",
   "family": "Furifont Sans",
   "rubyScript": "hiragana",
+  "nfMin": 1,
   "nfMax": 30,
   "selectTags": ["spec1"],
+  "skipJlpt": "N5",
+  "isolated": true,
   "isolatedMinShare": 0.8,
   "places": true,
   "words": {
@@ -95,8 +98,10 @@ These are the settings:
 
 - `base` names a font to download once, Source Han Sans JP or Source Han Serif JP with a weight (`Source Han Serif JP Bold`), or is the path to another OpenType font.
 - `nfMax` sets how many words get ruby. Words are ranked in newspaper frequency buckets of about 500 words each.
+- `nfMin` leaves the most common words bare, for readers who know them: `3` skips the first 1,000.
 - `selectTags` also selects words that have these JMdict priority tags.
-- `isolatedMinShare` sets how strongly one reading must dominate before a kanji alone gets ruby.
+- `skipJlpt` leaves bare the words on the JLPT lists up to this level: `"N4"` skips the N5 and N4 words. It is off by default.
+- `isolated: false` gives no ruby to a kanji alone. `isolatedMinShare` sets how strongly one reading must dominate before it gets some.
 - `places` adds station and place names. They make up most of the rules. Without them, a WOFF2 font is 3.6 MB instead of 5.2 MB, and the build is about four times faster.
 - `words` uses inline notation: `日[に]本[ほん]` gives one reading per kanji, and `今日[きょう]` gives one reading over several kanji.
 
@@ -127,4 +132,4 @@ pnpm dev            # the app, with a live studio
 
 - **Code:** [MIT](LICENSE.md).
 - **Fonts:** [SIL Open Font License 1.1](OFL.txt), as derivatives of Source Han Sans and Source Han Serif by Adobe. "Source" is a Reserved Font Name and does not appear in Furifont's names.
-- **Dictionary data and the reading rules in the fonts:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict, JMnedict and KANJIDIC2 (EDRDG) and JmdictFurigana.
+- **Dictionary data and the reading rules in the fonts:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict, JMnedict and KANJIDIC2 (EDRDG), JmdictFurigana, and yomitan-jlpt-vocab after Jonathan Waller's JLPT lists.

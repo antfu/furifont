@@ -11,6 +11,8 @@ export interface DictionaryEntry {
   order: number
   /** `来る`-type verb, whose kanji reads differently as it conjugates. */
   conjugatesReading?: boolean
+  /** The JLPT level whose word list has this pair: 5 for N5 down to 1 for N1. */
+  jlpt?: number
 }
 
 export interface Dictionary {

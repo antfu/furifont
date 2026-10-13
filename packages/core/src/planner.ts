@@ -25,6 +25,8 @@ interface RunReading {
   order: number
   /** Best newspaper bucket among priority-tagged entries, 0 when none. */
   nf: number
+  /** Easiest JLPT level listing an entry with this reading, 0 when none. */
+  jlpt: number
   /** Priority tags of the entries with this reading. */
   tags: Set<string>
   /** Made the default by the dictionary's curated list (1) or by the user (2). */
@@ -36,6 +38,7 @@ interface RunReading {
 interface SingleReading {
   weight: number
   nf: number
+  jlpt: number
   tags: Set<string>
 }
 
@@ -94,6 +97,8 @@ interface PlanContext {
   removed: Set<string>
   covered: (text: string) => boolean
   selected: (reading: { nf: number, tags: Set<string> }) => boolean
+  /** Among the most common words, or on the JLPT lists the reader knows: left bare. */
+  skipped: (reading: { nf: number, jlpt: number }) => boolean
   render: RenderRuby
   renderable: (run: HanRun) => boolean
 }
@@ -121,10 +126,11 @@ function entryWeight(entry: DictionaryEntry): number {
   return /[a-z]1\b/.test(entry.priority) ? 1 / 24 : 1 / 48
 }
 
-function keepBest<T extends { weight: number, nf: number, tags: Set<string> }>(current: T, value: T): void {
+function keepBest<T extends { weight: number, nf: number, jlpt: number, tags: Set<string> }>(current: T, value: T): void {
   current.weight = Math.max(current.weight, value.weight)
   if (value.nf && (!current.nf || value.nf < current.nf))
     current.nf = value.nf
+  current.jlpt = Math.max(current.jlpt, value.jlpt)
   for (const tag of value.tags)
     current.tags.add(tag)
 }
@@ -142,7 +148,7 @@ function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
 
 function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
   const order = run.text === entry.form ? entry.order : OTHER_FORM_ORDER + entry.order
-  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, tags: priorityTags(entry) }
+  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry) }
   const readings = getOrCreate(index.runs, run.text, () => new Map())
   const current = readings.get(spanKey(run.spans))
   if (!current) {
@@ -159,7 +165,7 @@ function indexSingle(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry
   const readings = getOrCreate(index.singles, run.text, () => new Map())
   // 来る reads く, き or こ as it conjugates: its dictionary form alone is no evidence.
   for (const r of entry.conjugatesReading && ruby === 'く' ? ['く', 'き', 'こ'] : [ruby]) {
-    const value = { weight: entryWeight(entry), nf: entry.nf, tags: priorityTags(entry) }
+    const value = { weight: entryWeight(entry), nf: entry.nf, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry) }
     const current = readings.get(r)
     if (current)
       keepBest(current, value)
@@ -192,11 +198,14 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
       return toKatakana(span.ruby)
     return span.ruby
   }
+  // N4 skips levels 5 and 4.
+  const known = options.skipJlpt ? Number(options.skipJlpt.slice(1)) : Infinity
   return {
     options,
     removed: new Set(options.words.remove),
     covered,
-    selected: r => (r.nf > 0 && r.nf <= options.nfMax) || options.selectTags.some(t => r.tags.has(t)),
+    selected: r => (r.nf >= options.nfMin && r.nf <= options.nfMax) || options.selectTags.some(t => r.tags.has(t)),
+    skipped: r => (r.nf > 0 && r.nf < options.nfMin) || r.jlpt >= known,
     render,
     renderable: run => covered(run.text) && run.spans.every((_, i) => covered(render(run, i))),
   }
@@ -212,35 +221,49 @@ function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notati
         lonePins.set(run.text, run.spans[0]!.ruby)
       continue
     }
+    // The curated defaults only choose among the readings of selected words; the user's lists may add words.
+    if (pinned === 1 && !patterns.has(run.text))
+      continue
     const readings = getOrCreate(patterns, run.text, () => [])
     const existing = readings.find(r => spanKey(r.spans) === spanKey(run.spans))
     if (existing)
       existing.pinned = Math.max(existing.pinned ?? 0, pinned)
     else
-      readings.push({ spans: run.spans, weight: 1, tagged: true, order: Number.MAX_SAFE_INTEGER, nf: 1, tags: new Set(), pinned })
+      readings.push({ spans: run.spans, weight: 1, tagged: true, order: Number.MAX_SAFE_INTEGER, nf: 1, jlpt: 0, tags: new Set(), pinned })
   }
 }
 
-/** Place names fill the runs no common word claims. */
-function addPlaces(patterns: Patterns, places: Dictionary['places'], ctx: PlanContext): void {
+/** Place names fill the runs no common word claims, nor a skipped one. */
+function addPlaces(patterns: Patterns, places: Dictionary['places'], skipped: Set<string>, ctx: PlanContext): void {
   for (const place of places ?? []) {
     const spans = parseFurigana(place.furigana)
-    if (patterns.has(place.form) || ctx.removed.has(place.form) || !ctx.renderable({ text: place.form, spans }))
+    if (patterns.has(place.form) || skipped.has(place.form) || ctx.removed.has(place.form) || !ctx.renderable({ text: place.form, spans }))
       continue
-    patterns.set(place.form, [{ spans, weight: 0, tagged: false, order: 0, nf: 0, tags: new Set(), place: true }])
+    patterns.set(place.form, [{ spans, weight: 0, tagged: false, order: 0, nf: 0, jlpt: 0, tags: new Set(), place: true }])
   }
 }
 
-/** Runs of common words, then place names and custom words; pinned readings of lone kanji are returned apart. */
-function selectWords(index: DictionaryIndex, dictionary: Dictionary, ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string> } {
+/**
+ * Runs of common words, then place names and custom words; pinned readings of
+ * lone kanji are returned apart. A word is skipped whole: were only its known
+ * reading dropped, 今日 would show こんにち.
+ */
+function selectWords(index: DictionaryIndex, dictionary: Dictionary, ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string>, skipped: Set<string> } {
   const patterns: Patterns = new Map()
+  const skipped = new Set<string>()
   for (const [text, readings] of index.runs) {
+    if (ctx.removed.has(text))
+      continue
+    if ([...readings.values()].some(ctx.skipped)) {
+      skipped.add(text)
+      continue
+    }
     const common = [...readings.values()].filter(r => ctx.selected(r) && ctx.renderable({ text, spans: r.spans }))
-    if (common.length && !ctx.removed.has(text))
+    if (common.length)
       patterns.set(text, common.map(r => ({ ...r })))
   }
   if (ctx.options.places)
-    addPlaces(patterns, dictionary.places, ctx)
+    addPlaces(patterns, dictionary.places, skipped, ctx)
   const lonePins = new Map<string, string>()
   for (const notation of ctx.options.words.add)
     addCustomWord(patterns, lonePins, notation, 0, ctx)
@@ -250,7 +273,7 @@ function selectWords(index: DictionaryIndex, dictionary: Dictionary, ctx: PlanCo
     addCustomWord(patterns, lonePins, notation, 2, ctx)
   for (const readings of patterns.values())
     readings.sort(rank).splice(MAX_READINGS)
-  return { patterns, lonePins }
+  return { patterns, lonePins, skipped }
 }
 
 /** Readings of a lone kanji the font can draw, heaviest first, with their share of the evidence. */
@@ -284,10 +307,12 @@ function addRareVerbEvidence(inflecting: DictionaryIndex['inflecting'], ctx: Pla
  * A kanji alone in its run gets ruby only when one reading clearly dominates
  * the common words it stands alone in, whatever the word list's size: verbs
  * like 書く rank low in newspapers yet decide how 書 reads. Every kanji also
- * gets an ordered list of its readings, which the variation selectors index into.
+ * gets an ordered list of its readings, which the variation selectors index
+ * into, except a kanji whose dominant reading the reader is taken to know.
  */
 function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: Map<string, string>, ctx: PlanContext): { isolated: Map<string, string>, kanjiReadings: Map<string, string[]> } {
-  const isolated = new Map(lonePins)
+  const isolated = new Map(ctx.options.isolated ? lonePins : [])
+  const skipped = new Set<string>()
   const evidence = new Map<string, Map<string, number>>()
   const add: AddEvidence = (kanji, ruby, weight) => {
     const readings = getOrCreate(evidence, kanji, () => new Map<string, number>())
@@ -299,8 +324,11 @@ function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: M
     if (ctx.removed.has(kanji))
       continue
     const ranked = loneReadings(kanji, readings, ctx).filter(r => r.share >= MIN_ALTERNATE_SHARE)
-    if (ranked[0] && ranked[0].share >= ctx.options.isolatedMinShare && !isolated.has(kanji))
-      isolated.set(kanji, ranked[0].ruby)
+    const top = ranked[0]
+    if (top && !lonePins.has(kanji) && ctx.skipped(readings.get(top.ruby)!))
+      skipped.add(kanji)
+    else if (top && top.share >= ctx.options.isolatedMinShare && ctx.options.isolated && !isolated.has(kanji))
+      isolated.set(kanji, top.ruby)
     for (const r of ranked)
       add(kanji, r.ruby, r.weight)
   }
@@ -308,6 +336,8 @@ function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: M
   addRareVerbEvidence(index.inflecting, ctx, add)
   const kanjiReadings = new Map<string, string[]>()
   for (const [kanji, readings] of evidence) {
+    if (skipped.has(kanji))
+      continue
     const ordered = [...readings].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     kanjiReadings.set(kanji, ordered.slice(0, MAX_READINGS).map(([r]) => r))
   }
@@ -346,9 +376,10 @@ type Known = Map<string, (string | undefined)[] | null>
 /**
  * Longer dictionary words that the selected words would misread, such as
  * 大人気 read through 大人: annotated with their own reading when that only
- * takes readings the font already has, left bare otherwise.
+ * takes readings the font already has, left bare otherwise. Skipped words are
+ * always left bare.
  */
-function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadings: Map<string, string[]>, ctx: PlanContext): Map<string, RubySpan[] | null> {
+function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadings: Map<string, string[]>, skipped: Set<string>, ctx: PlanContext): Map<string, RubySpan[] | null> {
   const known: Known = new Map([...patterns].map(([text, readings]) => [text, assignment(readings[0]!.spans, length(text))]))
   const protectedRuns = new Map<string, RubySpan[] | null>()
   for (const text of [...ctx.removed].filter(t => length(t) > 1)) {
@@ -364,7 +395,7 @@ function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadin
       return false
     const truth = [...readings.values()].sort(rank)[0]!
     const run = { text, spans: truth.spans }
-    const reusable = candidates.length === 1 && !isGrouped(run) && ctx.renderable(run) && truth.spans.every(s => kanjiReadings.get(chars[s.start]!)?.includes(s.ruby))
+    const reusable = !skipped.has(text) && candidates.length === 1 && !isGrouped(run) && ctx.renderable(run) && truth.spans.every(s => kanjiReadings.get(chars[s.start]!)?.includes(s.ruby))
     protectedRuns.set(text, reusable ? truth.spans : null)
     known.set(text, reusable ? expected[0]! : null)
     return true
@@ -514,9 +545,9 @@ export function createFontPlanner(dictionary: Dictionary) {
   /** Plans a font; with `previewText`, keeps only what that text can trigger. */
   return function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
     const ctx = createContext(dictionary, options, coverage)
-    const { patterns, lonePins } = selectWords(index, dictionary, ctx)
+    const { patterns, lonePins, skipped } = selectWords(index, dictionary, ctx)
     const { isolated, kanjiReadings } = chooseLoneKanji(index, patterns, lonePins, ctx)
-    const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, ctx)
+    const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, skipped, ctx)
     const glyphs = createGlyphRegistry(ctx.render)
     const { rules, ligatures, singles, variants, variantReadings, ivsWords } = buildRules(patterns, kanjiReadings, protectedRuns, glyphs)
     const lone = [...isolated].map(([kanji, ruby]) => ({ base: glyphName(kanji.codePointAt(0)!), glyph: glyphs.lone(kanji, ruby) }))
@@ -556,7 +587,7 @@ export function createFontPlanner(dictionary: Dictionary) {
         version: 1,
         names: {
           family: options.family,
-          description: `Furigana rules compiled from ${sources} (CC BY-SA 4.0: EDRDG, JmdictFurigana).`,
+          description: `Furigana rules compiled from ${sources} (CC BY-SA 4.0: EDRDG, JmdictFurigana, stephenmk after Jonathan Waller).`,
         },
         metrics: options.metrics,
         codepoints: [...named].sort((a, b) => a - b),

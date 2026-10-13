@@ -85,6 +85,28 @@ test('previews, plans and builds a font', async ({ page }) => {
   expect((await download.body()).subarray(0, 4).toString()).toBe('OTTO')
 })
 
+test('estimates the size, keeps settings across reloads, and resets them but not the words', async ({ page }) => {
+  await page.goto(url)
+  await expect(page.getByText(/≈ \d+\.\d\d MB WOFF2 · \d+\.\d\d MB OTF/)).toBeVisible({ timeout: 60_000 })
+
+  const skip = page.getByRole('slider', { name: /Skip the most common words/ })
+  const isolated = page.getByRole('checkbox', { name: 'Ruby on single kanji' })
+  await skip.focus()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await page.locator('label', { has: isolated }).click()
+  await page.getByLabel('Word to add').fill('推[お]し活[かつ]')
+  await page.getByRole('button', { name: 'Add word' }).click()
+
+  await page.reload()
+  await expect(skip).toHaveValue('1000')
+  await expect(isolated).not.toBeChecked()
+  await page.getByRole('button', { name: 'Reset to defaults' }).click()
+  await expect(skip).toHaveValue('0')
+  await expect(isolated).toBeChecked()
+  await expect(page.getByRole('button', { name: 'Remove 推[お]し活[かつ]' })).toBeVisible()
+})
+
 /** Opens a page on another site, in `lang`, with tight lines and maybe a CSP; the demo site's fonts are the test font. */
 async function openElsewhere(page: Page, lang: string, csp?: string): Promise<void> {
   const font = await readFile(TEST_FONT)
