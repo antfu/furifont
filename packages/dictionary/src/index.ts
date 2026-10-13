@@ -1,11 +1,6 @@
 import type { Dictionary } from '@furifont/core'
-import { readFile } from 'node:fs/promises'
 import * as v from 'valibot'
 import { DEFAULT_READINGS } from './defaults'
-
-const DATA = new URL('../data/dictionary.json', import.meta.url)
-const PLACES = new URL('../data/places.json', import.meta.url)
-const JLPT = new URL('../data/jlpt.json', import.meta.url)
 
 const DataSchema = v.object({
   sources: v.record(v.string(), v.string()),
@@ -17,13 +12,19 @@ const DataSchema = v.object({
 const PlacesSchema = v.array(v.tuple([v.string(), v.string()]))
 const JlptSchema = v.array(v.tuple([v.string(), v.string(), v.picklist([1, 2, 3, 4, 5])]))
 
-async function readJson<T extends v.GenericSchema>(url: URL, schema: T): Promise<v.InferOutput<T>> {
-  return v.parse(schema, JSON.parse(await readFile(url, 'utf8')))
+/**
+ * A data file as a JSON module, which Node loads and bundlers split into a
+ * lazy chunk. The path is a template so that TypeScript leaves the 11 MB file
+ * untyped rather than inferring it.
+ */
+async function readData<T extends v.GenericSchema>(name: 'dictionary' | 'places' | 'jlpt', schema: T): Promise<v.InferOutput<T>> {
+  const { default: data } = await import(`../data/${name}.json`, { with: { type: 'json' } })
+  return v.parse(schema, data)
 }
 
 /** Loads the compiled dictionary: JMdict and JMnedict place names, aligned by JmdictFurigana, with KANJIDIC2's on'yomi and JLPT levels. */
 export async function loadDictionary(): Promise<Dictionary> {
-  const [data, places, jlpt] = await Promise.all([readJson(DATA, DataSchema), readJson(PLACES, PlacesSchema), readJson(JLPT, JlptSchema)])
+  const [data, places, jlpt] = await Promise.all([readData('dictionary', DataSchema), readData('places', PlacesSchema), readData('jlpt', JlptSchema)])
   const levels = new Map(jlpt.map(([form, furigana, level]) => [`${form}|${furigana}`, level]))
   return {
     sources: data.sources,

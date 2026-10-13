@@ -1,16 +1,15 @@
-import type { CompileProgress } from '@furifont/compiler'
+import type { BuiltFont, CompileProgress } from '@furifont/compiler'
 import type { Dictionary, Plan, PlanReport, PlanResult } from '@furifont/core'
 import type { FurifontConfig } from './config'
-import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
-import { promisify } from 'node:util'
-import { brotliCompress, constants } from 'node:zlib'
-import { BASE_FONTS, compileFont, fetchBaseFont, readFontInfo } from '@furifont/compiler'
+import { BASE_FONTS, compileFont, readFontInfo, toWoff2 } from '@furifont/compiler'
+import { brotli, subsetWasm } from '@furifont/compiler/node'
 import { createFontPlanner } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
+import { fetchBaseFont } from './base-fonts'
 
 export interface BuiltFile {
   name: string
@@ -22,8 +21,6 @@ export interface BuildResult {
   files: BuiltFile[]
   report: PlanReport
 }
-
-const brotli = promisify(brotliCompress)
 
 function cacheDir(): string {
   return join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'furifont')
@@ -50,7 +47,7 @@ export async function planWithBase(config: FurifontConfig, cwd: string, previewT
   const base = await resolveBase(config.base, cwd)
   let coverage = coverages.get(base)
   if (!coverage)
-    coverages.set(base, coverage = readFontInfo(base).then(info => new Set(info.codepoints)))
+    coverages.set(base, coverage = readFile(base).then(font => new Set(readFontInfo(font).codepoints)))
   return { ...(await planner)(config, await coverage, previewText), base }
 }
 
@@ -58,48 +55,35 @@ function fileStem(config: FurifontConfig, style: string): string {
   return `${config.family.replaceAll(' ', '')}-${style.replaceAll(' ', '')}`
 }
 
-/** Builds `<Family>-<Style>.otf`, `.woff2` and the selector reference `.ivs.json` into `outDir`. */
-export async function buildFont(config: FurifontConfig, options: { cwd: string, outDir: string, onProgress?: (p: CompileProgress) => void }): Promise<BuildResult> {
-  const { plan, report, base } = await planWithBase(config, options.cwd)
-  await mkdir(options.outDir, { recursive: true })
-  // Unique per build: several may run at once, and the style is only known once compiled.
-  const work = join(options.outDir, `.furifont-${randomUUID()}`)
-  const otf = `${work}.otf`
-  const woff2 = `${work}.woff2`
-  try {
-    const result = await compileFont({ plan, base, output: otf, woff2, onProgress: options.onProgress })
-    const stem = fileStem(config, result.style)
-    const files: BuiltFile[] = []
-    for (const [from, ext] of [[otf, 'otf'], [woff2, 'woff2']] as const) {
-      const path = join(options.outDir, `${stem}.${ext}`)
-      await rename(from, path)
-      files.push({ name: `${stem}.${ext}`, path, bytes: (await stat(path)).size })
-    }
-    const ivs = join(options.outDir, `${stem}.ivs.json`)
-    await writeFile(ivs, `${JSON.stringify(report.ivs)}\n`)
-    files.push({ name: `${stem}.ivs.json`, path: ivs, bytes: (await stat(ivs)).size })
-    return { files, report }
-  }
-  finally {
-    await Promise.all([rm(otf, { force: true }), rm(woff2, { force: true })])
-  }
+async function compileOpenType({ plan, base }: { plan: Plan, base: string }, onProgress?: (p: CompileProgress) => void): Promise<BuiltFont> {
+  return compileFont({ plan, base: await readFile(base), subsetWasm, onProgress })
 }
 
-async function compileOpenType({ plan, base }: { plan: Plan, base: string }): Promise<Uint8Array> {
-  const output = join(tmpdir(), `furifont-${process.pid}-${randomUUID()}.otf`)
-  try {
-    await compileFont({ plan, base, output })
-    return new Uint8Array(await readFile(output))
+/** Builds `<Family>-<Style>.otf`, `.woff2` and the selector reference `.ivs.json` into `outDir`. */
+export async function buildFont(config: FurifontConfig, options: { cwd: string, outDir: string, onProgress?: (p: CompileProgress) => void }): Promise<BuildResult> {
+  const planned = await planWithBase(config, options.cwd)
+  const { font, style } = await compileOpenType(planned, options.onProgress)
+  options.onProgress?.({ step: 'woff2', done: null, total: null })
+  const outputs: [string, Uint8Array][] = [
+    ['otf', font],
+    ['woff2', await toWoff2(font, brotli)],
+    ['ivs.json', new TextEncoder().encode(`${JSON.stringify(planned.report.ivs)}\n`)],
+  ]
+  const stem = fileStem(config, style)
+  await mkdir(options.outDir, { recursive: true })
+  const files: BuiltFile[] = []
+  for (const [ext, data] of outputs) {
+    const path = join(options.outDir, `${stem}.${ext}`)
+    await writeFile(path, data)
+    files.push({ name: `${stem}.${ext}`, path, bytes: data.length })
   }
-  finally {
-    await rm(output, { force: true })
-  }
+  return { files, report: planned.report }
 }
 
 /** Compiles a small font covering only `text`, for a live preview. */
 export async function previewFont(config: FurifontConfig, text: string, cwd: string): Promise<{ font: Uint8Array, report: PlanReport }> {
   const planned = await planWithBase(config, cwd, text)
-  return { font: await compileOpenType(planned), report: planned.report }
+  return { font: (await compileOpenType(planned)).font, report: planned.report }
 }
 
 /** Bytes of the fonts a build would write. */
@@ -117,14 +101,6 @@ const FAST_WOFF2_RATIO = 0.885
 
 /** Compiles the OpenType font `config` builds, and estimates its WOFF2 from a fast Brotli pass. */
 export async function estimateFont(config: FurifontConfig, cwd: string): Promise<SizeEstimate> {
-  const otf = await compileOpenType(await planWithBase(config, cwd))
-  const fast = await brotli(otf, {
-    params: {
-      [constants.BROTLI_PARAM_MODE]: constants.BROTLI_MODE_FONT,
-      [constants.BROTLI_PARAM_QUALITY]: 8,
-      [constants.BROTLI_PARAM_LGWIN]: constants.BROTLI_MAX_WINDOW_BITS,
-      [constants.BROTLI_PARAM_SIZE_HINT]: otf.length,
-    },
-  })
-  return { otf: otf.length, woff2: Math.round(fast.length * FAST_WOFF2_RATIO) }
+  const { font } = await compileOpenType(await planWithBase(config, cwd))
+  return { otf: font.length, woff2: Math.round((await brotli(font, 8)).length * FAST_WOFF2_RATIO) }
 }

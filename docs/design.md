@@ -42,8 +42,8 @@ The repository is a pnpm monorepo. Each package has one job:
 | --- | --- | --- |
 | `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT word lists into committed JSON. It also holds a short list of curated default readings. |
 | `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
-| `@furifont/compiler` | TS | Draws the plan into the base font, compiles the rules and checks the output with HarfBuzz (harfbuzzjs, WebAssembly). |
-| `furifont` | TS | The CLI (`furifont build`, `furifont dev`) and the studio's Devframe definition and RPC functions. |
+| `@furifont/compiler` | TS | Draws the plan into the base font, compiles the rules and checks the output with HarfBuzz (harfbuzzjs, WebAssembly). Bytes in, bytes out. |
+| `furifont` | TS | The CLI (`furifont build`, `furifont dev`) and the studio's Devframe definition and RPC functions. It is the Node host: it reads and writes the files and caches the base fonts. |
 | `packages/app` | Nuxt | The demo site and the studio, as one static SPA. The CLI ships it as its Devframe client. |
 
 ```
@@ -56,7 +56,10 @@ packages/dictionary/data/{dictionary,places,okurigana,jlpt}.json (committed, one
 createFontPlanner(dictionary)(options, coverage[, previewText]) -> { plan, report }
         |                                     ^ codepoints of the base font (readFontInfo)
         v
-compileFont({ plan, base, output })  ->  font  ->  HarfBuzz smoke checks
+compileFont({ plan, base, subsetWasm })  ->  font  ->  HarfBuzz smoke checks
+        |
+        v
+toWoff2(font, brotli)
 ```
 
 ### Layer boundary
@@ -73,6 +76,26 @@ named `uniXXXX`/`uXXXXX` after their codepoint.
 The live preview and the full build both go through the same planner. The
 preview keeps only the rules its sample text can trigger, and tells the
 compiler to subset the base font first.
+
+### Browser-safe packages
+
+`core`, `compiler` and `dictionary` MUST run in a browser as well as in Node,
+so that a web studio can plan and compile without a server. They use no Node
+APIs, and ESLint rejects `node:` imports in their sources.
+
+- The compiler takes and returns bytes: `readFontInfo(font)`,
+  `compileFont({ plan, base, subsetWasm })` and `toWoff2(font, brotli)`.
+- The two things that differ by platform are passed in: `subsetWasm` loads
+  harfbuzzjs' hb-subset module, which previews need, and `brotli` compresses
+  WOFF2. `@furifont/compiler/node` has both for Node, with Brotli in font mode
+  at quality 11. It is the one file in these packages that uses Node.
+- `loadDictionary()` imports its data as JSON modules. Node loads them, and
+  bundlers split them into lazy chunks.
+- The base fonts are fetched from `raw.githubusercontent.com`, which sends
+  CORS headers. `github.com`'s redirect to it does not.
+
+The CLI is the Node host: it reads base fonts, caches them in
+`~/.cache/furifont` and writes the fonts it builds.
 
 ## What the prototype changed
 
@@ -305,9 +328,9 @@ Han Sans' `ruby` feature only covers five glyphs, so it is not used.
 ## Compiler
 
 `@furifont/compiler` is TypeScript. It reads outlines, shapes and subsets with
-harfbuzzjs, HarfBuzz built to WebAssembly, and compresses WOFF2 with Node's
-Brotli. It writes the tables it changes itself and copies every other table as
-bytes. For a build, it does this:
+harfbuzzjs, HarfBuzz built to WebAssembly, and compresses WOFF2 with the
+Brotli it is given. It writes the tables it changes itself and copies every
+other table as bytes. For a build, it does this:
 
 1. **Load.** It loads the base font, subsetting it first for previews with
    hb-subset, keeping every layout feature and name. Variable fonts, WOFF,
@@ -337,7 +360,7 @@ bytes. For a build, it does this:
    are registered in every language system.
 8. **Finish.** The ascender is raised and names are set. Source's Reserved
    Font Name must not appear in them. The font is shaped against the plan's
-   smoke checks, then written, with an optional WOFF2.
+   smoke checks and returned. `toWoff2` wraps it as WOFF2.
 
 A full Source Han Sans JP build takes about 1.5 s, plus about 25 s for the
 WOFF2. It gives 19.9 MB as OpenType and 4.7 MB as WOFF2, and uses about 41,700

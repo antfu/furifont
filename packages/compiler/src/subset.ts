@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises'
-import { createRequire } from 'node:module'
+/** Loads harfbuzzjs' hb-subset module (`harfbuzzjs/dist/harfbuzz-subset.wasm`), which the host knows how to read. */
+export type SubsetWasm = () => Promise<WebAssembly.Module>
 
 /** The parts of harfbuzzjs' hb-subset build used here; harfbuzzjs ships the module without bindings. */
 interface SubsetModule {
@@ -32,11 +32,11 @@ const HB_SUBSET_SETS_NAME_LANG_ID = 5
 const HB_SUBSET_SETS_LAYOUT_FEATURE_TAG = 6
 const HB_SUBSET_FLAGS_NOTDEF_OUTLINE = 0x40
 
-let loading: Promise<SubsetModule> | undefined
+/** One instance per loader: each holds 65 MB of memory, too much to make per preview. */
+const instances = new WeakMap<SubsetWasm, Promise<SubsetModule>>()
 
-async function load(): Promise<SubsetModule> {
-  const path = createRequire(import.meta.url).resolve('harfbuzzjs/dist/harfbuzz-subset.wasm')
-  const { instance } = await WebAssembly.instantiate(await readFile(path))
+async function load(wasm: SubsetWasm): Promise<SubsetModule> {
+  const instance = await WebAssembly.instantiate(await wasm())
   // A WebAssembly module's exports are untyped; SubsetModule lists the C functions it was built with.
   const hb: SubsetModule = instance.exports as WebAssembly.Exports & SubsetModule
   hb._initialize()
@@ -44,8 +44,11 @@ async function load(): Promise<SubsetModule> {
 }
 
 /** Keeps only what `codepoints` need, with every layout feature and name. */
-export async function subsetFont(font: Uint8Array, codepoints: number[]): Promise<Uint8Array> {
-  const hb = await (loading ??= load())
+export async function subsetFont(font: Uint8Array, codepoints: number[], wasm: SubsetWasm): Promise<Uint8Array> {
+  let loading = instances.get(wasm)
+  if (!loading)
+    instances.set(wasm, loading = load(wasm))
+  const hb = await loading
   const data = hb.malloc(font.length)
   new Uint8Array(hb.memory.buffer).set(font, data)
   const blob = hb.hb_blob_create(data, font.length, HB_MEMORY_MODE_READONLY, 0, 0)
