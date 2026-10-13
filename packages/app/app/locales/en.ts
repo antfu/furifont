@@ -22,6 +22,7 @@ export default {
     sponsors: 'sponsors',
   },
   copied: 'Copied',
+  shuffle: 'Show another sample',
   editable: 'Sample text, editable',
   scripts: {
     hiragana: 'Hiragana',

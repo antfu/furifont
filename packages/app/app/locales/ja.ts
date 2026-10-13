@@ -24,6 +24,7 @@ export default {
     sponsors: 'スポンサー',
   },
   copied: 'コピーしました',
+  shuffle: '別の例文を表示',
   editable: '編集できるサンプルテキスト',
   scripts: {
     hiragana: 'ひらがな',
