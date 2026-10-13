@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "devframe": "catalog:prod",
+    "valibot": "catalog:prod",
     "vue-i18n": "catalog:frontend"
   },
   "devDependencies": {
