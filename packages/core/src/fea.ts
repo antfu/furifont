@@ -38,6 +38,23 @@ function chainRule(rule: Rule): string {
   return `sub ${rule.input.map((g, i) => `${g}'${rule.lookups[i] ? ` lookup ${rule.lookups[i]}` : ''}`).join(' ')};`
 }
 
+/** The chain rules, longest first, then the lone-kanji class rules. */
+function mainRules(input: FeaInput): string[] {
+  const words = input.rules.flatMap((rule, i) => i && i % RULES_PER_SUBTABLE === 0 ? ['subtable;', chainRule(rule)] : [chainRule(rule)])
+  if (!input.isolated.length)
+    return words
+  const kanji = `[${input.isolated.map(i => i.input).join(' ')}]`
+  return [
+    ...words,
+    // Class-based rules get a subtable of their own, or none of the above could be
+    // glyph-keyed; feaLib rejects a break before the first rule.
+    ...words.length ? ['subtable;'] : [],
+    `ignore sub @han ${kanji}';`,
+    `ignore sub ${kanji}' @han;`,
+    `sub ${kanji}' lookup isolated;`,
+  ]
+}
+
 /**
  * Writes the feature file. Nested lookups come first so the main one can call
  * them; the fallbacks come after it, in lookup order, so they only see what it
@@ -57,17 +74,7 @@ export function emitFea(input: FeaInput): string {
   if (input.isolated.length)
     out.push(block('lookup', 'isolated', input.isolated.map(i => `sub ${i.input} by ${i.output};`)))
 
-  const main = input.rules.flatMap((rule, i) => i && i % RULES_PER_SUBTABLE === 0 ? ['subtable;', chainRule(rule)] : [chainRule(rule)])
-  if (input.isolated.length) {
-    const kanji = `[${input.isolated.map(i => i.input).join(' ')}]`
-    // Class-based rules get a subtable of their own, or none of the above could be glyph-keyed.
-    main.push(
-      'subtable;',
-      `ignore sub @han ${kanji}';`,
-      `ignore sub ${kanji}' @han;`,
-      `sub ${kanji}' lookup isolated;`,
-    )
-  }
+  const main = mainRules(input)
   if (main.length)
     out.push(block('lookup', 'furigana', main))
   if (input.variantReadings.length)
