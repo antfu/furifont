@@ -42,6 +42,8 @@ interface DictionaryIndex {
   runs: Map<string, Map<string, RunReading>>
   /** Kanji alone in a run, by kanji, then by reading. */
   singles: Map<string, Map<string, SingleReading>>
+  /** Readings of kanji followed by okurigana in words with no priority tag, such as 奉る: selectable, never defaults. */
+  inflecting: Map<string, Set<string>>
 }
 
 export interface PlanReport {
@@ -162,12 +164,16 @@ function indexSingle(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry
   }
 }
 
+const OKURIGANA = /[\u3041-\u3096]/
+
 function indexEntry(index: DictionaryIndex, entry: DictionaryEntry): void {
   for (const run of hanRuns(entry.form, parseFurigana(entry.furigana))) {
     if (length(run.text) > 1)
       indexRun(index, run, entry)
     else if (entry.priority)
       indexSingle(index, run, entry)
+    else if (OKURIGANA.test(entry.form[entry.form.indexOf(run.text) + run.text.length] ?? ''))
+      getOrCreate(index.inflecting, run.text, () => new Set<string>()).add(run.spans[0]!.ruby)
   }
 }
 
@@ -238,6 +244,26 @@ function loneReadings(kanji: string, readings: Map<string, SingleReading>, ctx: 
   return drawable.map(([ruby, r]) => ({ ruby, weight: r.weight, share: r.weight / total })).sort((a, b) => b.weight - a.weight)
 }
 
+type AddEvidence = (kanji: string, ruby: string, weight: number) => void
+
+function addWordEvidence(patterns: Patterns, add: AddEvidence): void {
+  for (const [text, readings] of patterns) {
+    const chars = [...text]
+    for (const r of readings) {
+      for (const s of r.spans.filter(s => s.end - s.start === 1))
+        add(chars[s.start]!, s.ruby, r.weight || 1e-6)
+    }
+  }
+}
+
+/** Last in each list: readings a selector helper may need for verbs too rare to rank. */
+function addRareVerbEvidence(inflecting: DictionaryIndex['inflecting'], ctx: PlanContext, add: AddEvidence): void {
+  for (const [kanji, rubies] of inflecting) {
+    for (const ruby of [...rubies].filter(ruby => !ctx.removed.has(kanji) && ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] })))
+      add(kanji, ruby, 1e-9)
+  }
+}
+
 /**
  * A kanji alone in its run gets ruby only when one reading clearly dominates
  * the common words it stands alone in, whatever the word list's size: verbs
@@ -247,12 +273,12 @@ function loneReadings(kanji: string, readings: Map<string, SingleReading>, ctx: 
 function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: Map<string, string>, ctx: PlanContext): { isolated: Map<string, string>, kanjiReadings: Map<string, string[]> } {
   const isolated = new Map(lonePins)
   const evidence = new Map<string, Map<string, number>>()
-  const addEvidence = (kanji: string, ruby: string, weight: number): void => {
+  const add: AddEvidence = (kanji, ruby, weight) => {
     const readings = getOrCreate(evidence, kanji, () => new Map<string, number>())
     readings.set(ruby, (readings.get(ruby) ?? 0) + weight)
   }
   for (const [kanji, ruby] of lonePins)
-    addEvidence(kanji, ruby, 1)
+    add(kanji, ruby, 1)
   for (const [kanji, readings] of index.singles) {
     if (ctx.removed.has(kanji))
       continue
@@ -260,13 +286,10 @@ function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: M
     if (ranked[0] && ranked[0].share >= ctx.options.isolatedMinShare && !isolated.has(kanji))
       isolated.set(kanji, ranked[0].ruby)
     for (const r of ranked)
-      addEvidence(kanji, r.ruby, r.weight)
+      add(kanji, r.ruby, r.weight)
   }
-  for (const [text, readings] of patterns) {
-    const chars = [...text]
-    for (const r of readings.flatMap(r => r.spans.filter(s => s.end - s.start === 1).map(s => ({ s, weight: r.weight }))))
-      addEvidence(chars[r.s.start]!, r.s.ruby, r.weight || 1e-6)
-  }
+  addWordEvidence(patterns, add)
+  addRareVerbEvidence(index.inflecting, ctx, add)
   const kanjiReadings = new Map<string, string[]>()
   for (const [kanji, readings] of evidence) {
     const ordered = [...readings].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
@@ -464,7 +487,7 @@ function smokeChecks(patterns: Patterns, lone: { glyph: PlanGlyph }[], glyphs: G
  * is the default, which longer words must be protected from a shorter match.
  */
 export function createFontPlanner(dictionary: Dictionary) {
-  const index: DictionaryIndex = { runs: new Map(), singles: new Map() }
+  const index: DictionaryIndex = { runs: new Map(), singles: new Map(), inflecting: new Map() }
   for (const entry of dictionary.entries)
     indexEntry(index, entry)
   const sources = Object.entries(dictionary.sources).map(([name, version]) => `${name} ${version}`).join(', ')

@@ -59,6 +59,12 @@ describe('planner', () => {
     expect(curated(resolveOptions({ words: { pin: ['今日[きょう]'] } }), coverage).report.ivs.words['今日']![0]).toBe('今日[きょう]')
   })
 
+  it('makes the reading of a rare verb selectable without making it a default', () => {
+    const { report } = plan()
+    expect(report.ivs.kanji['奉']).toEqual(['ほう', 'たてまつ'])
+    expect(report.stats.isolated).toBe(1)
+  })
+
   it('applies pins and removals', () => {
     const pinned = plan({ words: { pin: ['今[こん]日[にち]', '書[か]'] } }).report
     expect(pinned.ivs.words['今日']![0]).toBe('今[こん]日[にち]')
