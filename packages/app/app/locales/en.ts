@@ -19,6 +19,7 @@ export default {
     source: 'Source on GitHub',
   },
   copied: 'Copied',
+  shuffle: 'Show another sample',
   editable: 'Sample text, editable',
   scripts: {
     hiragana: 'Hiragana',

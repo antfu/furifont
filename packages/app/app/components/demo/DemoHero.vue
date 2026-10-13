@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const emit = defineEmits<{ download: [] }>()
+const text = ref(SAMPLES[0]!)
 const size = 44
 </script>
 
@@ -23,9 +24,10 @@ const size = 44
       </div>
     </div>
     <div class="relative isolate flex flex-col justify-center gap-4 overflow-hidden border-t border-base px-6 py-12 lg:border-t-0">
+      <UiButton variant="ghost" icon="i-ph-shuffle" class="absolute right-3 top-3 w-9 px-0" :aria-label="$t('shuffle')" :title="$t('shuffle')" @click="text = otherSample(text)" />
       <div class="relative">
         <UiTypeGrid :size />
-        <FuriText text="今日は&#10;日本語の勉強を&#10;します。" :size />
+        <FuriText v-model:text="text" :size />
       </div>
       <span class="label">Furifont Sans JP Regular / {{ size }}px</span>
     </div>

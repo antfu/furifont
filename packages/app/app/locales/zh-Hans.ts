@@ -21,6 +21,7 @@ export default {
     source: 'GitHub 上的源代码',
   },
   copied: '已复制',
+  shuffle: '换一个例句',
   editable: '可编辑的示例文本',
   scripts: {
     hiragana: '平假名',

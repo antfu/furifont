@@ -62,6 +62,14 @@ test('speaks the browser\'s language and remembers the one chosen', async ({ bro
   await context.close()
 })
 
+test('shows another sample on shuffle', async ({ page }) => {
+  await page.goto(new URL('/#/', url).href)
+  const sample = page.getByRole('textbox').first()
+  const before = await sample.textContent()
+  await page.getByRole('button', { name: 'Show another sample' }).first().click()
+  await expect(sample).not.toHaveText(before!)
+})
+
 test('writes the selectors for verbs from the playground', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
   const playground = page.locator('section', { has: page.getByRole('heading', { name: 'Try it' }) })

@@ -47,7 +47,7 @@ function createStudio() {
   const state = shallowRef<StudioState>()
   const config = ref<FurifontConfigInput>({})
   const report = shallowRef<PlanReport>()
-  const text = ref('今日は日本語の勉強をします。明日は東京の大学へ行きます。市場で魚を買った。')
+  const text = ref(SAMPLES[0]!)
   const preview = reactive<PreviewState>({ loading: false })
   const build = reactive<BuildProgress>({ running: false, files: [] })
   const savedTo = ref<string>()
