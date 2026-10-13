@@ -7,7 +7,7 @@ export type RubyScript = typeof RUBY_SCRIPTS[number]
 /** Sizes in em, relative to the base font. */
 const RubyMetricsSchema = v.object({
   /** Ruby size relative to the base characters. */
-  rubyScale: v.optional(v.pipe(v.number(), v.minValue(0.2), v.maxValue(0.8)), 0.5),
+  rubyScale: v.optional(v.pipe(v.number(), v.minValue(0.2), v.maxValue(0.8)), 0.4),
   /** Space between the top of the em box and the bottom of the ruby. */
   rubyGap: v.optional(v.pipe(v.number(), v.minValue(0), v.maxValue(0.5)), 0.05),
   /** Ruby is squeezed horizontally down to this scale before it may overhang. */

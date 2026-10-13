@@ -209,17 +209,17 @@ The reading lists ship as `<font>.ivs.json` and on the demo's reference page.
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `rubyScale` | 0.5 | Ruby size relative to the base characters |
+| `rubyScale` | 0.4 | Ruby size relative to the base characters |
 | `rubyGap` | 0.05 em | Space between the top of the ideographic em box and the ruby |
 | `compressionFloor` | 0.6 | Ruby is squeezed horizontally down to this scale, then overhangs |
 | `maxRubyWidth` | 1.6 em | The widest a ruby may get, overhanging both sides equally |
 
 The em box comes from the BASE table's `ideo` baseline, and falls back to the
 typographic ascender. `hhea.ascent` and `usWinAscent` are raised to cover the
-ruby: from 1160 to 1430 for Source Han Sans JP.
+ruby: from 1160 to 1330 for Source Han Sans JP.
 
 Advance widths do not change, so line breaking and justification match the base
-font. The default line height grows to about 1.7. A smaller `line-height`
+font. The default line height grows to about 1.6. A smaller `line-height`
 clips the ruby. This is documented, not worked around.
 
 Kana ruby uses the base font's own kana. Romaji uses its Latin glyphs. Source
