@@ -109,7 +109,10 @@ export default {
       eyebrow: 'スタジオ / オフライン',
       title: '自分だけの Furifont を作る',
       body: 'スタジオはあなたのマシンで動きます。Python と fontTools でフォントをコンパイルするので、静的なサイトでは動かせません。好きなフォルダで起動すると、このページが接続した状態で開き、ライブプレビュー、辞書、ビルドボタンが使えます。ビルドしたフォントは {folder} に保存されます。',
-      needs: 'Node 22 以上と、{command} を入れた Python 3.10 以上が必要です。',
+      needs: 'Node 22.18 以上と Python 3.10 以上が必要です。',
+      install: '1. フォント用ライブラリを入れる',
+      run: '2. 好きなフォルダでスタジオを起動する',
+      venv: 'Homebrew の Python などグローバルへの追加を拒否される場合は、プロジェクトの .venv に入れてください。そこから使われます。別の Python は FURIFONT_PYTHON で指定できます。',
     },
     auth: {
       eyebrow: 'スタジオ / ロック中',

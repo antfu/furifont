@@ -109,7 +109,10 @@ export default {
       eyebrow: '工作室 / 离线',
       title: '构建你自己的 Furifont',
       body: '工作室运行在你的电脑上：它用 Python 和 fontTools 编译字体，静态网站做不到这一点。在任意文件夹中启动它，此页面就会连接上，提供实时预览、词典和构建按钮。构建结果保存在 {folder}。',
-      needs: '需要 Node 22 及以上版本，以及安装了 {command} 的 Python 3.10 及以上版本。',
+      needs: '需要 Node 22.18+ 和 Python 3.10+。',
+      install: '1. 安装字体库',
+      run: '2. 在任意文件夹中启动工作室',
+      venv: '如果你的 Python 拒绝全局安装（如 Homebrew 的），请装进项目里的 .venv，会自动从那里读取。其他 Python 可用 FURIFONT_PYTHON 指定。',
     },
     auth: {
       eyebrow: '工作室 / 已锁定',

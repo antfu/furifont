@@ -109,7 +109,10 @@ export default {
       eyebrow: '工作室 / 離線',
       title: '建置你自己的 Furifont',
       body: '工作室在你的電腦上執行：它用 Python 與 fontTools 編譯字型，靜態網站無法做到。在任何資料夾啟動它，此頁面就會連線，提供即時預覽、辭典與建置按鈕。建置結果會存放在 {folder}。',
-      needs: '需要 Node 22 以上版本，以及安裝了 {command} 的 Python 3.10 以上版本。',
+      needs: '需要 Node 22.18+ 和 Python 3.10+。',
+      install: '1. 安裝字型函式庫',
+      run: '2. 在任意資料夾中啟動工作室',
+      venv: '如果你的 Python 拒絕全域安裝（如 Homebrew 的），請裝進專案裡的 .venv，會自動從那裡讀取。其他 Python 可用 FURIFONT_PYTHON 指定。',
     },
     auth: {
       eyebrow: '工作室 / 已鎖定',
