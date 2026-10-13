@@ -1,8 +1,8 @@
 export const LOCALES = [
   { code: 'en', name: 'English' },
   { code: 'ja', name: '日本語' },
-  { code: 'zh-CN', name: '简体中文' },
-  { code: 'zh-TW', name: '繁體中文' },
+  { code: 'zh-Hans', name: '简体中文' },
+  { code: 'zh-Hant', name: '繁體中文' },
 ] as const
 
 export type Locale = typeof LOCALES[number]['code']
@@ -21,7 +21,7 @@ export function isLocale(value: string | null): value is Locale {
 export function detectLocale(languages: readonly string[]): Locale {
   for (const tag of languages.map(l => l.toLowerCase())) {
     if (tag.startsWith('zh'))
-      return /-(?:tw|hk|mo|hant)\b/.test(tag) ? 'zh-TW' : 'zh-CN'
+      return /-(?:tw|hk|mo|hant)\b/.test(tag) ? 'zh-Hant' : 'zh-Hans'
     if (tag.startsWith('ja'))
       return 'ja'
     if (tag.startsWith('en'))
