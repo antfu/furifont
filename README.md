@@ -2,25 +2,26 @@
 
 # Furifont
 
-A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji.
+A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji. [Try it on furifont.antfu.me](https://furifont.antfu.me).
 
 ```html
 <p style="font-family: 'Furifont Sans JP'; line-height: 1.7">今日は日本語の勉強をします。</p>
 ```
 
-Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JMnedict](https://www.edrdg.org/enamdict/enamdict_doc.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). The tools that build it work with other base fonts and other word lists.
+Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and [Source Han Serif JP](https://github.com/adobe-fonts/source-han-serif), and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JMnedict](https://www.edrdg.org/enamdict/enamdict_doc.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project). The tools that build it work with other base fonts and other word lists.
 
 ## Fonts
 
-Each [release](https://github.com/antfu/furigana-font/releases/latest) has six fonts, as OpenType and WOFF2:
+Each [release](https://github.com/antfu/furigana-font/releases/latest) has eight fonts, as OpenType and WOFF2:
 
-| Family | Ruby | Weights |
-| --- | --- | --- |
-| Furifont Sans JP | Hiragana | Regular, Bold |
-| Furifont Sans JP Kata | On'yomi in katakana, kun'yomi in hiragana | Regular, Bold |
-| Furifont Sans JP Romaji | Modified Hepburn, with macrons | Regular, Bold |
+| Family | Base | Ruby | Weights |
+| --- | --- | --- | --- |
+| Furifont Sans JP | Source Han Sans JP | Hiragana | Regular, Bold |
+| Furifont Sans JP Romaji | Source Han Sans JP | Modified Hepburn, with macrons | Regular, Bold |
+| Furifont Serif JP | Source Han Serif JP | Hiragana | Regular, Bold |
+| Furifont Serif JP Romaji | Source Han Serif JP | Modified Hepburn, with macrons | Regular, Bold |
 
-Each font also comes with a `.ivs.json` file. It lists the readings that the variation selectors pick, as described below.
+Each font also comes with a `.ivs.json` file. It lists the readings that the variation selectors pick, as described below. The Regular WOFF2s and their `.ivs.json` are also in [`fonts/`](fonts), as the site serves them. Katakana for on'yomi is a build option.
 
 ### Using them
 
@@ -50,7 +51,7 @@ To pick another reading, write a variation selector right after the first kanji 
 
 After the first kanji of a word with several readings, the selector picks the word's reading. For example, `市\u{E01E2}場` shows しじょう instead of いちば. After any other kanji, it picks that kanji's own reading.
 
-Selectors are invisible, survive copy and paste, and need no markup. The [reference page](https://antfu.github.io/furigana-font/#/reference) lists every reading and copies a word together with its selector.
+Selectors are invisible, survive copy and paste, and need no markup. The [reference page](https://furifont.antfu.me/#/reference) lists every reading and copies a word together with its selector.
 
 ### Verbs
 
@@ -75,7 +76,7 @@ If your Python refuses a global install, as Homebrew's does, install them into a
 From the command line:
 
 ```sh
-npx furifont build --base Bold --script hepburn --family "My Furigana"
+npx furifont build --base "Source Han Serif JP Bold" --script hepburn --family "My Furigana"
 ```
 
 Or open the studio. It runs in your browser with a live preview, the dictionary, your own words, and a build button:
@@ -88,7 +89,7 @@ Both commands read `furifont.config.json` from the current folder, and the studi
 
 ```json
 {
-  "base": "Regular",
+  "base": "Source Han Sans JP Regular",
   "family": "Furifont Sans JP",
   "rubyScript": "hiragana",
   "nfMax": 10,
@@ -106,7 +107,7 @@ Both commands read `furifont.config.json` from the current folder, and the studi
 
 These are the settings:
 
-- `base` is a Source Han Sans JP weight, which is downloaded once, or the path to another OpenType font.
+- `base` names a font to download once, Source Han Sans JP or Source Han Serif JP with a weight (`Source Han Serif JP Bold`), or is the path to another OpenType font.
 - `nfMax` sets how many words get ruby. Words are ranked in newspaper frequency buckets of about 500 words each.
 - `selectTags` also selects words that have these JMdict priority tags.
 - `isolatedMinShare` sets how strongly one reading must dominate before a kanji alone gets ruby.
@@ -140,5 +141,5 @@ pnpm dev            # the app, with a live studio
 ## License
 
 - **Code:** [MIT](LICENSE.md).
-- **Fonts:** [SIL Open Font License 1.1](OFL.txt), as derivatives of Source Han Sans by Adobe. "Source" is a Reserved Font Name and does not appear in Furifont's names.
+- **Fonts:** [SIL Open Font License 1.1](OFL.txt), as derivatives of Source Han Sans and Source Han Serif by Adobe. "Source" is a Reserved Font Name and does not appear in Furifont's names.
 - **Dictionary data and the reading rules in the fonts:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict, JMnedict and KANJIDIC2 (EDRDG) and JmdictFurigana.

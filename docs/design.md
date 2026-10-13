@@ -17,8 +17,9 @@ rules. It differs in three ways:
 
 ## Goals
 
-- Prebuilt fonts: **Furifont Sans JP** Regular and Bold, from Source Han Sans
-  JP, in three ruby scripts (hiragana, katakana for on'yomi, Hepburn romaji).
+- Prebuilt fonts: **Furifont Sans JP** and **Furifont Serif JP**, Regular and
+  Bold, from Source Han Sans JP and Source Han Serif JP, with hiragana or
+  Hepburn romaji ruby. Katakana for on'yomi is a build option.
 - A build anyone can run with another base font, word list or options.
 - A local studio, served by Devframe, to tune, preview and build.
 - A static demo site that loads the prebuilt fonts.
@@ -366,24 +367,32 @@ own mount.
 
 ## Release
 
-Tags run `release.yml`:
+A human runs `pnpm release`. It builds the packages, bumps every version, and
+rebuilds the four Regular fonts into `fonts/` as WOFF2 with their `.ivs.json`.
+The bump and the fonts land in one commit, so each tag carries the fonts the
+site serves. Git keeps no OpenType and no Bold: all eight fonts in both formats
+would add over 200 MB to the history per release, against 25 MB.
+
+The tag runs `release.yml`:
 
 - npm publishing and the changelog, through `sxzz/workflows`;
-- the six fonts, built from Source Han Sans JP Regular and Bold, are attached
-  to the GitHub Release with the OFL and the data license;
-- the demo, with the WOFF2 fonts, is deployed to GitHub Pages under
-  `/<repo>/`.
+- all eight fonts, OpenType and WOFF2 in both weights, built again from the
+  tagged code and attached to the GitHub Release with the OFL and the data
+  license.
 
-A human pushes the tag.
+The site is deployed by Vercel (`vercel.json`) on every push to `main`, at
+https://furifont.antfu.me. Its build needs neither Python nor a font build: it
+serves `fonts/` as committed. So a change to the `.ivs.json` format reaches the
+site only with the next release.
 
 ## Licensing
 
 - **Code:** MIT.
 - **Dictionary data and the rules compiled from it:** CC BY-SA 4.0 (EDRDG,
   JmdictFurigana). Each font's name table records the source versions.
-- **Fonts:** SIL OFL 1.1, as derivatives of Source Han Sans. They carry
-  Adobe's copyright, and none of their names contains the Reserved Font Name
-  "Source".
+- **Fonts:** SIL OFL 1.1, as derivatives of Source Han Sans and Source Han
+  Serif. They carry Adobe's copyright, and none of their names contains the
+  Reserved Font Name "Source".
 
 ## Known limits
 
