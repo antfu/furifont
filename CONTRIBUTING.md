@@ -52,7 +52,7 @@ The interface is in English, Japanese, Simplified Chinese and Traditional Chines
 ## Pull requests
 
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org).
-- The pre-commit hook runs the full check: `pnpm lint && pnpm typecheck && pnpm knip && pnpm build && pnpm test`. Run `pnpm test:e2e` as well when you change rendering, the compiler or the studio.
+- The pre-commit hook runs the full check: `pnpm lint && pnpm build && pnpm typecheck && pnpm knip && pnpm test`. Run `pnpm test:e2e` as well when you change rendering, the compiler or the studio.
 - Test behaviour: what a text shapes to, or what a page shows. Don't test which function was called.
 
 ## Releases
