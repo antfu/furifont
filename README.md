@@ -69,15 +69,7 @@ It writes a selector only where the font would not already show that reading. A 
 
 ## Build your own
 
-You need Node 22.18 or later, and Python 3.10 or later with fontTools:
-
-```sh
-python3 -m pip install fonttools uharfbuzz brotli
-```
-
-If your Python refuses a global install, as Homebrew's does, install them into a `.venv` in your project instead, and Furifont uses it from there. `FURIFONT_PYTHON` points it at any other Python.
-
-From the command line:
+You need Node 22.18 or later. From the command line:
 
 ```sh
 npx furifont build --base "Source Han Serif JP Bold" --script hepburn --family "My Furigana"
@@ -124,7 +116,7 @@ These are the settings:
 | --- | --- |
 | [`furifont`](packages/cli) | The CLI and the studio's server |
 | [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary. It reads no fonts. |
-| [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font with fontTools and compiles the rules |
+| [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font and compiles the rules, in TypeScript with HarfBuzz |
 | [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary and the script that updates it |
 | [`@furifont/annotate`](packages/annotate) | Writes the selectors that okurigana decide into a text |
 | [`packages/app`](packages/app) | The demo site and the studio (Nuxt) |
@@ -134,7 +126,7 @@ These are the settings:
 ## Development
 
 ```sh
-pnpm run setup      # dependencies, Python's font libraries, test browsers, first build
+pnpm run setup      # dependencies, test browsers, first build
 pnpm test           # unit and font tests
 pnpm test:e2e       # rendering in Chromium, Firefox and WebKit, and the studio
 pnpm dev            # the app, with a live studio

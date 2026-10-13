@@ -20,8 +20,8 @@ export interface FeaInput {
 }
 
 /**
- * Rules per subtable of the main lookup. Breaking it up lets fontTools pack each
- * part as one glyph-keyed format 1 subtable under the 16-bit offset limit,
+ * Rules per subtable of the main lookup. Breaking it up lets the compiler pack
+ * each part as one glyph-keyed format 1 subtable under the 16-bit offset limit,
  * instead of thousands of format 3 subtables; order is kept across the breaks.
  */
 const RULES_PER_SUBTABLE = 600
@@ -47,7 +47,7 @@ function mainRules(input: FeaInput): string[] {
   return [
     ...words,
     // Class-based rules get a subtable of their own, or none of the above could be
-    // glyph-keyed; feaLib rejects a break before the first rule.
+    // glyph-keyed; a break before the first rule would only open an empty one.
     ...words.length ? ['subtable;'] : [],
     `ignore sub @han ${kanji}';`,
     `ignore sub ${kanji}' @han;`,

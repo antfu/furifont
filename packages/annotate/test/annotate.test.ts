@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { checkPython, compileFont, readFontInfo } from '@furifont/compiler'
+import { compileFont, readFontInfo } from '@furifont/compiler'
 import { createFontPlanner, resolveOptions, SELECTOR_FIRST_READING, SELECTOR_SUPPRESS } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
 import { OKURIGANA } from '@furifont/dictionary/okurigana'
@@ -64,7 +64,7 @@ describe('createAnnotator', () => {
   })
 })
 
-describe.skipIf(!(await checkPython()).ok)('with a font', () => {
+describe('with a font', () => {
   let dir: string
   let plan: Plan
   let reference: PlanReport['ivs']
