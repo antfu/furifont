@@ -28,13 +28,13 @@ const weights = WEIGHTS.map(w => ({ value: w.weight, label: w.style }))
       <UiToggle v-model="ruby">
         {{ $t('playground.ruby') }} <span class="font-mono text-xs color-muted">{{ $t('playground.rubyNote') }}</span>
       </UiToggle>
-      <UiField :label="$t('playground.text')" :hint="$t('playground.textHint')">
-        <textarea v-model="text" rows="6" lang="ja" class="input resize-y font-sans" />
-      </UiField>
+      <p class="text-xs color-muted">
+        {{ $t('playground.textHint') }}
+      </p>
     </div>
     <div class="flex min-w-0 flex-col">
       <div class="min-h-72 flex-1 px-6 py-8">
-        <FuriText :text :family :weight :ruby :size />
+        <FuriText v-model:text="text" :family :weight :ruby :size />
       </div>
       <div class="flex items-center gap-3 border-t border-base px-6 py-3">
         <UiButton variant="ghost" :icon="copied ? 'i-ph-check' : 'i-ph-copy'" @click="copy(text)">

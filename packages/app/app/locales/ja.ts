@@ -21,6 +21,7 @@ export default {
     source: 'GitHub のソースコード',
   },
   copied: 'コピーしました',
+  editable: '編集できるサンプルテキスト',
   scripts: {
     hiragana: 'ひらがな',
     katakanaOn: '音読みはカタカナ',
@@ -45,8 +46,7 @@ export default {
     size: 'サイズ / {size}px',
     ruby: 'ルビ',
     rubyNote: '（オフのときは ss01）',
-    text: 'テキスト',
-    textHint: '日本語を自由に入力できます。ルビはフォントだけで表示されます。',
+    textHint: 'テキストをクリックすると編集できます。ルビはフォントだけで表示されます。',
     copy: 'テキストをコピー',
     pasteNote: 'どこに貼り付けても、ルビの文字は含まれません。',
   },
@@ -139,7 +139,6 @@ export default {
     },
     preview: {
       compiling: 'プレビューをコンパイル中',
-      text: 'プレビューのテキスト',
       size: 'プレビューのサイズ',
       stats: '{glyphs} グリフ / {ms} ms',
     },
