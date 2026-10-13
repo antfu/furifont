@@ -5,11 +5,12 @@ import { OKURIGANA } from '../src/okurigana'
 
 const dictionary = await loadDictionary()
 const coverage = new Set(dictionary.entries.flatMap(e => [...e.form, ...e.furigana]).map(c => c.codePointAt(0)!))
-const { report } = createFontPlanner(dictionary)(resolveOptions(), coverage)
+const planFont = createFontPlanner(dictionary)
+const { report } = planFont(resolveOptions(), coverage)
 
 describe('compiled dictionary', () => {
   it('records the sources it was compiled from', () => {
-    expect(Object.keys(dictionary.sources)).toEqual(['JMdict', 'JMnedict', 'JmdictFurigana', 'KANJIDIC2'])
+    expect(Object.keys(dictionary.sources)).toEqual(['JMdict', 'JMnedict', 'JmdictFurigana', 'KANJIDIC2', 'JLPT'])
     expect(dictionary.entries.length).toBeGreaterThan(100_000)
   })
 
@@ -39,6 +40,16 @@ describe('compiled dictionary', () => {
     expect(words).toBeLessThan(15_000)
     expect(report.ivs.kanji['来']).toEqual(expect.arrayContaining(['く', 'き']))
     expect(report.ivs.lone['桜']).toBe('さくら')
+  })
+
+  it('knows the JLPT level of words as the lists write them', () => {
+    const level = (form: string, furigana: string): number | undefined => dictionary.entries.find(e => e.form === form && e.furigana === furigana)?.jlpt
+    expect(level('今日', '0-1:きょう')).toBe(5)
+    expect(level('会う', '0:あ')).toBe(5)
+    const known = planFont(resolveOptions({ skipJlpt: 'N5' }), coverage).report
+    expect(known.ivs.words['今日']).toBeUndefined()
+    expect(known.ivs.lone['私']).toBeUndefined()
+    expect(report.ivs.lone['私']).toBe('わたし')
   })
 
   it('reads a kanji with its okurigana as one word', () => {
