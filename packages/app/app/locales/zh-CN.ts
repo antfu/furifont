@@ -21,6 +21,7 @@ export default {
     source: 'GitHub 上的源代码',
   },
   copied: '已复制',
+  editable: '可编辑的示例文本',
   scripts: {
     hiragana: '平假名',
     katakanaOn: '音读用片假名',
@@ -45,8 +46,7 @@ export default {
     size: '字号 / {size}px',
     ruby: '振假名',
     rubyNote: '（关闭时为 ss01）',
-    text: '文本',
-    textHint: '输入任意日文，振假名完全由字体显示。',
+    textHint: '点击文本即可编辑，振假名完全由字体显示。',
     copy: '复制文本',
     pasteNote: '粘贴到任何地方都不会带上振假名。',
   },
@@ -139,7 +139,6 @@ export default {
     },
     preview: {
       compiling: '正在编译预览',
-      text: '预览文本',
       size: '预览字号',
       stats: '{glyphs} 个字形 / {ms} ms',
     },

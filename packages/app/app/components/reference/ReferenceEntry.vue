@@ -14,17 +14,15 @@ const { copied, copy } = useCopy()
       {{ text }}
     </h3>
     <ul class="flex flex-wrap">
-      <li v-for="(reading, i) in readings" :key="reading">
+      <li v-for="(reading, i) in readings" :key="reading" class="flex flex-col items-start gap-1 px-6 py-3">
+        <FuriText :text="withReading(text, i)" :size="30" />
         <button
           type="button"
-          class="focus-ring flex flex-col items-start gap-1 px-6 py-3 text-left transition-colors hover:bg-hover"
+          class="focus-ring font-mono text-[11px] color-muted transition-colors hover:color-base"
           :title="$t('reference.copyWith', { text, selector: selectorName(i) })"
           @click="copy(withReading(text, i))"
         >
-          <FuriText :text="withReading(text, i)" :size="30" />
-          <span class="font-mono text-[11px] color-muted">
-            {{ copied === withReading(text, i) ? $t('copied') : `${selectorName(i)} ${reading}${wordDefault && i === 0 ? ` / ${$t('reference.default')}` : ''}` }}
-          </span>
+          {{ copied === withReading(text, i) ? $t('copied') : `${selectorName(i)} ${reading}${wordDefault && i === 0 ? ` / ${$t('reference.default')}` : ''}` }}
         </button>
       </li>
     </ul>

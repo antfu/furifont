@@ -19,6 +19,7 @@ export default {
     source: 'Source on GitHub',
   },
   copied: 'Copied',
+  editable: 'Sample text, editable',
   scripts: {
     hiragana: 'Hiragana',
     katakanaOn: 'Katakana on\'yomi',
@@ -43,8 +44,7 @@ export default {
     size: 'Size / {size}px',
     ruby: 'Ruby',
     rubyNote: '(ss01 when off)',
-    text: 'Text',
-    textHint: 'Type any Japanese. Ruby comes from the font alone.',
+    textHint: 'Click the text to edit it. Ruby comes from the font alone.',
     copy: 'Copy the text',
     pasteNote: 'Paste it anywhere: no ruby characters come along.',
   },
@@ -137,7 +137,6 @@ export default {
     },
     preview: {
       compiling: 'Compiling a preview',
-      text: 'Preview text',
       size: 'Preview size',
       stats: '{glyphs} glyphs / {ms} ms',
     },
