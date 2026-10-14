@@ -162,6 +162,20 @@ describe('planner', () => {
     expect(p.smoke).toEqual([])
   })
 
+  it('lets salt n act as selector n after the first kanji of a run, in full builds only', () => {
+    const { plan: p, report } = plan()
+    expect(report.ivs.salt).toBe(true)
+    // One glyph per selector, so the word rules and the kanji's own readings see the choice as they do for a selector.
+    expect(p.fea).toContain(`sub uni6765 from [${report.ivs.kanji['来']!.map((_, i) => `uni6765.vs${i + 1}`).join(' ')}];`)
+    // Only a kanji that starts a run keeps it: after another Han glyph, a selector glyph goes back to its kanji.
+    expect(p.fea).toContain('sub uni4ECA.vs1 by uni4ECA;')
+    expect(p.fea).toMatch(/sub @han \[[^\]]*uni4ECA\.vs1[^\]]*\]' lookup salt_back;/)
+    expect(p.fea).toContain('feature salt {')
+    const preview = plan({}, '日本')
+    expect(preview.report.ivs.salt).toBe(false)
+    expect(preview.plan.fea).not.toContain('salt')
+  })
+
   it('names the glyphs its smoke checks expect', () => {
     const { plan: p } = plan()
     const names = new Set(p.glyphs.map(g => g.name))

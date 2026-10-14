@@ -31,7 +31,7 @@ Each font also comes with a `.ivs.json` file. It lists the readings that the var
 
 ### On any page
 
-The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both use Furifont when it is installed on your computer, and otherwise load the Regular WOFF2 from the site. They give lines with kanji room for the ruby. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed for the bookmarklet, but not for the userscript. When neither works, a toast says so and links to the downloads.
+The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both use Furifont when it is installed on your computer, and otherwise load the Regular WOFF2 from the site. They give lines with kanji room for the ruby. They also read kanji by their okurigana (来 in 来ない and 来ます, 一人 in 一人も), through `salt` on a span around the kanji; a switch on the demo site's bookmarklet, and the userscript's menu, turn that off. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed for the bookmarklet, but not for the userscript. When neither works, a toast says so and links to the downloads.
 
 ### Which words get ruby
 
@@ -56,6 +56,8 @@ To pick another reading, write a variation selector right after the first kanji 
 After the first kanji of a word with several readings, the selector picks the word's reading. For example, `市\u{E01E2}場` shows しじょう instead of いちば. After any other kanji, it picks that kanji's own reading.
 
 Selectors are invisible, survive copy and paste, and need no markup. The [reference page](https://furifont.antfu.me/#/reference) lists every reading and copies a word together with its selector.
+
+Selectors add a character to the text, and that shows up in copy and paste. If you control the markup, `font-feature-settings: "salt" n` on a span around a run of kanji does what the selector n after its first kanji does (VS226 is `"salt" 1`), and leaves the text plain. A verb's kanji, such as 来 in 来ない (こ) and 来ます (き), or a word like 一人 in 一人も (ひとり), is a run of its own, because the okurigana is another script. Wrap it: `<span style="font-feature-settings: 'salt' 5">来</span>ない`. The font's `.ivs.json` says which number is which reading, and its `salt` field says whether the font has the feature. Fonts built before it do not.
 
 ## Build your own
 

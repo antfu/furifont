@@ -30,6 +30,8 @@ const planFont = createFontPlanner(dictionary)
 
 interface Built {
   plan: Plan
+  /** The readings of each kanji, in the order selectors and `salt` count them. */
+  readings: Record<string, string[]>
   names: string[]
   otf: Uint8Array
   font: hb.Font
@@ -37,9 +39,9 @@ interface Built {
 
 async function build(file: string, previewText?: string): Promise<Built> {
   const base = await fixture(file)
-  const plan = planFont(resolveOptions(), new Set(readFontInfo(base).codepoints), previewText).plan
+  const { plan, report } = planFont(resolveOptions(), new Set(readFontInfo(base).codepoints), previewText)
   const { font, glyphNames } = await compileFont({ plan, base, subsetWasm })
-  return { plan, names: glyphNames, otf: font, font: new hb.Font(new hb.Face(new hb.Blob(font))) }
+  return { plan, readings: report.ivs.kanji, names: glyphNames, otf: font, font: new hb.Font(new hb.Face(new hb.Blob(font))) }
 }
 
 /**
@@ -107,6 +109,27 @@ describe.each([
     expect(read(built, `今${VS(2)}日`)).toEqual(['今:こん', '日:にち'])
     expect(read(built, `今${VS(1)}日`)).toEqual(['今日:きょう'])
     expect(read(built, `日${VS(0)}本`)).toEqual(['日', '本'])
+  })
+
+  it('lets salt pick a reading of a kanji alone, as markup can where the text cannot', () => {
+    const { readings } = built
+    for (const [kanji, list] of Object.entries(readings).filter(([, l]) => l.length > 1)) {
+      list.forEach((reading, i) => expect(read(built, kanji, [new hb.Feature('salt', i + 1)])).toEqual([`${kanji}:${reading}`]))
+    }
+    expect(read(built, '日', [new hb.Feature('salt', 0)])).toEqual(['日'])
+    expect(read(built, '桜', [new hb.Feature('salt', 1)])).toEqual(['桜:さくら'])
+  })
+
+  it('lets salt n on a run act as selector n after its first kanji', () => {
+    // Words too: 今日 is きょう, or こん and にち with the second reading. 日日 shows the gate: only the first kanji of a run takes salt.
+    for (const text of ['今日', '日本', '日本語', '大学', '桜', '日日', '日本日']) {
+      for (const n of [1, 2, 3]) {
+        const [first, ...rest] = [...text]
+        expect(read(built, text, [new hb.Feature('salt', n)]), `${text} salt ${n}`).toEqual(read(built, `${first}${VS(n)}${rest.join('')}`))
+      }
+    }
+    expect(read(built, '今日', [new hb.Feature('salt', 2)])).toEqual(['今:こん', '日:にち'])
+    expect(read(built, '日日', [new hb.Feature('salt', 2)])).toEqual(['日:にち', '日'])
   })
 
   it('turns ruby off with ss01', () => {

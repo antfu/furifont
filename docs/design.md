@@ -240,6 +240,7 @@ lookup maps an input glyph only once.
 | --- | --- | --- |
 | `rb_*`, `lig_*`, `isolated` | (nested) | Base or variant glyph to ruby glyph |
 | `furigana` | `rclt` | Chain rules, longest first per first glyph; then the lone-kanji class rules in their own subtable |
+| `alternates` | `salt` | `salt` n picks the nth reading of a kanji, before `furigana` sees it |
 | `variant_readings` | `rclt` | A selector no word claimed picks the kanji's own reading |
 | `variants_off` | `ccmp` | Variant glyphs left over go back to plain kanji, for example when `rclt` is off |
 | `ruby_off`, `ruby_off_ligatures` | `ss01` | Ruby glyphs back to their bases |
@@ -274,13 +275,55 @@ kanji through `variants_off`. Placeholders therefore cost nothing in outlines.
 The reading lists ship as `<font>.ivs.json`, with the reading each lone kanji
 shows by default (`lone`), and on the demo's reference page.
 
+### Salt
+
+A selector is a character in the text, and it shows up in copy and paste.
+Markup can carry the same choice with `font-feature-settings: "salt" n`, on a
+span around a run of kanji: `salt` n does what selector n (VS225 + n) does
+after the run's first kanji. An alternate substitution (GSUB type 3) maps each
+such kanji to its selector glyphs, and a chain rule applies it only to a kanji
+that no other Han glyph precedes, so a word's second kanji is left alone. The
+word rules and the kanji's own readings then see the choice as a glyph, exactly
+as for a selector: 今日 with `salt` 2 is こん, にち, and 日 alone is にち. The
+lookup comes before `furigana` in the lookup list. It is a full-build feature:
+a preview leaves it out, and `ivs.salt` in `.ivs.json` says whether the font has
+it. The compiler reads `sub X from [...]` for it.
+
 ## Okurigana pairs
 
 A font cannot read verbs, because their okurigana is in another run. 来 is
 こ in 来ない and き in 来ます. The text itself can carry that reading as a
 selector, and a table of **pairs** decides it: a run of kanji with the kana
-after it, read as one word. Nothing in Furifont writes these selectors yet;
-`@furifont/dictionary/okurigana` exports the table.
+after it, read as one word. `@furifont/dictionary/okurigana` exports the table.
+
+Writing a selector would change the text, so the bookmarklet and the
+userscript use [`salt`](#salt) instead. They wrap a whole run of kanji in a
+span, `<span data-furifont-salt="5">来</span>ない` or
+`<span data-furifont-salt="2">一人</span>も`, which a rule in the page's adopted
+stylesheet turns into `font-feature-settings: "salt" 5`. The text nodes keep
+their characters. A run is read only whole, from its first kanji to the
+hiragana after it: a pair of 一人 does not apply inside 毎日一人も.
+
+The reading logic is one function, `createOkuriganaReader`, which the
+bookmarklet and the userscript ship as source text and the demo's playground
+imports. The playground draws the same spans in its editable text, after a
+pause in typing and not during IME composition, and keeps the caret and the
+undo history when nothing changes. It needs JavaScript, and that is a browser
+limit: a browser shapes each script on its own, so no font can see the kana
+after a kanji.
+
+The site serves `data/okurigana.json` as it is: `dict:update` writes it packed
+by run of kanji and then by reading, without losing a pair,
+`{"来": {"こ": ["ない", "なかった"], "き": ["ます"], "": ["に"]}}`, where `""`
+holds the okurigana that read two ways. That is a quarter fewer bytes than a
+flat list, and the page only parses it: it inverts the okurigana of a run when
+it first meets that run, and tries no suffix longer than that run's longest.
+The page also loads the font's `.ivs.json`, to turn the
+pair's reading into a number: the position in the kanji's list (`kanji`), or in
+the word's (`words`). It skips a reading the font already shows by default: a
+kanji's `lone`, or a word's first. When a font has no `ivs.salt`, or a file fails to load
+(a CSP can block it in the bookmarklet), the page is left alone. The userscript's
+menu and a switch next to the bookmarklet turn it off.
 
 `dict:update` writes the pairs to `okurigana.json` from JMdict words spelled as
 one kanji run and kana (読み, 行く, 美味しい). Compounds and phrases such as
@@ -466,7 +509,11 @@ site only with the next release.
 - A word broken across lines is shaped as two runs, and may lose or change its
   ruby. In Chromium, `word-break: auto-phrase` keeps phrases together.
 - Inflected forms of verbs with ambiguous kanji (書く, 行く, 来ない) stay
-  bare, because their okurigana is in another run. Selectors can add their ruby.
+  bare, because their okurigana is in another run. Selectors can add their
+  ruby, and so can `salt` on a span: the bookmarklet and the userscript do.
+- A page that renders its own text nodes (a framework updating text in place)
+  can overwrite or duplicate what the span wrapper split. A reader can turn the
+  wrapper off.
 - An okurigana pair has no context beyond its own kana: 行った stays
   ambiguous, and a noun written as kanji and kana wins over a verb's stem
   (降り is ふり, also in 降り口).

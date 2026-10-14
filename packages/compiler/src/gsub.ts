@@ -2,7 +2,7 @@ import type { ChainRule, Lookup, Resolve, Substitution } from './fea'
 import { OffsetOverflow, tagAt, view, Writer } from './binary'
 import { fail, parseFeatures } from './fea'
 
-const LOOKUP_TYPE = { single: 1, multiple: 2, ligature: 4, chain: 6 } as const
+const LOOKUP_TYPE = { single: 1, multiple: 2, alternate: 3, ligature: 4, chain: 6 } as const
 const EXTENSION = 7
 
 function coverage(glyphs: number[]): Uint8Array {
@@ -179,6 +179,7 @@ function compileLookups(lookups: Lookup[], index: (name: string) => number): Com
       subtables = lookup.segments.flatMap(ligatureSubtables)
     }
     else {
+      // An alternate set is laid out like a multiple substitution's sequence: a count, then glyphs.
       const build = lookup.kind === 'single' ? singleSubtables : multipleSubtables
       subtables = lookup.segments.flatMap(s => build(s, lookup.name))
     }

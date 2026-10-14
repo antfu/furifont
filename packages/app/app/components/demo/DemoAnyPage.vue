@@ -3,9 +3,12 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const { face, script, family, faces, scripts } = useFamilyPicker()
+const okurigana = ref(true)
 const bookmarklet = computed(() => {
   const toast = { message: t('anyPage.toast.message'), download: t('anyPage.toast.download'), close: t('anyPage.toast.close') } satisfies Toast
-  return `javascript:${encodeURIComponent(`void (${toggleFurifont})(${JSON.stringify(family.value)},${JSON.stringify(siteFontUrl(family.value))},${JSON.stringify(toast)})`)}`
+  // The page fetches the files itself, so the bookmarklet carries only where they are, and the code that reads them.
+  const readings = okurigana.value ? `{readings:${JSON.stringify(siteReadingsUrl(family.value))},pairs:${JSON.stringify(SITE_PAIRS_URL)},reader:${createOkuriganaReader}}` : 'void 0'
+  return `javascript:${encodeURIComponent(`void (${toggleFurifont})(${JSON.stringify(family.value)},${JSON.stringify(siteFontUrl(family.value))},${JSON.stringify(toast)},void 0,${readings})`)}`
 })
 const userscript = `${useRuntimeConfig().app.baseURL}furifont.user.js`
 </script>
@@ -22,6 +25,14 @@ const userscript = `${useRuntimeConfig().app.baseURL}furifont.user.js`
       <UiField :label="$t('playground.face')">
         <UiSegmented v-model="face" :label="$t('playground.face')" :options="faces" />
       </UiField>
+      <div class="flex flex-col gap-1.5">
+        <UiToggle v-model="okurigana">
+          {{ $t('anyPage.okurigana') }}
+        </UiToggle>
+        <p class="text-xs leading-relaxed color-muted">
+          {{ $t('anyPage.okuriganaHint') }}
+        </p>
+      </div>
     </div>
     <div class="grid sm:grid-cols-2">
       <div class="flex flex-col gap-3 border-b border-base p-6 sm:border-b-0 sm:border-r">
