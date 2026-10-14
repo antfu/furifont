@@ -99,6 +99,10 @@ overrides:
   # One jiti for ESLint and Nuxt, so both resolve the same Vite instance (and types).
   jiti: ^2.7.0
 
+patchedDependencies:
+  # Nuxt 4.6 keeps its browser app context off unctx: nuxt-modules/storybook#1138.
+  '@storybook-vue/nuxt@10.0.1': patches/@storybook-vue__nuxt@10.0.1.patch
+
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
@@ -140,6 +144,9 @@ catalogs:
     devframe: ^1.2.4
     harfbuzzjs: ^1.6.3
     valibot: ^1.5.0
+  storybook:
+    '@storybook-vue/nuxt': ^10.0.1
+    storybook: ^10.6.2
   testing:
     '@playwright/test': 1.63.0
     vitest: ^5.0.4
