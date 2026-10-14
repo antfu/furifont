@@ -43,11 +43,7 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
       <UiStat v-for="s in stats" :key="s.label" v-bind="s" class="border-r border-base last:border-r-0" />
       <span v-if="!stats.length" class="label col-span-full px-6 py-4">{{ $t('customize.build.planning') }}</span>
     </div>
-    <p v-if="sizes || estimate.loading" class="flex flex-wrap gap-3 px-6 pt-4 font-mono text-xs color-muted tabular-nums">
-      <span v-if="sizes">{{ sizes }}</span>
-      <span v-if="estimate.loading">{{ $t('customize.build.estimating') }}</span>
-    </p>
-    <div class="flex flex-wrap items-center gap-3 px-6 py-4">
+    <div class="flex flex-wrap gap-3 px-6 pt-4 font-mono text-xs color-muted tabular-nums items-center">
       <div role="group" :aria-label="$t('customize.build.formats')" class="flex gap-2">
         <button
           v-for="format in FONT_FORMATS"
@@ -62,6 +58,12 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
           .{{ format }}
         </button>
       </div>
+      <div v-if="sizes || estimate.loading">
+        <span v-if="sizes">{{ sizes }}</span>
+        <span v-if="estimate.loading">{{ $t('customize.build.estimating') }}</span>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 px-6 py-4">
       <button type="button" class="btn-solid focus-ring" :disabled="build.running" @click="runBuild">
         <span :class="build.running ? 'i-ph-circle-notch animate-spin' : 'i-ph-hammer'" />
         {{ build.running ? progress : $t('customize.build.run') }}
