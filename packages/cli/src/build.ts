@@ -51,27 +51,33 @@ export async function planWithBase(config: FurifontConfig, cwd: string, previewT
   return { ...(await planner)(config, await coverage, previewText), base }
 }
 
-function fileStem(config: FurifontConfig, style: string): string {
-  return `${config.family.replaceAll(' ', '')}-${style.replaceAll(' ', '')}`
+/** `<Family>-<Style>`, or a variable font's `<Family>`: its one file has every style. */
+function fileStem(config: FurifontConfig, { style, variable }: BuiltFont): string {
+  const family = config.family.replaceAll(' ', '')
+  return variable ? family : `${family}-${style.replaceAll(' ', '')}`
 }
 
 async function compileOpenType({ plan, base }: { plan: Plan, base: string }, onProgress?: (p: CompileProgress) => void): Promise<BuiltFont> {
   return compileFont({ plan, base: await readFile(base), subsetWasm, onProgress })
 }
 
-/** Builds `<Family>-<Style>.otf` and `.woff2`, as `config.formats` lists, and the selector reference `.ivs.json` into `outDir`. */
+/**
+ * Builds the OpenType font (`.otf`, or `.ttf` on a TrueType base) and `.woff2`,
+ * as `config.formats` lists, and the selector reference `.ivs.json` into `outDir`.
+ */
 export async function buildFont(config: FurifontConfig, options: { cwd: string, outDir: string, onProgress?: (p: CompileProgress) => void }): Promise<BuildResult> {
   const planned = await planWithBase(config, options.cwd)
-  const { font, style } = await compileOpenType(planned, options.onProgress)
+  const built = await compileOpenType(planned, options.onProgress)
+  const { font } = built
   const outputs: [string, Uint8Array][] = []
   if (config.formats.includes('otf'))
-    outputs.push(['otf', font])
+    outputs.push([built.outlines === 'truetype' ? 'ttf' : 'otf', font])
   if (config.formats.includes('woff2')) {
     options.onProgress?.({ step: 'woff2', done: null, total: null })
     outputs.push(['woff2', await toWoff2(font, brotli)])
   }
   outputs.push(['ivs.json', new TextEncoder().encode(`${JSON.stringify(planned.report.ivs)}\n`)])
-  const stem = fileStem(config, style)
+  const stem = fileStem(config, built)
   await mkdir(options.outDir, { recursive: true })
   const files: BuiltFile[] = []
   for (const [ext, data] of outputs) {
