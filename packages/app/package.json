@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nuxi dev",
     "generate": "nuxi generate",
-    "typecheck": "nuxi typecheck"
+    "typecheck": "nuxi typecheck",
+    "storybook": "storybook dev -p 6006 --no-open"
   },
   "dependencies": {
     "devframe": "catalog:prod",
@@ -17,9 +18,11 @@
     "@devframes/vite": "catalog:frontend",
     "@iconify-json/ph": "catalog:frontend",
     "@nuxt/kit": "catalog:frontend",
+    "@storybook-vue/nuxt": "catalog:storybook",
     "@unocss/nuxt": "catalog:frontend",
     "furifont": "workspace:*",
     "nuxt": "catalog:frontend",
+    "storybook": "catalog:storybook",
     "typescript": "catalog:cli",
     "unocss": "catalog:frontend",
     "vue": "catalog:frontend",
