@@ -65,13 +65,13 @@ You need Node 22.18 or later. From the command line:
 npx furifont build --base "Source Han Serif JP Bold" --script hepburn --family "My Furigana"
 ```
 
-Or open the studio. It runs in your browser with a live preview, the size of the font it would build, the dictionary, your own words, and a build button. It keeps your changes in the browser until you save them:
+Or open Customize. It runs in your browser with a live preview, the size of the font it would build, the dictionary, your own words, and a build button. It keeps your changes in the browser until you save them:
 
 ```sh
 npx furifont dev
 ```
 
-Both commands read `furifont.config.json` from the current folder, and the studio writes it for you:
+Both commands read `furifont.config.json` from the current folder, and Customize writes it for you:
 
 ```json
 {
@@ -109,11 +109,11 @@ These are the settings:
 
 | Package | |
 | --- | --- |
-| [`furifont`](packages/cli) | The CLI and the studio's server |
+| [`furifont`](packages/cli) | The CLI and the server behind Customize |
 | [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary. It reads no fonts. |
 | [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font and compiles the rules, in TypeScript with HarfBuzz |
 | [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary and the script that updates it |
-| [`packages/app`](packages/app) | The demo site and the studio (Nuxt) |
+| [`packages/app`](packages/app) | The demo site and Customize (Nuxt) |
 
 [docs/design.md](docs/design.md) explains how it works.
 
@@ -122,8 +122,8 @@ These are the settings:
 ```sh
 pnpm run setup      # dependencies, test browsers, first build
 pnpm test           # unit and font tests
-pnpm test:e2e       # rendering in Chromium, Firefox and WebKit, and the studio
-pnpm dev            # the app, with a live studio
+pnpm test:e2e       # rendering in Chromium, Firefox and WebKit, and Customize
+pnpm dev            # the app, with live Customize
 ```
 
 [CONTRIBUTING.md](CONTRIBUTING.md) explains the setup and the rules a change must keep.

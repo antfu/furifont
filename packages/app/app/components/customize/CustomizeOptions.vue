@@ -3,7 +3,7 @@ import { JLPT_LEVELS } from '@furifont/core'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const { config, state, report, reset } = useStudio()
+const { config, state, report, reset } = useCustomize()
 
 // Newspaper frequency buckets of 500 words each, nf01 to nf48.
 const BUCKET = 500
@@ -36,7 +36,7 @@ const isolated = computed({
   set: value => config.value.isolated = value,
 })
 
-const scripts = computed(() => (['hiragana', 'katakanaOn', 'hepburn'] as const).map(value => ({ value, label: t(`studio.options.${value}`) })))
+const scripts = computed(() => (['hiragana', 'katakanaOn', 'hepburn'] as const).map(value => ({ value, label: t(`customize.options.${value}`) })))
 // JMdict priority tags, plus the JMnedict place names: each is a source of words.
 const sources = ['spec1', 'ichi1', 'news1', 'gai1', 'places'] as const
 type Source = typeof sources[number]
@@ -64,48 +64,48 @@ function toggle(source: Source): void {
 
 <template>
   <form class="flex flex-col gap-5 p-6" @submit.prevent>
-    <UiField :label="$t('studio.options.family')">
+    <UiField :label="$t('customize.options.family')">
       <input v-model="config.family" class="input" placeholder="Furifont Sans">
     </UiField>
-    <UiField :label="$t('studio.options.base')" :hint="$t('studio.options.baseHint')">
-      <input v-model="config.base" class="input" list="studio-base-fonts" placeholder="Source Han Sans JP Regular">
-      <datalist id="studio-base-fonts">
+    <UiField :label="$t('customize.options.base')" :hint="$t('customize.options.baseHint')">
+      <input v-model="config.base" class="input" list="customize-base-fonts" placeholder="Source Han Sans JP Regular">
+      <datalist id="customize-base-fonts">
         <option v-for="name in state?.baseFonts" :key="name" :value="name" />
       </datalist>
     </UiField>
-    <UiField :label="$t('studio.options.script')">
-      <UiSegmented v-model="rubyScript" :label="$t('studio.options.script')" :options="scripts" />
+    <UiField :label="$t('customize.options.script')">
+      <UiSegmented v-model="rubyScript" :label="$t('customize.options.script')" :options="scripts" />
     </UiField>
     <div class="h-px bg-[var(--ff-line)]" />
     <UiRange
       v-model="skip"
-      :label="$t('studio.options.skip')"
-      :display="skip ? skip.toLocaleString('en') : $t('studio.options.none')"
-      :hint="$t('studio.options.skipHint')"
+      :label="$t('customize.options.skip')"
+      :display="skip ? skip.toLocaleString('en') : $t('customize.options.none')"
+      :hint="$t('customize.options.skipHint')"
       :min="0"
       :max="(BUCKETS - 1) * BUCKET"
       :step="BUCKET"
     />
     <UiRange
       v-model="words"
-      :label="$t('studio.options.words')"
+      :label="$t('customize.options.words')"
       :display="words.toLocaleString('en')"
-      :hint="annotated === undefined ? undefined : $t('studio.options.wordsHint', { count: annotated.toLocaleString('en') })"
+      :hint="annotated === undefined ? undefined : $t('customize.options.wordsHint', { count: annotated.toLocaleString('en') })"
       :min="BUCKET"
       :max="(BUCKETS - nfMin + 1) * BUCKET"
       :step="BUCKET"
     />
     <UiRange
       v-model="jlpt"
-      :label="$t('studio.options.jlpt')"
-      :display="jlptLevels ?? $t('studio.options.none')"
-      :hint="$t('studio.options.jlptHint')"
+      :label="$t('customize.options.jlpt')"
+      :display="jlptLevels ?? $t('customize.options.none')"
+      :hint="$t('customize.options.jlptHint')"
       :min="0"
       :max="JLPT_LEVELS.length"
     />
     <fieldset class="flex flex-col gap-2">
       <legend class="label mb-1.5">
-        {{ $t('studio.options.sources') }}
+        {{ $t('customize.options.sources') }}
       </legend>
       <div class="flex flex-wrap gap-2">
         <button
@@ -114,37 +114,37 @@ function toggle(source: Source): void {
           type="button"
           class="focus-ring border px-2 py-1 text-xs transition-colors"
           :class="isOn(source) ? 'border-strong bg-inverse color-inverse' : 'border-base color-muted hover:border-strong'"
-          :title="$t(`studio.options.source.${source}.hint`)"
+          :title="$t(`customize.options.source.${source}.hint`)"
           :aria-pressed="isOn(source)"
           @click="toggle(source)"
         >
-          {{ $t(`studio.options.source.${source}.name`) }}
+          {{ $t(`customize.options.source.${source}.name`) }}
         </button>
       </div>
     </fieldset>
     <UiToggle v-model="isolated">
-      {{ $t('studio.options.isolated') }}
+      {{ $t('customize.options.isolated') }}
     </UiToggle>
-    <UiField :label="$t('studio.options.share')" :hint="$t('studio.options.shareHint')">
+    <UiField :label="$t('customize.options.share')" :hint="$t('customize.options.shareHint')">
       <input v-model.number="config.isolatedMinShare" type="number" min="0.5" max="1" step="0.05" class="input font-mono disabled:opacity-40" placeholder="0.8" :disabled="!isolated">
     </UiField>
     <div class="h-px bg-[var(--ff-line)]" />
     <div class="grid grid-cols-2 gap-4">
-      <UiField :label="$t('studio.options.rubyScale')">
+      <UiField :label="$t('customize.options.rubyScale')">
         <input v-model.number="metrics.rubyScale" type="number" min="0.2" max="0.8" step="0.05" class="input font-mono" placeholder="0.4">
       </UiField>
-      <UiField :label="$t('studio.options.rubyGap')">
+      <UiField :label="$t('customize.options.rubyGap')">
         <input v-model.number="metrics.rubyGap" type="number" min="0" max="0.5" step="0.01" class="input font-mono" placeholder="0.05">
       </UiField>
-      <UiField :label="$t('studio.options.squeeze')">
+      <UiField :label="$t('customize.options.squeeze')">
         <input v-model.number="metrics.compressionFloor" type="number" min="0.3" max="1" step="0.05" class="input font-mono" placeholder="0.6">
       </UiField>
-      <UiField :label="$t('studio.options.maxWidth')">
+      <UiField :label="$t('customize.options.maxWidth')">
         <input v-model.number="metrics.maxRubyWidth" type="number" min="1" max="3" step="0.1" class="input font-mono" placeholder="1.6">
       </UiField>
     </div>
-    <UiButton variant="ghost" icon="i-ph-arrow-counter-clockwise" class="self-start" :title="$t('studio.options.resetHint')" @click="reset">
-      {{ $t('studio.options.reset') }}
+    <UiButton variant="ghost" icon="i-ph-arrow-counter-clockwise" class="self-start" :title="$t('customize.options.resetHint')" @click="reset">
+      {{ $t('customize.options.reset') }}
     </UiButton>
   </form>
 </template>

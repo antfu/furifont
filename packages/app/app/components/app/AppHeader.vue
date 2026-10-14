@@ -7,8 +7,7 @@ const { locale } = useI18n()
 
 const links = [
   { to: '/', label: 'nav.demo' },
-  { to: '/reference', label: 'nav.reference' },
-  { to: '/studio', label: 'nav.studio' },
+  { to: '/customize', label: 'nav.customize' },
 ] as const
 </script>
 

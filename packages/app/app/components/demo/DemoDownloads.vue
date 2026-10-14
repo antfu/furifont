@@ -1,11 +1,3 @@
-<script setup lang="ts">
-const commands = [
-  { command: 'npx furifont build --base "Source Han Serif JP Bold"', note: 'downloads.cliBuild' },
-  { command: 'npx furifont dev', note: 'downloads.cliDev' },
-] as const
-const { copied, copy } = useCopy()
-</script>
-
 <template>
   <div class="grid lg:grid-cols-[2fr_1fr]">
     <table class="w-full border-b border-base text-sm lg:border-b-0 lg:border-r">
@@ -42,16 +34,9 @@ const { copied, copy } = useCopy()
       <p class="text-sm color-muted">
         {{ $t('downloads.buildOwn') }}
       </p>
-      <button
-        v-for="c in commands"
-        :key="c.command"
-        type="button"
-        class="focus-ring flex flex-col items-start gap-1 border border-base px-3 py-2 text-left transition-colors hover:border-strong"
-        @click="copy(c.command)"
-      >
-        <code class="font-mono text-xs">{{ copied === c.command ? $t('copied') : `$ ${c.command}` }}</code>
-        <span class="text-xs color-muted">{{ $t(c.note) }}</span>
-      </button>
+      <UiButton to="/customize" icon="i-ph-sliders-horizontal" class="self-start">
+        {{ $t('nav.customize') }}
+      </UiButton>
     </div>
   </div>
 </template>

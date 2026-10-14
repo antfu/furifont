@@ -7,9 +7,9 @@ import * as v from 'valibot'
 const STUDIO_ID: typeof StudioId = 'furifont'
 const DEBOUNCE = 350
 /** Followed by the project's config path: each project keeps its own changes. */
-const STORAGE_KEY = 'furifont:studio:'
+const STORAGE_KEY = 'furifont:customize:'
 
-type StudioStatus = 'connecting' | 'unavailable' | 'locked' | 'ready'
+type CustomizeStatus = 'connecting' | 'unavailable' | 'locked' | 'ready'
 
 interface BuildProgress {
   running: boolean
@@ -99,12 +99,12 @@ function restore(key: string, base: FurifontConfigInput): FurifontConfigInput {
 }
 
 /**
- * The studio, connected to the `furifont dev` server it was served by. On the
+ * Customize, connected to the `furifont dev` server it was served by. On the
  * static demo site there is no server, and `status` settles on `unavailable`.
  */
-function createStudio() {
-  const { devStudioBase } = useRuntimeConfig().public
-  const status = ref<StudioStatus>('connecting')
+function createCustomize() {
+  const { devCustomizeBase } = useRuntimeConfig().public
+  const status = ref<CustomizeStatus>('connecting')
   const state = shallowRef<StudioState>()
   const config = ref<FurifontConfigInput>({})
   const report = shallowRef<PlanReport>()
@@ -120,7 +120,7 @@ function createStudio() {
   let previews = 0
   let refreshes = 0
   let estimates = 0
-  /** What the server loaded, or last saved: the studio stores only its changes to it. */
+  /** What the server loaded, or last saved: Customize stores only its changes to it. */
   let loaded: FurifontConfigInput = {}
   let storageKey = ''
 
@@ -184,8 +184,8 @@ function createStudio() {
   async function connect(): Promise<void> {
     try {
       const { connectDevframe } = await import('devframe/client')
-      // Served by `furifont dev` the studio sits next to the app; under `nuxt dev`, on the bridge's mount.
-      client = await connectDevframe(import.meta.dev ? { baseURL: devStudioBase } : undefined)
+      // Served by `furifont dev` Customize sits next to the app; under `nuxt dev`, on the bridge's mount.
+      client = await connectDevframe(import.meta.dev ? { baseURL: devCustomizeBase } : undefined)
       rpc = client.scope(STUDIO_ID).rpc
     }
     catch {
@@ -266,20 +266,20 @@ function createStudio() {
   return { status, state, config, report, text, preview, estimate, build, savedTo, unlock, runBuild, save, reset, search, toggleWord }
 }
 
-export type Studio = ReturnType<typeof createStudio>
+export type Customize = ReturnType<typeof createCustomize>
 
-const STUDIO_KEY: InjectionKey<Studio> = Symbol('studio')
+const CUSTOMIZE_KEY: InjectionKey<Customize> = Symbol('customize')
 
-/** Creates the studio for the page and shares it with its sections. */
-export function provideStudio(): Studio {
-  const studio = createStudio()
-  provide(STUDIO_KEY, studio)
-  return studio
+/** Creates Customize for the page and shares it with its sections. */
+export function provideCustomize(): Customize {
+  const customize = createCustomize()
+  provide(CUSTOMIZE_KEY, customize)
+  return customize
 }
 
-export function useStudio(): Studio {
-  const studio = inject(STUDIO_KEY)
-  if (!studio)
-    throw new Error('useStudio() is only available inside the studio page')
-  return studio
+export function useCustomize(): Customize {
+  const customize = inject(CUSTOMIZE_KEY)
+  if (!customize)
+    throw new Error('useCustomize() is only available inside the customize page')
+  return customize
 }

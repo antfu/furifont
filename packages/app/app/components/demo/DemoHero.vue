@@ -19,7 +19,7 @@ const size = 44
         <UiButton variant="solid" icon="i-ph-download-simple" @click="emit('download')">
           {{ $t('hero.download') }}
         </UiButton>
-        <UiButton to="/studio" icon="i-ph-sliders-horizontal">
+        <UiButton to="/customize" icon="i-ph-sliders-horizontal">
           {{ $t('hero.build') }}
         </UiButton>
       </div>

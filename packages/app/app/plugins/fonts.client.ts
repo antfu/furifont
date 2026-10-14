@@ -1,6 +1,6 @@
 /**
  * Declares the prebuilt families against the app's base URL, so the same build
- * finds `fonts/` on the demo site and next to the CLI's studio. The overrides
+ * finds `fonts/` on the demo site and next to the CLI's customize. The overrides
  * center the em box in the line: the font's own metrics reserve room above for
  * the ruby, which would sit text lower than icons next to it.
  */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const steps = ['runs', 'longest', 'bare', 'pick'] as const
+const steps = ['build', 'ligatures', 'longest', 'bare'] as const
 </script>
 
 <template>
