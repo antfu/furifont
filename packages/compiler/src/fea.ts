@@ -21,7 +21,7 @@ export interface Substitution {
 
 export type Lookup
   = | { name: string, kind: 'chain', segments: ChainRule[][] }
-    | { name: string, kind: 'single' | 'ligature' | 'multiple', segments: Substitution[][] }
+    | { name: string, kind: 'single' | 'ligature' | 'multiple' | 'alternate', segments: Substitution[][] }
 
 export interface Features {
   lookups: Lookup[]
@@ -62,6 +62,7 @@ class FeatureFile {
     [/^lookup (\w+);$/, m => this.inFeature().lookups.push(m[1]!)],
     [/^subtable;$/, () => (this.lookup ?? fail('subtable outside a lookup')).segments.push([])],
     [/^(ignore )?sub ([^\n\r'\u2028\u2029]*'.*);$/, m => this.chainRule(Boolean(m[1]), m[2]!)],
+    [/^sub (\S+) from \[(.+)\];$/, m => this.inLookup('alternate').segments.at(-1)!.push({ from: this.glyphs(m[1]!), to: this.glyphs(m[2]!) })],
     [/^sub (.+) by (.+);$/, m => this.substitution(this.glyphs(m[1]!), this.glyphs(m[2]!))],
   ]
 

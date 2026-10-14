@@ -8,12 +8,15 @@ import { loadDictionary } from '@furifont/dictionary'
 export const FIXTURE_FONT = fileURLToPath(new URL('../../packages/compiler/test/fixtures/SourceHanSansJP-Subset.otf', import.meta.url))
 /** The WOFF2, as the site serves its fonts. */
 export const TEST_FONT = fileURLToPath(new URL('./.cache/Furifont-Test.woff2', import.meta.url))
+/** The font's `.ivs.json`, which says what each `salt` value picks. */
+export const TEST_READINGS = fileURLToPath(new URL('./.cache/Furifont-Test.ivs.json', import.meta.url))
 
 /** A small Furifont: the full dictionary over a subset of Source Han Sans JP. */
 export default async function setup(): Promise<void> {
   const base = await readFile(FIXTURE_FONT)
-  const { plan } = createFontPlanner(await loadDictionary())(resolveOptions(), new Set(readFontInfo(base).codepoints))
+  const { plan, report } = createFontPlanner(await loadDictionary())(resolveOptions(), new Set(readFontInfo(base).codepoints))
   const { font } = await compileFont({ plan, base, subsetWasm })
   await mkdir(fileURLToPath(new URL('./.cache', import.meta.url)), { recursive: true })
   await writeFile(TEST_FONT, await toWoff2(font, brotli))
+  await writeFile(TEST_READINGS, JSON.stringify(report.ivs))
 }
