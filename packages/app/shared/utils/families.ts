@@ -32,3 +32,11 @@ export function releaseUrl(file: string): string {
 export function siteFontUrl(family: Family): string {
   return `${SITE}/fonts/${family.stem}-Regular.woff2`
 }
+
+/** The reading lists of a family's Regular, which say what `salt` n picks. */
+export function siteReadingsUrl(family: Family): string {
+  return `${SITE}/fonts/${family.stem}-Regular.ivs.json`
+}
+
+/** The okurigana pairs of one kanji, for pages that pick its reading with `salt`. */
+export const SITE_PAIRS_URL = `${SITE}/okurigana.json`

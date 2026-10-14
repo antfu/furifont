@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
-import { FIXTURE_FONT, TEST_FONT } from './setup'
+import { FIXTURE_FONT, TEST_FONT, TEST_READINGS } from './setup'
 
 const CLI = fileURLToPath(new URL('../../packages/cli/bin.mjs', import.meta.url))
 
@@ -110,13 +110,18 @@ test('estimates the size, keeps settings across reloads, and resets them but not
 /** Opens a page on another site, in `lang`, with tight lines and maybe a CSP; the demo site's fonts are the test font. */
 async function openElsewhere(page: Page, lang: string, csp?: string): Promise<void> {
   const font = await readFile(TEST_FONT)
-  await page.route('https://furifont.antfu.me/fonts/**', route =>
-    route.fulfill({ body: font, contentType: 'font/otf', headers: { 'access-control-allow-origin': '*' } }))
+  const readings = await readFile(TEST_READINGS)
+  const pairs = await (await page.request.get(new URL('/okurigana.json', url).href)).body()
+  const cors = { 'access-control-allow-origin': '*' }
+  await page.route('https://furifont.antfu.me/fonts/**', route => route.request().url().endsWith('.ivs.json')
+    ? route.fulfill({ body: readings, contentType: 'application/json', headers: cors })
+    : route.fulfill({ body: font, contentType: 'font/otf', headers: cors }))
+  await page.route('https://furifont.antfu.me/okurigana.json', route => route.fulfill({ body: pairs, contentType: 'application/json', headers: cors }))
   await page.route('https://elsewhere.test/**', route => route.fulfill({
     contentType: 'text/html; charset=utf-8',
     headers: csp ? { 'content-security-policy': csp } : {},
     body: `<!doctype html><html lang="${lang}"><meta charset="utf-8">
-      <body style="font: 20px/1.2 monospace"><p id="kanji">日本の市場</p><p id="latin">Market</p>`,
+      <body style="font: 20px/1.2 monospace"><p id="kanji">日本の市場</p><p id="latin">Market</p><p id="verb">来ない、来ます、来る、今日では、出入り</p>`,
   }))
   await page.goto('https://elsewhere.test/')
 }
@@ -126,14 +131,18 @@ async function addUserscriptManager(page: Page): Promise<void> {
   await page.addInitScript(() => Object.assign(window, {
     GM_getValue: (key: string, fallback: string) => localStorage.getItem(key) ?? fallback,
     GM_setValue: (key: string, value: string) => localStorage.setItem(key, value),
-    GM_registerMenuCommand: (caption: string, onClick: () => void) => {
+    // With an id, a command replaces the one before it.
+    GM_registerMenuCommand: (caption: string, onClick: () => void, options?: { id: string }) => {
       const button = document.createElement('button')
       button.textContent = caption
       button.onclick = onClick
+      if (options)
+        button.dataset.id = options.id
+      document.querySelector(options ? `[data-id="${options.id}"]` : 'x-none')?.remove()
       document.body.append(button)
     },
-    GM_xmlhttpRequest: ({ url, onload, onerror }: { url: string, onload: (response: { response: ArrayBuffer }) => void, onerror: () => void }) =>
-      fetch(url).then(r => r.arrayBuffer()).then(response => onload({ response }), onerror),
+    GM_xmlhttpRequest: ({ url, responseType, onload, onerror }: { url: string, responseType: 'arraybuffer' | 'text', onload: (response: { response: ArrayBuffer | string }) => void, onerror: () => void }) =>
+      fetch(url).then((r): Promise<ArrayBuffer | string> => responseType === 'text' ? r.text() : r.arrayBuffer()).then(response => onload({ response }), onerror),
   }))
 }
 
@@ -226,4 +235,108 @@ test('turns the userscript back off with a toast in the browser\'s language when
   await expect(page.getByRole('alert')).toContainText('パソコンに Furifont をインストールする必要があります。')
   expect((await styleOf(page, 'kanji')).fontFamily).toBe('monospace')
   await context.close()
+})
+
+/** The `salt` values the wrapped runs of #verb carry, and the page's text. */
+function readVerbs(page: Page): Promise<{ salts: (string | null)[], text: string }> {
+  return page.evaluate(() => ({
+    salts: [...document.querySelectorAll('#verb span')].map(span => span.getAttribute('data-furifont-salt')),
+    text: document.getElementById('verb')!.textContent!,
+  }))
+}
+
+/** What the pairs make of #verb: 来ない, 来ます, 来る, then the words 今日では (こんにち) and 出入り (でい), which sit second in their lists. */
+async function verbSalts(): Promise<string[]> {
+  const { kanji, words } = JSON.parse(await readFile(TEST_READINGS, 'utf8')) as { kanji: Record<string, string[]>, words: Record<string, string[]> }
+  const word = (run: string, reading: string): string => String(words[run]!.findIndex(w => [...w.matchAll(/\[([^\]]*)\]/g)].map(m => m[1]).join('') === reading) + 1)
+  return [...['こ', 'き', 'く'].map(reading => String(kanji['来']!.indexOf(reading) + 1)), word('今日', 'こんにち'), word('出入', 'でい')]
+}
+
+test('reads 来 as こ, き and く, and words like 今日では, from the okurigana through the userscript, and its menu turns that off', async ({ page }) => {
+  const userscript = await fetchUserscript(page)
+  await addUserscriptManager(page)
+
+  await openElsewhere(page, 'ja-JP')
+  await page.evaluate(userscript)
+  // The font shows its default for none of them, so each gets its reading.
+  await expect.poll(async () => (await readVerbs(page)).salts).toEqual(await verbSalts())
+  // Spans, not text: copy and search see what the page wrote.
+  expect((await readVerbs(page)).text).toBe('来ない、来ます、来る、今日では、出入り')
+
+  await page.getByRole('button', { name: 'Okurigana readings: on' }).click()
+  await expect(page.getByRole('button', { name: 'Okurigana readings: off' })).toBeVisible()
+  expect((await readVerbs(page)).salts.every(salt => salt === null)).toBe(true)
+
+  // The choice outlives a reload, and a page that is off is left alone.
+  await page.reload()
+  await page.evaluate(userscript)
+  await expect(page.getByRole('button', { name: 'Okurigana readings: off' })).toBeVisible()
+  await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
+  expect((await readVerbs(page)).salts).toEqual([])
+
+  await page.getByRole('button', { name: 'Okurigana readings: off' }).click()
+  await expect.poll(async () => (await readVerbs(page)).salts).toEqual(await verbSalts())
+  await page.evaluate(() => document.body.insertAdjacentHTML('beforeend', '<p id="later">来ない</p>'))
+  await expect.poll(() => page.evaluate(() => document.querySelector('#later span')?.getAttribute('data-furifont-salt'))).toBe((await verbSalts())[0])
+})
+
+test('leaves a page as it is when a font predates salt or the files do not load', async ({ page }) => {
+  const userscript = await fetchUserscript(page)
+  await addUserscriptManager(page)
+  await openElsewhere(page, 'ja-JP')
+  // A font from before `salt`: its reading list does not say it can.
+  const old = JSON.parse(await readFile(TEST_READINGS, 'utf8'))
+  delete old.salt
+  await page.route('https://furifont.antfu.me/fonts/*.ivs.json', route => route.fulfill({ body: JSON.stringify(old), contentType: 'application/json', headers: { 'access-control-allow-origin': '*' } }))
+  await page.evaluate(userscript)
+  await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
+  await page.waitForTimeout(300)
+  expect((await readVerbs(page)).salts).toEqual([])
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Sans", sans-serif')
+})
+
+test('offers the okurigana readings in the bookmarklet, on unless turned off', async ({ page }) => {
+  await page.goto(new URL('/#/', url).href)
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const link = section.getByRole('link', { name: 'Furifont Sans', exact: true })
+  const on = await link.getAttribute('href')
+  await section.getByRole('checkbox', { name: 'Okurigana readings' }).uncheck({ force: true })
+  const off = await link.getAttribute('href')
+  expect(decodeURIComponent(on!)).toContain('okurigana.json')
+  expect(decodeURIComponent(off!)).not.toContain('okurigana.json')
+
+  await openElsewhere(page, 'en')
+  await page.evaluate(decodeURIComponent(on!.replace(/^javascript:/, '')))
+  await expect.poll(async () => (await readVerbs(page)).salts).toEqual(await verbSalts())
+
+  await openElsewhere(page, 'en')
+  await page.evaluate(decodeURIComponent(off!.replace(/^javascript:/, '')))
+  await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
+  await page.waitForTimeout(300)
+  expect((await readVerbs(page)).salts).toEqual([])
+})
+
+test('reads kanji by their okurigana in the playground as it is edited, and turns that off', async ({ page }) => {
+  // The prebuilt fonts on the site predate salt, so the test font's reading list stands in for theirs.
+  const readings = await readFile(TEST_READINGS)
+  await page.route('**/fonts/FurifontSans-Regular.ivs.json', route => route.fulfill({ body: readings, contentType: 'application/json' }))
+  await page.goto(new URL('/#/', url).href)
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'Try it' }) })
+  const text = section.getByRole('textbox')
+  const salts = (): Promise<(string | undefined)[]> => text.locator('span').evaluateAll(spans => spans.map(span => (span as HTMLElement).dataset.salt))
+
+  await text.fill('来ない、来ます')
+  const [ko, ki] = (await verbSalts()).slice(0, 2)
+  await expect.poll(salts).toEqual([ko, ki])
+  expect(await text.textContent()).toBe('来ない、来ます')
+
+  // The redraw puts the caret back where it was: the next character lands at the end.
+  await text.press('End')
+  await page.keyboard.type('X')
+  await expect.poll(async () => text.textContent()).toBe('来ない、来ますX')
+  await expect.poll(salts).toEqual([ko, ki])
+
+  await section.locator('label', { has: page.getByRole('checkbox', { name: 'Okurigana readings' }) }).click()
+  await expect.poll(salts).toEqual([])
+  expect(await text.textContent()).toBe('来ない、来ますX')
 })

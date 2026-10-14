@@ -52,6 +52,8 @@
     "face": "字体样式",
     "size": "字号 / {size}px",
     "ruby": "振假名",
+    "okurigana": "送假名读音",
+    "okuriganaHint": "根据送假名选出汉字的读音，例如「来ない」中的「来」。需要 JavaScript：浏览器按文字种类分别排版，字体看不到假名。",
     "textHint": "点击文字即可编辑。",
     "copy": "复制文本"
   },
@@ -89,13 +91,19 @@
     "body": "你可以在任何网站上使用 Furifont。有汉字的行会留出放振假名的空间。如果电脑上已安装 Furifont，就不用下载。否则字体会从本站加载，第一次约 5 MB。",
     "bookmarklet": "书签小工具",
     "bookmarkletHint": "把它拖到书签栏。在任何页面点击它，就会打开 Furifont；再点一次就会关闭。有些网站（如 X 和 GitHub）不允许加载其他网站的字体。在这些网站上，请在电脑上安装 Furifont。",
+    "okurigana": "送假名读音",
+    "okuriganaHint": "为送假名前的汉字选出正确的读音，例如「来る」「来ない」中的「来」。",
     "userscript": "用户脚本",
     "install": "安装用户脚本",
-    "userscriptHint": "适用于 Tampermonkey 或 Violentmonkey（运行小脚本的浏览器扩展）。它会在日语页面自动打开 Furifont，在不允许加载其他网站字体的网站上也能用。你可以在它的菜单里切换到另一款 Furifont 字体，或将其关闭。",
+    "userscriptHint": "适用于 Tampermonkey 或 Violentmonkey（运行小脚本的浏览器扩展）。它会在日语页面自动打开 Furifont，在不允许加载其他网站字体的网站上也能用。你可以在它的菜单里切换到另一款 Furifont 字体，或将其关闭。菜单里也能打开或关闭送假名读音（来る、来ない）。",
     "toast": {
       "message": "Furifont 无法在此页面加载字体。有些网站（如 X 和 GitHub）不允许加载其他网站的字体。在这些网站上，需要在电脑上安装 Furifont。",
       "download": "下载字体",
       "close": "关闭"
+    },
+    "menu": {
+      "okuriganaOn": "送假名读音：开",
+      "okuriganaOff": "送假名读音：关"
     }
   },
   "reference": {
