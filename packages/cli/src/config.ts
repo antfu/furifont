@@ -5,10 +5,15 @@ import * as v from 'valibot'
 
 export const CONFIG_FILE = 'furifont.config.json'
 
+/** The fonts a build can write. */
+export const FONT_FORMATS = ['otf', 'woff2'] as const
+
 export const FurifontConfigSchema = withNfWindow(v.object({
   ...PlanOptionsSchema.entries,
   /** A Source Han Sans JP weight (downloaded once), or the path of another OpenType font. */
   base: v.optional(v.pipe(v.string(), v.nonEmpty()), 'Source Han Sans JP Regular'),
+  /** The fonts a build writes, beside the selector reference `.ivs.json`. */
+  formats: v.optional(v.pipe(v.array(v.picklist(FONT_FORMATS)), v.minLength(1)), () => [...FONT_FORMATS]),
 }))
 export type FurifontConfig = v.InferOutput<typeof FurifontConfigSchema>
 export type FurifontConfigInput = v.InferInput<typeof FurifontConfigSchema>

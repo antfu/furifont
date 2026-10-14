@@ -69,7 +69,7 @@ test('shows another sample on shuffle', async ({ page }) => {
   await expect(sample).not.toHaveText(before!)
 })
 
-test('previews, plans and builds a font', async ({ page }) => {
+test('previews, plans and builds a font in the formats chosen', async ({ page }) => {
   await page.goto(url)
   await expect(page.getByText(/\d+ glyphs \/ \d+ ms/)).toBeVisible({ timeout: 60_000 })
   await expect(page.getByText('Ruby glyphs', { exact: true })).toBeVisible()
@@ -77,9 +77,13 @@ test('previews, plans and builds a font', async ({ page }) => {
   await page.getByRole('radio', { name: 'Romaji' }).click()
   await expect(page.locator('main [style*="Furifont Preview"]')).toBeVisible()
 
+  await page.getByRole('button', { name: '.woff2' }).click()
+  await expect(page.getByRole('button', { name: '.otf' })).toBeDisabled()
+  await expect(page.getByText(/^\d+\.\d\d MB OTF$/)).toBeVisible({ timeout: 60_000 })
   await page.getByRole('button', { name: 'Build font' }).click()
   const otf = page.getByRole('link', { name: /\.otf$/ })
   await expect(otf).toBeVisible({ timeout: 60_000 })
+  await expect(page.getByRole('link', { name: /\.woff2$/ })).toHaveCount(0)
   const download = await page.request.get(new URL((await otf.getAttribute('href'))!, url).href)
   expect(download.ok()).toBe(true)
   expect((await download.body()).subarray(0, 4).toString()).toBe('OTTO')

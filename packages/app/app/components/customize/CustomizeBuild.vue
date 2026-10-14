@@ -2,9 +2,23 @@
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const { report, estimate, build, savedTo, runBuild, save } = useCustomize()
+const { config, report, estimate, build, savedTo, runBuild, save } = useCustomize()
 
 const megabytes = (bytes: number): string => `${(bytes / 1024 / 1024).toFixed(2)} MB`
+
+type FontFormat = typeof FONT_FORMATS[number]
+const formats = computed(() => config.value.formats ?? FONT_FORMATS)
+/** A build writes at least one font: the last one left stays on. */
+function toggleFormat(format: FontFormat): void {
+  config.value.formats = FONT_FORMATS.filter(f => f === format ? !formats.value.includes(f) : formats.value.includes(f))
+}
+const sizes = computed(() => {
+  const size = estimate.size
+  return size && (['woff2', 'otf'] as const)
+    .filter(f => formats.value.includes(f))
+    .map(f => t(`customize.build.estimate.${f}`, { size: megabytes(size[f]) }))
+    .join(' · ')
+})
 
 const stats = computed(() => {
   const s = report.value?.stats
@@ -29,11 +43,25 @@ const progress = computed(() => build.total ? `${build.step} ${build.done}/${bui
       <UiStat v-for="s in stats" :key="s.label" v-bind="s" class="border-r border-base last:border-r-0" />
       <span v-if="!stats.length" class="label col-span-full px-6 py-4">{{ $t('customize.build.planning') }}</span>
     </div>
-    <p v-if="estimate.size || estimate.loading" class="flex flex-wrap gap-3 px-6 pt-4 font-mono text-xs color-muted tabular-nums">
-      <span v-if="estimate.size">{{ $t('customize.build.estimate', { woff2: megabytes(estimate.size.woff2), otf: megabytes(estimate.size.otf) }) }}</span>
+    <p v-if="sizes || estimate.loading" class="flex flex-wrap gap-3 px-6 pt-4 font-mono text-xs color-muted tabular-nums">
+      <span v-if="sizes">{{ sizes }}</span>
       <span v-if="estimate.loading">{{ $t('customize.build.estimating') }}</span>
     </p>
     <div class="flex flex-wrap items-center gap-3 px-6 py-4">
+      <div role="group" :aria-label="$t('customize.build.formats')" class="flex gap-2">
+        <button
+          v-for="format in FONT_FORMATS"
+          :key="format"
+          type="button"
+          class="focus-ring border px-2 py-1 font-mono text-xs transition-colors disabled:cursor-not-allowed"
+          :class="formats.includes(format) ? 'border-strong bg-inverse color-inverse' : 'border-base color-muted hover:border-strong'"
+          :aria-pressed="formats.includes(format)"
+          :disabled="build.running || (formats.length === 1 && formats.includes(format))"
+          @click="toggleFormat(format)"
+        >
+          .{{ format }}
+        </button>
+      </div>
       <button type="button" class="btn-solid focus-ring" :disabled="build.running" @click="runBuild">
         <span :class="build.running ? 'i-ph-circle-notch animate-spin' : 'i-ph-hammer'" />
         {{ build.running ? progress : $t('customize.build.run') }}

@@ -30,11 +30,9 @@ await copyFile(new URL('../packages/dictionary/LICENSE.md', import.meta.url), jo
 
 for (const weight of site ? ['Regular'] : ['Regular', 'Bold']) {
   await Promise.all(families.map(async ({ base, ...family }) => {
-    const config = v.parse(FurifontConfigSchema, { ...family, base: `${base} ${weight}` })
-    const { files } = await buildFont(config, { cwd: cwd(), outDir })
     // The site loads WOFF2; git keeps no OpenType, which the release carries.
-    if (site)
-      await Promise.all(files.filter(f => f.name.endsWith('.otf')).map(f => rm(f.path)))
+    const config = v.parse(FurifontConfigSchema, { ...family, base: `${base} ${weight}`, ...(site && { formats: ['woff2'] }) })
+    const { files } = await buildFont(config, { cwd: cwd(), outDir })
     console.log(files.map(f => f.name).join('  '))
   }))
 }

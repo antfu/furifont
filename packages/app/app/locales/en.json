@@ -206,7 +206,11 @@
       "glyphs": "Ruby glyphs",
       "rules": "Rules",
       "planning": "Planning",
-      "estimate": "≈ {woff2} WOFF2 · {otf} OTF",
+      "estimate": {
+        "woff2": "≈ {size} WOFF2",
+        "otf": "{size} OTF"
+      },
+      "formats": "Formats",
       "estimating": "Estimating the size",
       "run": "Build font",
       "save": "Save settings"

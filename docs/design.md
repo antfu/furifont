@@ -89,6 +89,12 @@ APIs, and ESLint rejects `node:` imports in their sources.
   harfbuzzjs' hb-subset module, which previews need, and `brotli` compresses
   WOFF2. `@furifont/compiler/node` has both for Node, with Brotli in font mode
   at quality 11. It is the one file in these packages that uses Node.
+- `@furifont/compiler/browser` has both for browsers. It fetches hb-subset from
+  the URL the bundler gives harfbuzzjs' file. For Brotli it uses the browser's
+  own `CompressionStream('brotli')`. Where there is none, as in Chrome, it
+  loads brotli-wasm, an optional peer dependency, on first use. Neither takes
+  font mode or the largest window, so a full font's WOFF2 comes out about 10%
+  larger: 5.21 MB instead of 4.75 MB.
 - `loadDictionary()` imports its data as JSON modules. Node loads them, and
   bundlers split them into lazy chunks.
 - The base fonts are fetched from `raw.githubusercontent.com`, which sends
@@ -423,9 +429,11 @@ progress while it builds.
 - **Size.** After the stats and the preview, `estimate` compiles the whole
   OpenType font. Its WOFF2 would take half a minute, so Brotli at quality 8
   stands in for it, scaled by a measured ratio: within 2% from a test subset to
-  full fonts with place names.
-- **Builds.** They stream progress and land in `./fonts`, which the studio
-  serves for download.
+  full fonts with place names. Only the formats a build writes are shown.
+- **Builds.** They write the formats in `formats`, OpenType, WOFF2 or both,
+  stream progress, and land in `./fonts`, which the studio serves for
+  download. Turning a format on or off is saved with the config, but it
+  changes no plan, so it re-runs neither the preview nor the estimate.
 - **Settings.** The browser keeps the changes made to the loaded config, per
   config path, until they are saved to it. A stored change that no longer
   validates drops them all. Reset returns to the loaded config but keeps the
