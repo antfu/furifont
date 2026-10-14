@@ -35,6 +35,35 @@ lookup isolated useExtension {
   sub uni685C by uni685C.rb.1;
 } isolated;
 
+lookup alternates useExtension {
+  sub uni4ECA from [uni4ECA.vs1 uni4ECA.vs2];
+  sub uni66F8 from [uni66F8.vs1 uni66F8.vs2];
+  sub uni6765 from [uni6765.vs1 uni6765.vs2 uni6765.vs3];
+  sub uni65E5 from [uni65E5.vs1 uni65E5.vs2];
+  sub uni5B66 from [uni5B66.vs1 uni5B66.vs2];
+  sub uni5949 from [uni5949.vs1 uni5949.vs2];
+} alternates;
+
+lookup salt_back useExtension {
+  sub uni4ECA.vs1 by uni4ECA;
+  sub uni4ECA.vs2 by uni4ECA;
+  sub uni66F8.vs1 by uni66F8;
+  sub uni66F8.vs2 by uni66F8;
+  sub uni6765.vs1 by uni6765;
+  sub uni6765.vs2 by uni6765;
+  sub uni6765.vs3 by uni6765;
+  sub uni65E5.vs1 by uni65E5;
+  sub uni65E5.vs2 by uni65E5;
+  sub uni5B66.vs1 by uni5B66;
+  sub uni5B66.vs2 by uni5B66;
+  sub uni5949.vs1 by uni5949;
+  sub uni5949.vs2 by uni5949;
+} salt_back;
+
+lookup salt_first useExtension {
+  sub @han [uni4ECA.vs1 uni4ECA.vs2 uni66F8.vs1 uni66F8.vs2 uni6765.vs1 uni6765.vs2 uni6765.vs3 uni65E5.vs1 uni65E5.vs2 uni5B66.vs1 uni5B66.vs2 uni5949.vs1 uni5949.vs2]' lookup salt_back;
+} salt_first;
+
 lookup furigana useExtension {
   sub uni4EBA' lookup rb_1 uni6C17' lookup rb_1;
   sub uni4ECA' lookup lig_1 uni65E5';
@@ -140,5 +169,10 @@ feature ss01 {
   lookup ruby_off;
   lookup ruby_off_ligatures;
 } ss01;
+
+feature salt {
+  lookup alternates;
+  lookup salt_first;
+} salt;
 "
 `;

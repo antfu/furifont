@@ -14,6 +14,8 @@ export interface FeaInput {
   rules: Rule[]
   /** Variant glyphs no rule claimed, to the kanji's own reading. */
   variantReadings: Substitution[]
+  /** A kanji to its selector glyphs, in order: `salt` n is selector n after the first kanji of a run, so markup can choose a reading where the text cannot. */
+  alternates: { input: string, outputs: string[] }[]
   /** Variant glyphs back to their kanji: the default when no rule picked a reading, or ruby is off. */
   variantsOff: Substitution[]
   rubyOff: { glyph: string, bases: string[] }[]
@@ -74,6 +76,18 @@ export function emitFea(input: FeaInput): string {
   if (input.isolated.length)
     out.push(block('lookup', 'isolated', input.isolated.map(i => `sub ${i.input} by ${i.output};`)))
 
+  // Before `furigana`, which sees the selector `salt` picked. Every glyph takes it, then all but the run's first go back. Keep the alternates a lookup of the feature itself: CoreText gives a nested one alternate 1 whatever the value.
+  const salt = { lookup: [] as string[], feature: [] as string[] }
+  if (input.alternates.length) {
+    const selectors = `[${input.alternates.flatMap(a => a.outputs).join(' ')}]`
+    salt.lookup = [
+      block('lookup', 'alternates', input.alternates.map(a => `sub ${a.input} from [${a.outputs.join(' ')}];`)),
+      block('lookup', 'salt_back', input.alternates.flatMap(a => a.outputs.map(o => `sub ${o} by ${a.input};`))),
+      block('lookup', 'salt_first', [`sub @han ${selectors}' lookup salt_back;`]),
+    ]
+    salt.feature = [block('feature', 'salt', ['lookup alternates;', 'lookup salt_first;'])]
+  }
+  out.push(...salt.lookup)
   const main = mainRules(input)
   if (main.length)
     out.push(block('lookup', 'furigana', main))
@@ -100,5 +114,6 @@ export function emitFea(input: FeaInput): string {
     out.push(block('feature', 'ccmp', ['lookup variants_off;']))
   if (off.length)
     out.push(block('feature', 'ss01', off))
+  out.push(...salt.feature)
   return out.join('\n')
 }

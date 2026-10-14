@@ -63,11 +63,18 @@ export interface PlanReport {
     rules: number
   }
   /**
-   * The lists variation selectors index into, VS226 being the first entry.
+   * The lists variation selectors index into, VS226 being the first entry,
+   * and `salt` 1 the same entry through `font-feature-settings`.
    * Words list their readings in inline notation, the default first. `lone`
    * is the reading a kanji alone in its run shows without a selector.
    */
-  ivs: { kanji: Record<string, string[]>, words: Record<string, string[]>, lone: Record<string, string> }
+  ivs: {
+    kanji: Record<string, string[]>
+    words: Record<string, string[]>
+    lone: Record<string, string>
+    /** Whether the font maps `salt` n to the selector n after a run's first kanji: fonts built before it do not, and a preview does not. */
+    salt: boolean
+  }
 }
 
 export interface PlanResult {
@@ -421,6 +428,12 @@ interface Variant {
   selector: number
 }
 
+/** A kanji and its selector glyphs, in order: `salt` n picks the nth, as the selector after a run's first kanji does. */
+interface Alternate {
+  input: string
+  outputs: string[]
+}
+
 interface VariantReading {
   input: string
   glyph: PlanGlyph
@@ -453,7 +466,7 @@ function buildRules(
   kanjiReadings: Map<string, string[]>,
   protectedRuns: Map<string, RubySpan[] | null>,
   glyphs: GlyphRegistry,
-): { rules: Rule[], ligatures: Ligature[], singles: SingleLookups, variants: Variant[], variantReadings: VariantReading[], ivsWords: Record<string, string[]> } {
+): { rules: Rule[], ligatures: Ligature[], singles: SingleLookups, variants: Variant[], variantReadings: VariantReading[], alternates: Alternate[], ivsWords: Record<string, string[]> } {
   // Ligatures share lookups: the nth distinct ligature of a component sequence lives in lig_<n>.
   // A shorter sequence never meets a longer one in the same lookup by mistake: the rule for
   // the longer one would have matched first.
@@ -511,7 +524,14 @@ function buildRules(
     readings.forEach((ruby, i) => variantReadings.push({ input: variants.name(kanji, i + 1), glyph: glyphs.lone(kanji, ruby), selector: SELECTOR_SUPPRESS + i + 1 }))
   }
   rules.sort((a, b) => a.input[0]!.localeCompare(b.input[0]!) || b.input.length - a.input.length)
-  return { rules, ligatures: [...ligatures.values()], singles, variants: variants.all(), variantReadings, ivsWords }
+  // `salt` n is the selector n after the first kanji of a run, so it reaches every glyph a selector does: word rules, then the kanji's own reading. It counts up to the highest selector a rule or reading uses, with glyphs for the ones between.
+  const top = new Map<number, number>()
+  for (const { base, selector } of variants.all()) {
+    if (selector > SELECTOR_SUPPRESS)
+      top.set(base, Math.max(top.get(base) ?? 0, selector - SELECTOR_SUPPRESS))
+  }
+  const alternates = [...top].map(([base, n]) => ({ input: glyphName(base), outputs: Array.from({ length: n }, (_, i) => variants.name(String.fromCodePoint(base), i + 1)) }))
+  return { rules, ligatures: [...ligatures.values()], singles, variants: variants.all(), variantReadings, alternates, ivsWords }
 }
 
 function smokeChecks(patterns: Patterns, lone: { glyph: PlanGlyph }[], glyphs: GlyphRegistry): Plan['smoke'] {
@@ -559,9 +579,9 @@ export function createFontPlanner(dictionary: Dictionary) {
     const { isolated, kanjiReadings } = chooseLoneKanji(index, patterns, lonePins, ctx)
     const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, skipped, ctx)
     const glyphs = createGlyphRegistry(ctx.render)
-    const { rules, ligatures, singles, variants, variantReadings, ivsWords } = buildRules(patterns, kanjiReadings, protectedRuns, glyphs)
+    const { rules, ligatures, singles, variants, variantReadings, alternates, ivsWords } = buildRules(patterns, kanjiReadings, protectedRuns, glyphs)
     const lone = [...isolated].map(([kanji, ruby]) => ({ base: glyphName(kanji.codePointAt(0)!), glyph: glyphs.lone(kanji, ruby) }))
-    return { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, ivsWords, lone }
+    return { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone }
   }
 
   // A live preview plans on every keystroke and the report on every change, with the same options: keep the last analysis.
@@ -575,7 +595,7 @@ export function createFontPlanner(dictionary: Dictionary) {
 
   /** Plans a font; with `previewText`, keeps only what that text can trigger. */
   return function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
-    const { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, ivsWords, lone } = analysisFor(options, coverage)
+    const { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone } = analysisFor(options, coverage)
 
     const sample = previewText === undefined ? undefined : new Set(codepoints(previewText))
     const inSample = (cps: readonly number[]): boolean => !sample || cps.every(cp => sample.has(cp))
@@ -583,6 +603,8 @@ export function createFontPlanner(dictionary: Dictionary) {
     const keptLone = lone.filter(l => inSample(l.glyph.bases))
     const keptVariants = variants.filter(v => inSample([v.base, v.selector]))
     const keptVariantReadings = variantReadings.filter(v => inSample([...v.glyph.bases, v.selector]))
+    // A preview skips `salt`: its selectors cover it, and the rules for every reading would grow the font on each keystroke.
+    const keptAlternates = sample ? [] : alternates
     const usedLookups = new Set(keptRules.flatMap(r => r.lookups.map((lookup, i) => `${r.input[i]}@${lookup}`)))
     const keptSingles = singles.all().filter(s => usedLookups.has(`${s.input}@${s.lookup}`))
     const keptLigatures = ligatures.filter(l => inSample(l.codepoints))
@@ -602,6 +624,7 @@ export function createFontPlanner(dictionary: Dictionary) {
       isolated: keptLone.map(l => ({ input: l.base, output: l.glyph.name })),
       rules: keptRules,
       variantReadings: keptVariantReadings.map(v => ({ input: v.input, output: v.glyph.name })),
+      alternates: keptAlternates,
       variantsOff: keptVariants.map(v => ({ input: v.name, output: glyphName(v.base) })),
       rubyOff: keptGlyphs.map(g => ({ glyph: g.name, bases: g.bases.map(glyphName) })),
     })
@@ -633,7 +656,7 @@ export function createFontPlanner(dictionary: Dictionary) {
           glyphs: keptGlyphs.length,
           rules: keptRules.length,
         },
-        ivs: { kanji: Object.fromEntries(kanjiReadings), words: ivsWords, lone: Object.fromEntries(isolated) },
+        ivs: { kanji: Object.fromEntries(kanjiReadings), words: ivsWords, lone: Object.fromEntries(isolated), salt: keptAlternates.length > 0 },
       },
     }
   }

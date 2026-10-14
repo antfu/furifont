@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test'
 import type { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
-import { TEST_FONT } from './setup'
+import { TEST_FONT, TEST_READINGS } from './setup'
 
 const ORIGIN = 'https://furifont.test'
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
@@ -40,6 +40,37 @@ test('picks a reading with a variation selector, or none', async ({ page }) => {
     <p id="suppressed">日${VS(0)}本</p><p id="plain" class="off">日本</p>`)
   expect(await shot(page, '#second')).not.toEqual(await shot(page, '#default'))
   expect(await shot(page, '#suppressed')).toEqual(await shot(page, '#plain'))
+})
+
+test('picks a reading of a kanji with salt on markup, as a selector does in the text', async ({ page }) => {
+  // 来 is こ in 来ない: the font never sees the ない, so the markup has to say it.
+  const { kanji } = JSON.parse(await readFile(TEST_READINGS, 'utf8')) as { kanji: Record<string, string[]> }
+  const salt = kanji['来']!.indexOf('こ') + 1
+  expect(salt).toBeGreaterThan(0)
+  await show(page, `
+    <p id="salt"><span style="font-feature-settings:'salt' ${salt}">来</span>ない</p>
+    <p id="selector">来${VS(salt)}ない</p><p id="plain">来ない</p>
+    <p id="zero"><span style="font-feature-settings:'salt' 0">来</span>ない</p>`)
+  expect(await shot(page, '#salt')).toEqual(await shot(page, '#selector'))
+  expect(await shot(page, '#salt')).not.toEqual(await shot(page, '#plain'))
+  expect(await shot(page, '#zero')).toEqual(await shot(page, '#plain'))
+})
+
+test('picks the reading of a word with salt on a span around its kanji, and leaves the second kanji alone', async ({ page, browserName }) => {
+  // 今日 is こんにち before では, and 日日 shows that only the first kanji of a run takes salt.
+  const { words } = JSON.parse(await readFile(TEST_READINGS, 'utf8')) as { words: Record<string, string[]> }
+  const salt = words['今日']!.findIndex(w => w.startsWith('今[こん]')) + 1
+  expect(salt).toBeGreaterThan(1)
+  const on = `font-feature-settings:'salt' ${salt}`
+  await show(page, `
+    <p id="salt"><span style="${on}">今日</span>では</p>
+    <p id="selector">今${VS(salt)}日では</p><p id="plain">今日では</p>
+    <p id="gate"><span style="${on}">日日</span></p><p id="split"><span style="${on}">日</span>日</p>`)
+  expect(await shot(page, '#salt')).not.toEqual(await shot(page, '#plain'))
+  expect(await shot(page, '#gate')).toEqual(await shot(page, '#split'))
+  // WebKit draws a word's selector as the first kanji's own reading: the selector is what is wrong there, not salt.
+  if (browserName !== 'webkit')
+    expect(await shot(page, '#salt')).toEqual(await shot(page, '#selector'))
 })
 
 test('keeps the text plain for selection and copy', async ({ page }) => {
