@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
  * Guide lines on the font's own metrics, behind text set at `size` px from the
- * parent's top left: a column per em, and per line the top of the ruby, the em
- * box and the baseline. It spills past the parent, which its container clips.
+ * parent's top left: a column per em, and per line the top and bottom of the em
+ * box. It spills past the parent, which its container clips.
  */
 const { size } = defineProps<{ size: number }>()
 
