@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { DEFAULTS } from './defaults'
 
 export const RUBY_SCRIPTS = ['hiragana', 'katakanaOn', 'hepburn'] as const
 export const PRIORITY_TAGS = ['ichi1', 'ichi2', 'news1', 'news2', 'spec1', 'spec2', 'gai1', 'gai2'] as const
@@ -9,13 +10,13 @@ export type RubyScript = typeof RUBY_SCRIPTS[number]
 /** Sizes in em, relative to the base font. */
 const RubyMetricsSchema = v.object({
   /** Ruby size relative to the base characters. */
-  rubyScale: v.optional(v.pipe(v.number(), v.minValue(0.2), v.maxValue(0.8)), 0.4),
+  rubyScale: v.optional(v.pipe(v.number(), v.minValue(0.2), v.maxValue(0.8)), DEFAULTS.plan.metrics.rubyScale),
   /** Space between the top of the em box and the bottom of the ruby. */
-  rubyGap: v.optional(v.pipe(v.number(), v.minValue(0), v.maxValue(0.5)), 0.05),
+  rubyGap: v.optional(v.pipe(v.number(), v.minValue(0), v.maxValue(0.5)), DEFAULTS.plan.metrics.rubyGap),
   /** Ruby is squeezed horizontally down to this scale before it may overhang. */
-  compressionFloor: v.optional(v.pipe(v.number(), v.minValue(0.3), v.maxValue(1)), 0.6),
+  compressionFloor: v.optional(v.pipe(v.number(), v.minValue(0.3), v.maxValue(1)), DEFAULTS.plan.metrics.compressionFloor),
   /** Widest a ruby may get, overhanging its base symmetrically. */
-  maxRubyWidth: v.optional(v.pipe(v.number(), v.minValue(1), v.maxValue(3)), 1.6),
+  maxRubyWidth: v.optional(v.pipe(v.number(), v.minValue(1), v.maxValue(3)), DEFAULTS.plan.metrics.maxRubyWidth),
 })
 export type RubyMetrics = v.InferOutput<typeof RubyMetricsSchema>
 
@@ -27,28 +28,28 @@ export function withNfWindow<T extends v.GenericSchema<unknown, { nfMin: number,
 }
 
 export const PlanOptionsSchema = withNfWindow(v.object({
-  family: v.optional(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.check(name => !/source/i.test(name), 'Source is a reserved font name of the base font')), 'Furifont Sans'),
-  rubyScript: v.optional(v.picklist(RUBY_SCRIPTS), 'hiragana'),
+  family: v.optional(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.check(name => !/source/i.test(name), 'Source is a reserved font name of the base font')), DEFAULTS.plan.family),
+  rubyScript: v.optional(v.picklist(RUBY_SCRIPTS), DEFAULTS.plan.rubyScript),
   /**
    * Words whose newspaper frequency bucket is below this stay bare: the most
    * common ones, which a reader knows. Tags don't bring them back.
    */
-  nfMin: v.optional(Bucket, 1),
+  nfMin: v.optional(Bucket, DEFAULTS.plan.nfMin),
   /** Words whose newspaper frequency bucket is at most this are annotated. */
-  nfMax: v.optional(Bucket, 30),
+  nfMax: v.optional(Bucket, DEFAULTS.plan.nfMax),
   /**
    * JMdict priority tags that select a word whatever its frequency bucket:
    * `spec1` catches words like 日本 that the newspaper ranking misses.
    */
-  selectTags: v.optional(v.array(v.picklist(PRIORITY_TAGS)), ['spec1']),
+  selectTags: v.optional(v.array(v.picklist(PRIORITY_TAGS)), () => [...DEFAULTS.plan.selectTags]),
   /** Words on the JLPT lists of this level and every easier one stay bare. */
   skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate place names from the dictionary where no common word claims the run. */
-  places: v.optional(v.boolean(), true),
+  places: v.optional(v.boolean(), DEFAULTS.plan.places),
   /** Annotate a kanji alone in its run; when off, only selectors give it ruby. */
-  isolated: v.optional(v.boolean(), true),
+  isolated: v.optional(v.boolean(), DEFAULTS.plan.isolated),
   /** A kanji alone in its run is annotated only when one reading has this share of the evidence. */
-  isolatedMinShare: v.optional(v.pipe(v.number(), v.minValue(0.5), v.maxValue(1)), 0.8),
+  isolatedMinShare: v.optional(v.pipe(v.number(), v.minValue(0.5), v.maxValue(1)), DEFAULTS.plan.isolatedMinShare),
   words: v.optional(v.object({
     /** Extra words in inline notation, `日[に]本[ほん]`. */
     add: v.optional(v.array(v.string()), []),

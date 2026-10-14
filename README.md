@@ -97,15 +97,15 @@ Both commands read `furifont.config.json` from the current folder, and Customize
 }
 ```
 
-These are the settings:
+These are the settings. Their defaults, and the families, weights and options of the prebuilt fonts, are all in [`packages/core/src/defaults.ts`](packages/core/src/defaults.ts).
 
 - `base` names a font to download once, Source Han Sans JP or Source Han Serif JP with a weight (`Source Han Serif JP Bold`), or is the path to another OpenType font.
-- `nfMax` sets how many words get ruby. Words are ranked in newspaper frequency buckets of about 500 words each.
+- `nfMax` sets how many words get ruby. Words are ranked in newspaper frequency buckets of about 500 words each, 48 of them. By default all of them get ruby.
 - `nfMin` leaves the most common words bare, for readers who know them: `3` skips the first 1,000.
-- `selectTags` also selects words that have these JMdict priority tags.
+- `selectTags` also selects words that have these JMdict priority tags. By default, the first tier of each list, which JMdict marks as common: `ichi1`, `news1`, `spec1` and `gai1`.
 - `skipJlpt` leaves bare the words on the JLPT lists up to this level: `"N4"` skips the N5 and N4 words. It is off by default.
 - `isolated: false` gives no ruby to a kanji alone. `isolatedMinShare` sets how strongly one reading must dominate before it gets some.
-- `places` adds station and place names. They make up most of the rules. Without them, a WOFF2 font is 3.6 MB instead of 5.2 MB, and the build is about four times faster.
+- `places` adds station and place names. They make up most of the rules. Without them, a WOFF2 font is 3.7 MB instead of 4.6 MB, and the build is about 1.7 times faster.
 - `words` uses inline notation: `日[に]本[ほん]` gives one reading per kanji, and `今日[きょう]` gives one reading over several kanji.
 - `formats` lists the fonts a build writes: OpenType (`otf`) to install, WOFF2 (`woff2`) for websites, or both. WOFF2 takes most of a build's time. `--formats otf` on the command line overrides it. The reading reference `.ivs.json` is always written.
 

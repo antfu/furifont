@@ -2,8 +2,9 @@ import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import * as v from 'valibot'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { buildFont, estimateFont, loadConfig } from '../src'
+import { buildFont, DEFAULTS, estimateFont, FurifontConfigSchema, loadConfig, PREBUILT } from '../src'
 
 const BASE = fileURLToPath(new URL('../../compiler/test/fixtures/SourceHanSansJP-Subset.otf', import.meta.url))
 
@@ -13,10 +14,21 @@ beforeAll(async () => {
 })
 afterAll(() => rm(cwd, { recursive: true, force: true }))
 
+describe('pREBUILT', () => {
+  it('makes a valid config for every font and weight, as build-fonts.ts does', () => {
+    for (const { base, family, rubyScript } of PREBUILT.fonts) {
+      for (const style of PREBUILT.weights.map(w => w.style)) {
+        const config = v.parse(FurifontConfigSchema, { ...PREBUILT.options, family, rubyScript, base: `${base} ${style}` })
+        expect(config).toMatchObject({ family, rubyScript, base: `${base} ${style}`, formats: [...DEFAULTS.build.formats] })
+      }
+    }
+  })
+})
+
 describe('loadConfig', () => {
   it('fills defaults when there is no config file', async () => {
     const config = await loadConfig(cwd)
-    expect(config).toMatchObject({ family: 'Furifont Sans', base: 'Source Han Sans JP Regular', rubyScript: 'hiragana', nfMax: 30, formats: ['otf', 'woff2'] })
+    expect(config).toMatchObject({ family: DEFAULTS.plan.family, base: DEFAULTS.build.base, rubyScript: DEFAULTS.plan.rubyScript, nfMax: DEFAULTS.plan.nfMax, formats: [...DEFAULTS.build.formats] })
   })
 
   it('names the file and the problem when the config is invalid', async () => {

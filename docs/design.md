@@ -223,8 +223,8 @@ readings, as 大人気 does through 大人.
   おとなげ in 大人気ない.
 
 Protected runs become rules themselves, so the check repeats until nothing
-changes. With the default preset, about 1,750 runs are annotated and 2,200
-left bare. Without place names, about 680 and 1,260.
+changes. With the default preset, about 2,400 runs are annotated and 2,300
+left bare. Without place names, about 1,800 and 2,000.
 
 ### Glyphs
 

@@ -34,10 +34,10 @@ describe('compiled dictionary', () => {
     expect(report.stats.places).toBeGreaterThan(100_000)
   })
 
-  it('keeps about ten thousand words and leaves ambiguous lone kanji out', () => {
+  it('keeps about nineteen thousand words and leaves ambiguous lone kanji out', () => {
     const words = report.stats.patterns - report.stats.places
-    expect(words).toBeGreaterThan(8000)
-    expect(words).toBeLessThan(15_000)
+    expect(words).toBeGreaterThan(15_000)
+    expect(words).toBeLessThan(23_000)
     expect(report.ivs.kanji['来']).toEqual(expect.arrayContaining(['く', 'き']))
     expect(report.ivs.lone['桜']).toBe('さくら')
   })
