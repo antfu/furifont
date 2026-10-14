@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { OkuriganaReader } from '@furifont/webpage'
+
 const { family = FAMILIES[0]!.family, ruby = true, size = 32, okurigana } = defineProps<{
   family?: string
   /** Off turns on `ss01`, the font's own switch back to plain glyphs. */

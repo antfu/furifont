@@ -40,7 +40,7 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 [docs/design.md](docs/design.md) explains the design. Four rules matter for most changes:
 
 - **`@furifont/core` reads no fonts, and `@furifont/compiler` decides no readings.** The plan (`PlanSchema`) is the only thing passed between them. A change to which words get ruby, or how, belongs in core. A change to how glyphs are drawn or compiled belongs in the compiler.
-- **Core, the compiler and the dictionary run in browsers too.** They take and return bytes and use no Node APIs, and ESLint rejects `node:` imports in them. Files and the base-font cache belong to the CLI. Node's Brotli and hb-subset loader live in `@furifont/compiler/node`, which the CLI passes in.
+- **Core, the compiler, the dictionary and webpage run in browsers too.** They take and return bytes and use no Node APIs, and ESLint rejects `node:` imports in them. Files and the base-font cache belong to the CLI. Node's Brotli and hb-subset loader live in `@furifont/compiler/node`, which the CLI passes in.
 - **Browsers shape one script at a time.** A rule can only see a run of kanji, never the kana around it. HarfBuzz on a whole string matches rules that no browser does. So check any change to rendering with `pnpm test:e2e`, not with HarfBuzz alone.
 - **Never edit `packages/dictionary/data/dictionary.json`, `places.json` or `okurigana.json` by hand.** Regenerate it with `pnpm dict:update`. To fix a wrong default reading, add the word to `packages/dictionary/src/defaults.ts`, with a comment that says why.
 

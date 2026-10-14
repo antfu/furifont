@@ -1,13 +1,20 @@
 <script setup lang="ts">
+import type { FurifontOptions } from '@furifont/webpage'
+import engine from '@furifont/webpage/iife?raw'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const { face, script, okurigana, family, faces, scripts } = useFontSettings()
 const bookmarklet = computed(() => {
-  const toast = { message: t('anyPage.toast.message'), download: t('anyPage.toast.download'), close: t('anyPage.toast.close') } satisfies Toast
-  // The page fetches the files itself, so the bookmarklet carries only where they are, and the code that reads them.
-  const readings = okurigana.value ? `{readings:${JSON.stringify(siteReadingsUrl(family.value))},pairs:${JSON.stringify(SITE_PAIRS_URL)},reader:${createOkuriganaReader}}` : 'void 0'
-  return `javascript:${encodeURIComponent(`void (${toggleFurifont})(${JSON.stringify(family.value)},${JSON.stringify(siteFontUrl(family.value))},${JSON.stringify(toast)},void 0,${readings})`)}`
+  const options = {
+    family: family.value.family,
+    url: siteFontUrl(family.value),
+    toast: { message: t('anyPage.toast.message'), download: t('anyPage.toast.download'), close: t('anyPage.toast.close') },
+    // The page fetches the files itself, so the bookmarklet carries only where they are.
+    okurigana: okurigana.value ? { readings: siteReadingsUrl(family.value), pairs: SITE_PAIRS_URL } : undefined,
+  } satisfies FurifontOptions
+  // In a function, the engine's `var Furifont` stays off the page's globals.
+  return `javascript:${encodeURIComponent(`void (()=>{${engine};Furifont.toggleFurifont(${JSON.stringify(options)})})()`)}`
 })
 const userscript = `${useRuntimeConfig().app.baseURL}furifont.user.js`
 </script>
