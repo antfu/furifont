@@ -301,7 +301,9 @@ Furifont adds have a `unicode-range` of kanji, kana, CJK punctuation,
 full-width forms and the variation selectors. So the page's fonts keep
 everything else: Latin text, and the icon fonts that draw ligatures (`search`)
 or private-use code points, as on Google Maps. A stack that is monospaced, by
-its generic family or by its first family's name, sets code and is left alone.
+its generic family or by its first family's name, sets code and is left alone. The
+body gets Furifont too, even without Japanese of its own: scripts that draw
+text on a canvas read its font, as Google Maps does for its map labels.
 
 An installed Furifont needs no download: its faces come from `local()`, each
 weight by its full name. Otherwise the site's variable font downloads, which

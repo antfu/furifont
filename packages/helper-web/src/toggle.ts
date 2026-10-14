@@ -136,16 +136,19 @@ function install(family: string): State {
     },
   }
 
-  /** Puts Furifont in front of the font stack of each element under `roots` that holds Japanese. */
+  /** Puts Furifont in front of the font stack of each element under `roots` that holds Japanese, and of the body. */
   const mark = (roots: Node[]): void => {
+    const holders = holdersIn(roots)
     // Every read before any write, or each write forces another style pass.
-    const found = [...holdersIn(roots)].filter(e => !e.hasAttribute('data-furifont')).map((element) => {
+    // Scripts that draw text on a canvas take the body's font, as Google Maps does for its labels.
+    const found = [...holders, document.body].filter(e => !e.hasAttribute('data-furifont')).map((element) => {
       const { fontFamily, lineHeight, fontSize } = getComputedStyle(element)
       const stack = parseFontStack(fontFamily)
       // Inside an element Furifont sets, a stack starts with Furifont, and the page's comes after it.
       if (familyName(stack[0] ?? '') === state.family)
         stack.shift()
-      return { element, stack, tight: Number.parseFloat(lineHeight) < 1.6 * Number.parseFloat(fontSize) }
+      // The line height of the whole page stays the page's, unless the body holds Japanese itself.
+      return { element, stack, tight: holders.has(element) && Number.parseFloat(lineHeight) < 1.6 * Number.parseFloat(fontSize) }
     }).filter(({ stack }) => stack.length && !isMonospace(stack))
     const known = stacks.length
     for (const { element, stack, tight } of found) {
