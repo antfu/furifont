@@ -1,8 +1,11 @@
-<p align="center"><img src="logo.svg" alt="Furifont" width="96" height="96"></p>
+![Furifont](./packages/app/public/og.png)
 
-# Furifont
 
-A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji. [Try it on furifont.antfu.me](https://furifont.antfu.me).
+# Furifont  
+
+<img src="logo.svg" style="float: right;" alt="Furifont" width="96" height="96">
+
+A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup. The font looks each word up in its own rules and draws the reading above the kanji. [Try it on furifont.antfu.me](https://furifont.antfu.me).
 
 ```html
 <p style="font-family: 'Furifont Sans'; line-height: 1.7">今日は日本語の勉強をします。</p>

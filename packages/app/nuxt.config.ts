@@ -24,6 +24,12 @@ const studioBridge: NonNullable<NuxtConfig['modules']>[number] = async (_, nuxt)
   addVitePlugin(devframeViteBridge(devframe, { base: DEV_STUDIO_BASE, auth: false }))
 }
 
+/** The demo site's address, which link previews need in full (`SITE` in the shared utils, which a config cannot import). */
+const SITE = 'https://furifont.antfu.me'
+const TITLE = 'Furifont: furigana built into the font'
+const DESCRIPTION = 'A Japanese font that shows furigana by itself.'
+const PREVIEW = `${SITE}/og.png`
+
 export default defineNuxtConfig({
   ssr: false,
   css: ['~/assets/css/tokens.css'],
@@ -45,10 +51,22 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'Furifont: furigana built into the font',
+      title: TITLE,
       htmlAttrs: { lang: 'en' },
       meta: [
-        { name: 'description', content: 'A Japanese font that shows furigana by itself. The text does not change.' },
+        { name: 'description', content: DESCRIPTION },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: SITE },
+        { property: 'og:title', content: TITLE },
+        { property: 'og:description', content: DESCRIPTION },
+        { property: 'og:image', content: PREVIEW },
+        { property: 'og:image:width', content: '2400' },
+        { property: 'og:image:height', content: '1260' },
+        { property: 'og:image:alt', content: TITLE },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: TITLE },
+        { name: 'twitter:description', content: DESCRIPTION },
+        { name: 'twitter:image', content: PREVIEW },
       ],
       link: [{ rel: 'icon', type: 'image/svg+xml', href: 'favicon.svg' }],
     },

@@ -9,6 +9,7 @@
     ".": {},
     "packages/*": {},
     "packages/app": {
+      "storybook": true,
       "ignoreDependencies": [
         "@iconify-json/ph",
         "vue-tsc"
