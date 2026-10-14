@@ -1,7 +1,7 @@
 {
   "name": "@furifont/dictionary",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "JMdict words aligned with per-kanji readings, compiled for Furifont",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "CC-BY-SA-4.0",
