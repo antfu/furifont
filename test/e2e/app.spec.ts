@@ -81,7 +81,7 @@ test('applies the font chosen in the playground to the whole site, and remembers
   const hero = page.getByRole('textbox').first()
   await expect(hero).toHaveCSS('font-family', '"Furifont Serif Romaji", sans-serif')
   await expect(hero).toHaveCSS('font-feature-settings', '"ss01"')
-  const anyPage = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const anyPage = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
   await expect(anyPage.getByRole('radio', { name: 'Serif' })).toBeChecked()
   await expect(anyPage.getByRole('checkbox', { name: 'Okurigana readings' })).not.toBeChecked()
   await expect(anyPage.getByRole('link', { name: 'Furifont Serif Romaji', exact: true })).toBeVisible()
@@ -189,7 +189,7 @@ function hasLoaded(page: Page, family: string): Promise<boolean> {
 
 test('sets another site in Furifont from the bookmarklet, and a second click turns it off', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
-  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
   await section.getByRole('radio', { name: 'Serif' }).click()
   const href = await section.getByRole('link', { name: 'Furifont Serif', exact: true }).getAttribute('href')
   const click = (): Promise<void> => page.evaluate(decodeURIComponent(href!.replace(/^javascript:/, '')))
@@ -209,7 +209,7 @@ test('sets another site in Furifont from the bookmarklet, and a second click tur
 
 test('asks to install Furifont where a CSP blocks fonts from other sites, and links to the downloads', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
-  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
   const href = await section.getByRole('link', { name: 'Furifont Sans', exact: true }).getAttribute('href')
 
   await openElsewhere(page, 'en', 'font-src \'self\'')
@@ -323,7 +323,7 @@ test('leaves a page as it is when a font predates salt or the files do not load'
 
 test('offers the okurigana readings in the bookmarklet, on unless turned off', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
-  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
   const link = section.getByRole('link', { name: 'Furifont Sans', exact: true })
   const on = await link.getAttribute('href')
   await section.getByRole('checkbox', { name: 'Okurigana readings' }).uncheck({ force: true })
