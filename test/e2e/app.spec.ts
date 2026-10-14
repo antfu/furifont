@@ -213,7 +213,9 @@ test('sets another site in Furifont from the bookmarklet, and a second click tur
   await openElsewhere(page, 'en')
   await click()
   expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: `"Furifont Serif", ${PAGE_FONT}`, lineHeight: 'normal' })
-  expect(await styleOf(page, 'latin')).toEqual({ fontFamily: PAGE_FONT, lineHeight: '24px' })
+  // The body too, for scripts that draw text on a canvas with its font, as Google Maps does: its lines keep their height.
+  expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toBe(`"Furifont Serif", ${PAGE_FONT}`)
+  expect(await styleOf(page, 'latin')).toEqual({ fontFamily: `"Furifont Serif", ${PAGE_FONT}`, lineHeight: '24px' })
   await expect.poll(() => hasLoaded(page, 'Furifont Serif')).toBe(true)
   // Furifont draws 日本, one glyph with its ruby, and the system the 14 Latin letters and spaces around it, the icon's ligature among them.
   expect(await glyphsBySource(page, 'mixed')).toEqual({ web: 1, system: 14 })
