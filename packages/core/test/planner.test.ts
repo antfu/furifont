@@ -26,7 +26,7 @@ describe('planner', () => {
   it('selects words by frequency bucket or priority tag', () => {
     expect(drawn(plan().plan)).toContain('京:きょう')
     expect(drawn(plan({ selectTags: [], nfMax: 10 }).plan)).not.toContain('京:きょう')
-    expect(drawn(plan({ nfMax: 2 }).plan)).not.toContain('大人:おとな')
+    expect(drawn(plan({ selectTags: [], nfMax: 2 }).plan)).not.toContain('大人:おとな')
   })
 
   it('skips the most common words whole, whatever their tags', () => {
@@ -36,7 +36,7 @@ describe('planner', () => {
     expect(drawn(plan({ nfMin: 26 }).plan)).not.toContain('京:きょう')
     expect(report.ivs.words['今日']).toHaveLength(2)
     expect(plan({ nfMin: 3 }).report.ivs.words['今日']).toBeUndefined()
-    expect(() => resolveOptions({ nfMin: 31 })).toThrow(/nfMin/)
+    expect(() => resolveOptions({ nfMin: 31, nfMax: 30 })).toThrow(/nfMin/)
   })
 
   it('still selects tagged words that have no frequency bucket', () => {
@@ -102,7 +102,8 @@ describe('planner', () => {
 
   it('leaves a run bare when it may be another word with another reading', () => {
     const entries = [...dictionary.entries, { form: '大人気ない', furigana: '0-1:おとな;2:げ', nf: 0, priority: 'ichi1', order: 0 }]
-    const { plan: p } = createFontPlanner({ ...dictionary, entries })(resolveOptions(), coverage)
+    // Tagged ichi1, it would be a word of its own with the default tags: this test is about one that is not selected.
+    const { plan: p } = createFontPlanner({ ...dictionary, entries })(resolveOptions({ selectTags: ['spec1'] }), coverage)
     expect(p.fea).toContain('ignore sub uni5927\' uni4EBA\' uni6C17\';')
   })
 

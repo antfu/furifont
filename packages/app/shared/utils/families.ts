@@ -1,3 +1,5 @@
+import { PREBUILT } from '@furifont/core'
+
 export interface Family {
   family: string
   /** File name stem: `<stem>-Regular.woff2`. */
@@ -6,19 +8,11 @@ export interface Family {
   script: 'hiragana' | 'hepburn'
 }
 
-/** The prebuilt fonts: hiragana and romaji ruby on Source Han Sans and Serif. */
-export const FAMILIES: Family[] = [
-  { family: 'Furifont Sans', stem: 'FurifontSans', face: 'sans', script: 'hiragana' },
-  { family: 'Furifont Sans Romaji', stem: 'FurifontSansRomaji', face: 'sans', script: 'hepburn' },
-  { family: 'Furifont Serif', stem: 'FurifontSerif', face: 'serif', script: 'hiragana' },
-  { family: 'Furifont Serif Romaji', stem: 'FurifontSerifRomaji', face: 'serif', script: 'hepburn' },
-]
+/** The prebuilt fonts, as `PREBUILT` in core lists them. */
+export const FAMILIES: Family[] = PREBUILT.fonts.map(({ family, face, rubyScript }) => ({ family, stem: family.replaceAll(' ', ''), face, script: rubyScript }))
 
 /** Weights on the release; the site serves Regular only. */
-export const WEIGHTS = [
-  { weight: 400, style: 'Regular' },
-  { weight: 700, style: 'Bold' },
-] as const
+export const WEIGHTS = PREBUILT.weights
 
 export const REPOSITORY = 'https://github.com/antfu/furigana-font'
 

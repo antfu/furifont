@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { PlanOptionsSchema, withNfWindow } from '@furifont/core'
+import { DEFAULTS, PlanOptionsSchema, withNfWindow } from '@furifont/core'
 import * as v from 'valibot'
 
 export const CONFIG_FILE = 'furifont.config.json'
@@ -11,9 +11,9 @@ export const FONT_FORMATS = ['otf', 'woff2'] as const
 export const FurifontConfigSchema = withNfWindow(v.object({
   ...PlanOptionsSchema.entries,
   /** A Source Han Sans JP weight (downloaded once), or the path of another OpenType font. */
-  base: v.optional(v.pipe(v.string(), v.nonEmpty()), 'Source Han Sans JP Regular'),
+  base: v.optional(v.pipe(v.string(), v.nonEmpty()), DEFAULTS.build.base),
   /** The fonts a build writes, beside the selector reference `.ivs.json`. */
-  formats: v.optional(v.pipe(v.array(v.picklist(FONT_FORMATS)), v.minLength(1)), () => [...FONT_FORMATS]),
+  formats: v.optional(v.pipe(v.array(v.picklist(FONT_FORMATS)), v.minLength(1)), () => [...DEFAULTS.build.formats]),
 }))
 export type FurifontConfig = v.InferOutput<typeof FurifontConfigSchema>
 export type FurifontConfigInput = v.InferInput<typeof FurifontConfigSchema>
