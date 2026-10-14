@@ -1,8 +1,6 @@
 <script setup lang="ts">
 const text = ref('今日は日本語の勉強をします。\n明日は東京の大学へ行きます。\n私は毎朝新聞を読みます。桜が咲きました。')
-const { face, script, family, faces, scripts } = useFamilyPicker()
-const ruby = ref(true)
-const okurigana = ref(true)
+const { face, script, ruby, okurigana, family, faces, scripts } = useFontSettings()
 const { reader } = useOkurigana(family)
 const size = ref(30)
 const { copied, copy } = useCopy()

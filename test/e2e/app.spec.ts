@@ -69,6 +69,28 @@ test('shows another sample on shuffle', async ({ page }) => {
   await expect(sample).not.toHaveText(before!)
 })
 
+test('applies the font chosen in the playground to the whole site, and remembers it', async ({ page }) => {
+  await page.goto(new URL('/#/', url).href)
+  const playground = page.locator('section', { has: page.getByRole('heading', { name: 'Try it' }) })
+  await playground.getByRole('radio', { name: 'Romaji' }).click()
+  await playground.getByRole('radio', { name: 'Serif' }).click()
+  await playground.getByRole('checkbox', { name: 'Furigana' }).uncheck({ force: true })
+  await playground.getByRole('checkbox', { name: 'Okurigana readings' }).uncheck({ force: true })
+  await page.reload()
+
+  const hero = page.getByRole('textbox').first()
+  await expect(hero).toHaveCSS('font-family', '"Furifont Serif Romaji", sans-serif')
+  await expect(hero).toHaveCSS('font-feature-settings', '"ss01"')
+  const anyPage = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  await expect(anyPage.getByRole('radio', { name: 'Serif' })).toBeChecked()
+  await expect(anyPage.getByRole('checkbox', { name: 'Okurigana readings' })).not.toBeChecked()
+  await expect(anyPage.getByRole('link', { name: 'Furifont Serif Romaji', exact: true })).toBeVisible()
+
+  await page.getByLabel('Language').selectOption('ja')
+  await expect(page.locator('body')).toHaveCSS('font-family', /^"Furifont Serif Romaji"/)
+  await expect(page.locator('body')).toHaveCSS('font-feature-settings', '"ss01"')
+})
+
 test('previews, plans and builds a font in the formats chosen', async ({ page }) => {
   await page.goto(url)
   await expect(page.getByText(/\d+ glyphs \/ \d+ ms/)).toBeVisible({ timeout: 60_000 })

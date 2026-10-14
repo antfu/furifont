@@ -26,9 +26,10 @@ html, body {
 body {
     -webkit-font-smoothing: antialiased;
 }
-/* The Japanese site is set in Furifont itself; the line height leaves room for the ruby. */
+/* The Japanese site is set in Furifont itself, as the visitor chose it; the line height leaves room for the ruby. */
 :lang(ja) body {
-    font-family: "Furifont Sans", ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--ff-font), ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: var(--ff-features);
     line-height: 1.8;
 }
 ::selection {

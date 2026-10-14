@@ -6,6 +6,7 @@ const { text, wordDefault = false } = defineProps<{
   wordDefault?: boolean
 }>()
 const { copied, copy } = useCopy()
+const { family } = useFontSettings()
 </script>
 
 <template>
@@ -15,7 +16,8 @@ const { copied, copy } = useCopy()
     </h3>
     <ul class="flex flex-wrap">
       <li v-for="(reading, i) in readings" :key="reading" class="flex flex-col items-start gap-1 px-6 py-3">
-        <FuriText :text="withReading(text, i)" :size="30" />
+        <!-- Ruby stays on whatever the setting: the readings are what this page shows. -->
+        <FuriText :text="withReading(text, i)" :family="family.family" :size="30" />
         <button
           type="button"
           class="focus-ring font-mono text-[11px] color-muted transition-colors hover:color-base"

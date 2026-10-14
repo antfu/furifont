@@ -9,6 +9,7 @@ const examples = [
   { label: 'selectors.none', text: `今${VS(0)}日`, code: '今\\u{E01E0}日' },
 ] as const
 const { copied, copy } = useCopy()
+const { family, ruby } = useFontSettings()
 </script>
 
 <template>
@@ -23,7 +24,7 @@ const { copied, copy } = useCopy()
     </div>
     <ul class="grid grid-cols-2 lg:grid-cols-5">
       <li v-for="example in examples" :key="example.code" class="flex flex-col gap-2 border-b border-r border-base p-4 last:border-r-0">
-        <FuriText :text="example.text" :size="36" />
+        <FuriText :text="example.text" :family="family.family" :ruby :size="36" />
         <span class="label">{{ $t(example.label) }}</span>
         <button type="button" class="focus-ring self-start font-mono text-xs color-muted hover:color-base" @click="copy(example.text)">
           {{ copied === example.text ? $t('copied') : example.code }}

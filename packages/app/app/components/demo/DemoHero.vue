@@ -3,6 +3,8 @@ const emit = defineEmits<{ download: [] }>()
 const text = ref(SAMPLES[0]!.text)
 const author = computed(() => SAMPLES.find(s => s.text === text.value)?.author)
 const size = 44
+const { family, ruby, okurigana } = useFontSettings()
+const { reader } = useOkurigana(family)
 </script>
 
 <template>
@@ -28,10 +30,10 @@ const size = 44
       <UiButton icon="i-ph-shuffle" class="absolute right-3 top-3 w-9 bg-base px-0" :aria-label="$t('shuffle')" :title="$t('shuffle')" @click="text = otherSample(text).text" />
       <div class="relative">
         <UiTypeGrid :size />
-        <FuriText v-model:text="text" :size />
+        <FuriText v-model:text="text" :family="family.family" :ruby :size :okurigana="okurigana ? reader : undefined" />
       </div>
       <span v-if="author" class="label no-ruby absolute right-3 bottom-3 border border-base bg-base px-2 py-1">⁄ {{ author }}</span>
-      <span class="label absolute bottom-3 left-3 border border-base bg-base px-2 py-1">Furifont Sans Regular / {{ size }}px</span>
+      <span class="label absolute bottom-3 left-3 border border-base bg-base px-2 py-1">{{ family.family }} Regular / {{ size }}px</span>
     </div>
   </div>
 </template>
