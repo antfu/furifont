@@ -66,8 +66,25 @@ function utf16(text: string): Uint8Array {
   return w.finish()
 }
 
-/** Replaces the family and style names; a style beyond the four RIBBI ones gets typographic names. */
-export function renameFont(table: Uint8Array, names: FontNames, description: string): Uint8Array {
+/** A variable font's named instances' PostScript names, after the new family: `FurifontSansVF-Bold`. */
+export function instancePostScriptNames(fvar: Uint8Array, table: Uint8Array, names: FontNames): [number, string][] {
+  const d = view(fvar)
+  const axisCount = d.getUint16(8)
+  const size = d.getUint16(14)
+  if (size < axisCount * 4 + 6)
+    return []
+  const prefix = names.family.replaceAll(' ', '')
+  return Array.from({ length: d.getUint16(12) }, (_, i): [number, string] => {
+    const at = d.getUint16(4) + axisCount * d.getUint16(10) + i * size
+    return [d.getUint16(at + 4 + axisCount * 4), `${prefix}-${(nameOf(table, d.getUint16(at)) ?? '').replaceAll(' ', '')}`]
+  }).filter(([id]) => id !== 0xFFFF)
+}
+
+/**
+ * Replaces the family and style names, and the `extra` ones by ID; a style
+ * beyond the four RIBBI ones gets typographic names.
+ */
+export function renameFont(table: Uint8Array, names: FontNames, description: string, extra: [number, string][]): Uint8Array {
   const { family, style, full, postScript } = names
   const ribbi = RIBBI.has(style)
   const version = (nameOf(table, 5) ?? 'Version 1.000').split(';')[0]!.replace(/^Version /, '')
@@ -81,7 +98,8 @@ export function renameFont(table: Uint8Array, names: FontNames, description: str
   ]
   if (!ribbi)
     entries.push([16, family], [17, style])
-  const records = readNames(table).filter(r => !REPLACED.has(r.id))
+  entries.push(...extra)
+  const records = readNames(table).filter(r => !REPLACED.has(r.id) && !extra.some(([id]) => id === r.id))
   for (const [id, value] of entries) {
     records.push({ platform: 3, encoding: 1, language: 0x409, id, bytes: utf16(value) })
     // Mac Roman is ASCII in this range; other names stay Windows-only.

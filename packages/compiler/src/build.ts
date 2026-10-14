@@ -11,11 +11,12 @@ import { addVariationSequences } from './cmap'
 import { Glyf } from './glyf'
 import { buildGsub } from './gsub'
 import { appendMetrics } from './metrics'
-import { fontNames, renameFont } from './names'
+import { fontNames, instancePostScriptNames, renameFont } from './names'
 import { drawGlyph, emptyOutline } from './outline'
 import { appendGlyphNames, postGlyphNames } from './post'
 import { readSfnt, writeSfnt } from './sfnt'
 import { subsetFont } from './subset'
+import { appendAdvanceMap, appendGlyphVariations } from './variations'
 
 const MAX_GLYPHS = 65535
 /** Per-glyph tables a new glyph count would invalidate; all optional. */
@@ -42,6 +43,9 @@ export interface BuiltFont {
   /** The glyph order, named as the plan names glyphs. */
   glyphNames: string[]
   style: string
+  /** Whether it has every weight (or other axis) of a variable base font. */
+  variable: boolean
+  outlines: 'cff' | 'truetype'
 }
 
 const logicalName = (cp: number): string => cp > 0xFFFF ? `u${cp.toString(16).toUpperCase()}` : `uni${cp.toString(16).toUpperCase().padStart(4, '0')}`
@@ -70,12 +74,26 @@ function emBox(tables: Map<string, Uint8Array>, upm: number): [number, number] {
   return ascender - descender === upm ? [descender, ascender] : [-0.12 * upm, 0.88 * upm]
 }
 
+/**
+ * The ends of each axis of a variable font: the base font there, and the
+ * normalized peak a tuple there takes. A two-master design varies linearly in
+ * between, so moving the components at the ends places them everywhere.
+ */
+function mastersOf(face: hb.Face): { font: hb.Font, peak: number[] }[] {
+  const axes = Object.values(face.getAxisInfos()).sort((a, b) => a.axisIndex - b.axisIndex)
+  return axes.flatMap(axis => [[axis.min, -1], [axis.max, 1]].filter(([value]) => value !== axis.default).map(([value, end]) => {
+    const font = new hb.Font(face)
+    font.setVariations([new hb.Variation(axis.tag, value)])
+    return { font, peak: axes.map(a => a === axis ? end! : 0) }
+  }))
+}
+
 /** The base font, opened once it is known to be one Furifont can build on. */
-async function openBase({ plan, base, subsetWasm }: CompileOptions): Promise<{ sfnt: Sfnt, font: hb.Font, upm: number, baseCount: number }> {
+async function openBase({ plan, base, subsetWasm }: CompileOptions): Promise<{ sfnt: Sfnt, face: hb.Face, upm: number, baseCount: number }> {
   const data = plan.subset ? await subsetFont(base, [...plan.subset, ...plan.codepoints], subsetWasm) : base
   const sfnt = readSfnt(data)
-  if (sfnt.tables.has('fvar') || sfnt.tables.has('CFF2'))
-    throw new Error('variable fonts are not supported: use a static instance')
+  if (sfnt.tables.has('CFF2'))
+    throw new Error('CFF2 variable fonts are not supported: use a TrueType one')
   if (!sfnt.tables.has('CFF ') && !sfnt.tables.has('glyf'))
     throw new Error('only CFF and TrueType base fonts are supported')
   const face = new hb.Face(new hb.Blob(data))
@@ -83,7 +101,7 @@ async function openBase({ plan, base, subsetWasm }: CompileOptions): Promise<{ s
   const added = plan.glyphs.length + plan.variants.length
   if (baseCount + added > MAX_GLYPHS)
     throw new Error(`${baseCount} base glyphs plus ${added} new ones exceed ${MAX_GLYPHS}: lower nfMax`)
-  return { sfnt, font: new hb.Font(face), upm: face.upem, baseCount }
+  return { sfnt, face, upm: face.upem, baseCount }
 }
 
 /**
@@ -127,6 +145,9 @@ class NewGlyphs {
   private readonly glyf?: Glyf
   private readonly horizontal: Metric[] = []
   private readonly vertical: Metric[] = []
+  /** Per new glyph: its components' moves at each master, and the base glyph whose metric variations it takes. */
+  private readonly deltas: Outline['deltas'][] = []
+  private readonly likes: number[] = []
   readonly head: Uint8Array
   /** Where vertical metrics measure from: VORG's default origin, else the ascender. */
   private readonly origin: number
@@ -153,6 +174,8 @@ class NewGlyphs {
       this.cff.addGlyph(name, outline, like)
     else
       this.glyf!.addGlyph(outline)
+    this.deltas.push(outline.deltas)
+    this.likes.push(like)
     const bounds = outline.bounds
     const [xMin, yMin, xMax, yMax] = bounds ?? [0, 0, 0, 0]
     this.horizontal.push({ advance: outline.advance, bearing: xMin, extent: bounds && [xMin, xMax] })
@@ -167,8 +190,39 @@ class NewGlyphs {
     extend(h, 42, yMax, Math.max)
   }
 
-  /** Writes the outlines, metrics, glyph count and names into the font's tables. */
-  write(names: FontNames, glyphNames: string[]): void {
+  /** The composites, their statistics in maxp, and a variable font's variations of them. */
+  private writeTrueType(outlines: Glyf, maxp: Uint8Array, peaks: number[][]): void {
+    const { tables } = this
+    const { glyf, loca } = outlines.compile()
+    tables.set('glyf', glyf)
+    tables.set('loca', loca)
+    view(this.head).setInt16(50, 1)
+    // maxp 1.0, TrueType's, counts points and contours too.
+    const m = view(maxp)
+    if (m.getUint32(0) === 0x00010000) {
+      m.setUint16(10, Math.max(m.getUint16(10), outlines.maxPoints))
+      m.setUint16(12, Math.max(m.getUint16(12), outlines.maxContours))
+      m.setUint16(28, Math.max(m.getUint16(28), outlines.maxComponents))
+      // The new glyphs are composites one level above the base glyphs.
+      m.setUint16(30, m.getUint16(30) + 1)
+    }
+    const gvar = tables.get('gvar')
+    if (gvar)
+      tables.set('gvar', appendGlyphVariations(gvar, this.deltas, peaks))
+    for (const [tag, sideMaps] of [['HVAR', 2], ['VVAR', 3]] as const) {
+      const table = tables.get(tag)
+      if (!table)
+        continue
+      const mapped = appendAdvanceMap(table, sideMaps, this.baseCount, this.likes)
+      if (mapped)
+        tables.set(tag, mapped)
+      else
+        tables.delete(tag)
+    }
+  }
+
+  /** Writes the outlines, metrics, variations, glyph count and names into the font's tables. */
+  write(names: FontNames, glyphNames: string[], peaks: number[][]): void {
     const { tables } = this
     const maxp = tables.get('maxp')!.slice()
     view(maxp).setUint16(4, this.baseCount + this.horizontal.length)
@@ -177,15 +231,7 @@ class NewGlyphs {
       tables.set('CFF ', this.cff.compile())
     }
     else {
-      const { glyf, loca } = this.glyf!.compile()
-      tables.set('glyf', glyf)
-      tables.set('loca', loca)
-      view(this.head).setInt16(50, 1)
-      // maxp 1.0, TrueType's, counts points and contours too.
-      if (view(maxp).getUint32(0) === 0x00010000) {
-        view(maxp).setUint16(6, Math.max(view(maxp).getUint16(6), this.glyf!.maxPoints))
-        view(maxp).setUint16(8, Math.max(view(maxp).getUint16(8), this.glyf!.maxContours))
-      }
+      this.writeTrueType(this.glyf!, maxp, peaks)
     }
     tables.set('maxp', maxp)
     // LONGDATETIME: seconds since 1904.
@@ -226,14 +272,16 @@ export async function buildFont(options: CompileOptions): Promise<BuiltFont> {
     await new Promise(resolve => setTimeout(resolve))
   }
   await progress('load')
-  const { sfnt, font, upm, baseCount } = await openBase(options)
+  const { sfnt, face, upm, baseCount } = await openBase(options)
+  const font = new hb.Font(face)
+  const masters = mastersOf(face)
   const { tables } = sfnt
   const glyphs = new NewGlyphs(tables, baseCount, upm)
   const { names, resolve } = nameGlyphs(plan, font, baseCount, glyphs.takenNames())
 
   const em = emBox(tables, upm)
   const glyphOf = (cp: number): number | undefined => font.nominalGlyph(cp)
-  const ctx = { font, unitsPerEm: upm, metrics: plan.metrics, em, glyphOf }
+  const ctx = { font, masters: masters.map(m => m.font), unitsPerEm: upm, metrics: plan.metrics, em, glyphOf }
   for (const [i, spec] of plan.glyphs.entries()) {
     if (i % 500 === 0)
       await progress('draw', i, plan.glyphs.length)
@@ -251,14 +299,15 @@ export async function buildFont(options: CompileOptions): Promise<BuiltFont> {
   tables.set('GSUB', buildGsub(plan.fea, tables.get('GSUB'), resolve))
 
   const fontName = fontNames(tables.get('name')!, plan.names.family)
-  tables.set('name', renameFont(tables.get('name')!, fontName, plan.names.description))
-  glyphs.write(fontName, names)
+  const fvar = tables.get('fvar')
+  tables.set('name', renameFont(tables.get('name')!, fontName, plan.names.description, fvar ? instancePostScriptNames(fvar, tables.get('name')!, fontName) : []))
+  glyphs.write(fontName, names, masters.map(m => m.peak))
   raiseAscender(tables, Math.ceil(em[1] + (plan.metrics.rubyGap + plan.metrics.rubyScale) * upm))
 
   await progress('save')
   const built = writeSfnt(sfnt)
   checkShaping(built, plan.smoke, resolve)
-  return { font: built, glyphNames: names, style: fontName.style }
+  return { font: built, glyphNames: names, style: fontName.style, variable: masters.length > 0, outlines: tables.has('glyf') ? 'truetype' : 'cff' }
 }
 
 function checkShaping(font: Uint8Array, smoke: Plan['smoke'], resolve: (name: string) => number): void {
