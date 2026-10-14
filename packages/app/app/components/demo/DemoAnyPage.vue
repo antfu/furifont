@@ -2,8 +2,7 @@
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-const { face, script, family, faces, scripts } = useFamilyPicker()
-const okurigana = ref(true)
+const { face, script, okurigana, family, faces, scripts } = useFontSettings()
 const bookmarklet = computed(() => {
   const toast = { message: t('anyPage.toast.message'), download: t('anyPage.toast.download'), close: t('anyPage.toast.close') } satisfies Toast
   // The page fetches the files itself, so the bookmarklet carries only where they are, and the code that reads them.

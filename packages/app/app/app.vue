@@ -7,6 +7,14 @@ useHead({
   title: () => t('meta.title'),
   meta: [{ name: 'description', content: () => t('meta.description') }],
 })
+
+// The Japanese interface is set in the chosen font too, see tokens.css.
+const { family, ruby } = useFontSettings()
+watchEffect(() => {
+  const { style } = document.documentElement
+  style.setProperty('--ff-font', `"${family.value.family}"`)
+  style.setProperty('--ff-features', ruby.value ? 'normal' : '"ss01"')
+})
 </script>
 
 <template>

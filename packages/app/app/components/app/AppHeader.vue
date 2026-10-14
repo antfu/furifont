@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 
 const { dark, toggle } = useDarkMode()
-const { ruby, toggle: toggleRuby } = useSiteRuby()
+const { ruby } = useFontSettings()
 const { locale } = useI18n()
 
 const links = [
@@ -33,7 +33,7 @@ const links = [
       </div>
       <div class="ml-auto flex items-center gap-1">
         <AppLanguageSelect />
-        <button v-if="locale === 'ja'" type="button" class="btn-ghost focus-ring w-9 px-0" :aria-label="ruby ? $t('nav.rubyOff') : $t('nav.rubyOn')" :title="ruby ? $t('nav.rubyOff') : $t('nav.rubyOn')" :aria-pressed="ruby" @click="toggleRuby">
+        <button v-if="locale === 'ja'" type="button" class="btn-ghost focus-ring w-9 px-0" :aria-label="ruby ? $t('nav.rubyOff') : $t('nav.rubyOn')" :title="ruby ? $t('nav.rubyOff') : $t('nav.rubyOn')" :aria-pressed="ruby" @click="ruby = !ruby">
           <span :class="ruby ? 'i-ph-eye' : 'i-ph-eye-slash'" />
         </button>
         <a :href="REPOSITORY" target="_blank" rel="noopener" class="btn-ghost focus-ring hidden w-9 px-0 sm:inline-flex" :aria-label="$t('nav.github')">
