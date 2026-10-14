@@ -359,6 +359,9 @@ importers:
 
   packages/app:
     dependencies:
+      '@furifont/webpage':
+        specifier: workspace:*
+        version: link:../webpage
       devframe:
         specifier: catalog:prod
         version: 1.2.4(cac@7.1.0)(srvx@1.0.5)
@@ -457,6 +460,12 @@ importers:
       valibot:
         specifier: catalog:prod
         version: 1.5.0(typescript@6.0.3)
+
+  packages/webpage:
+    dependencies:
+      '@furifont/core':
+        specifier: workspace:*
+        version: link:../core
 
 packages:
 
