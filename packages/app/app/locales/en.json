@@ -45,7 +45,7 @@
     "how": "How it works",
     "selectors": "Choosing a reading",
     "download": "Download",
-    "anyPage": "On any page"
+    "anyPage": "On Websites"
   },
   "playground": {
     "script": "Ruby letters",
@@ -53,7 +53,7 @@
     "size": "Size / {size}px",
     "ruby": "Furigana",
     "okurigana": "Okurigana readings",
-    "okuriganaHint": "Picks a kanji's reading from the okurigana after it, such as 来 in 来ない. Needs JavaScript: browsers shape each script separately, so the font cannot see the kana.",
+    "okuriganaHint": "This requires JavaScript. Font cannot handle okurigana due to browser's limitations.",
     "textHint": "Click the text to edit it.",
     "copy": "Copy the text"
   },
@@ -75,8 +75,8 @@
       "body": "A single kanji gets ruby only when one reading is clearly the most likely. 大人気 can be read だいにんき or おとなげ, so Furifont shows no ruby."
     },
     "okurigana": {
-      "title": "Okurigana need JavaScript",
-      "body": "Browsers shape each script on its own, so a font cannot see the kana after a kanji. That is why 来 is こ in 来ない and き in 来ます only with help: a script wraps the kanji in a span, and the font picks the reading. The bookmarklet, the userscript and the playground do this, and it needs JavaScript."
+      "title": "Opt-in Okurigana",
+      "body": "Browsers shape each font script separately, so the font cannot see the kana after a kanji (which is called okurigana). We provide optional support for it through JavaScript annotation."
     }
   },
   "selectors": {
