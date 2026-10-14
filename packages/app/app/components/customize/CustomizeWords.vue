@@ -37,7 +37,7 @@ const shown = computed<WordMatch[]>(() => query.value.trim()
           type="button"
           lang="ja"
           class="focus-ring border px-2 py-0.5 text-sm transition-colors"
-          :class="pinned.has(r.notation) ? 'border-strong bg-inverse color-inverse' : 'border-base hover:border-strong'"
+          :class="pinned.has(r.notation) ? 'border-inverse bg-inverse color-inverse' : 'border-base hover:border-strong'"
           :aria-pressed="pinned.has(r.notation)"
           :title="r.priority || $t('customize.dictionary.noTag')"
           @click="toggleWord('pin', r.notation)"

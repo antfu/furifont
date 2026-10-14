@@ -3,6 +3,7 @@
     --ff-fg: #0a0a0a;
     --ff-muted: #0a0a0a9e;
     --ff-line: #0a0a0a1f;
+    --ff-line-strong: #0a0a0a66;
     --ff-hover: #0a0a0a0d;
     color-scheme: light;
 }
@@ -11,6 +12,7 @@ html.dark {
     --ff-fg: #fafafa;
     --ff-muted: #fafafa9e;
     --ff-line: #fafafa2b;
+    --ff-line-strong: #fafafa66;
     --ff-hover: #fafafa12;
     color-scheme: dark;
 }

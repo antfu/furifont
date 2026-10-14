@@ -26,12 +26,14 @@ export default defineConfig({
     'color-inverse': 'text-[var(--ff-bg)]',
     'color-muted': 'text-[var(--ff-muted)]',
     'border-base': 'border-[var(--ff-line)]',
-    'border-strong': 'border-[var(--ff-fg)]',
+    'border-strong': 'border-[var(--ff-line-strong)]',
+    // The foreground color, for a border around a filled (`bg-inverse`) element, or a focus that must stand out.
+    'border-inverse': 'border-[var(--ff-fg)]',
     'label': 'font-mono text-[11px] leading-4 uppercase tracking-[0.12em] color-muted',
-    'input': 'w-full rounded-none border border-base bg-transparent px-3 py-2 text-sm color-base outline-none transition-colors placeholder:color-muted focus:border-strong',
+    'input': 'w-full rounded-none border border-base bg-transparent px-3 py-2 text-sm color-base outline-none transition-colors placeholder:color-muted focus:border-inverse',
     'btn': 'inline-flex h-9 items-center justify-center gap-2 border px-4 text-sm font-medium transition-colors duration-150 select-none disabled:cursor-not-allowed disabled:opacity-40',
-    'btn-solid': 'btn border-strong bg-inverse color-inverse hover:opacity-85',
-    'btn-outline': 'btn border-strong color-base hover:bg-inverse hover:color-inverse',
+    'btn-solid': 'btn border-inverse bg-inverse color-inverse hover:opacity-85',
+    'btn-outline': 'btn border-strong color-base hover:border-inverse hover:bg-inverse hover:color-inverse',
     'btn-ghost': 'btn border-transparent color-muted hover:color-base hover:bg-hover',
     'focus-ring': 'focus-visible:outline-2 focus-visible:outline-[var(--ff-fg)] focus-visible:outline-offset-2',
     // A bordered track that fills up to a square knob, like UiToggle. Firefox fills it

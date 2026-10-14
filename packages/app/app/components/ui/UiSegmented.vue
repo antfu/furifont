@@ -18,7 +18,7 @@ const model = defineModel<T>({ required: true })
       class="focus-ring h-8 px-3 text-xs font-medium transition-colors"
       :class="[
         model === option.value ? 'bg-inverse color-inverse' : 'color-muted hover:color-base hover:bg-hover',
-        i > 0 && 'border-l border-strong',
+        i > 0 && (model === option.value ? 'border-l border-inverse' : 'border-l border-strong'),
       ]"
       @click="model = option.value"
     >
