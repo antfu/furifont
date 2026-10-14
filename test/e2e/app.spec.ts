@@ -81,7 +81,7 @@ test('applies the font chosen in the playground to the whole site, and remembers
   const hero = page.getByRole('textbox').first()
   await expect(hero).toHaveCSS('font-family', '"Furifont Serif Romaji", sans-serif')
   await expect(hero).toHaveCSS('font-feature-settings', '"ss01"')
-  const anyPage = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const anyPage = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
   await expect(anyPage.getByRole('radio', { name: 'Serif' })).toBeChecked()
   await expect(anyPage.getByRole('checkbox', { name: 'Okurigana readings' })).not.toBeChecked()
   await expect(anyPage.getByRole('link', { name: 'Furifont Serif Romaji', exact: true })).toBeVisible()
@@ -133,7 +133,10 @@ test('estimates the size, keeps settings across reloads, and resets them but not
   await expect(page.getByRole('button', { name: 'Remove 推[お]し活[かつ]' })).toBeVisible()
 })
 
-/** Opens a page on another site, in `lang`, with tight lines and maybe a CSP; the demo site's fonts are the test font. */
+/** The other site's own font, which its Latin text keeps. */
+const PAGE_FONT = '"Page Font", sans-serif'
+
+/** Opens a page on another site, in `lang`, with tight lines, code, an icon font and maybe a CSP; the demo site's fonts are the test font. */
 async function openElsewhere(page: Page, lang: string, csp?: string): Promise<void> {
   const font = await readFile(TEST_FONT)
   const readings = await readFile(TEST_READINGS)
@@ -147,7 +150,8 @@ async function openElsewhere(page: Page, lang: string, csp?: string): Promise<vo
     contentType: 'text/html; charset=utf-8',
     headers: csp ? { 'content-security-policy': csp } : {},
     body: `<!doctype html><html lang="${lang}"><meta charset="utf-8">
-      <body style="font: 20px/1.2 monospace"><p id="kanji">日本の市場</p><p id="latin">Market</p><p id="verb">来ない、来ます、来る、今日では、出入り</p>`,
+      <body style="font: 20px/1.2 'Page Font', sans-serif"><p id="kanji">日本の市場</p><p id="latin">Market</p><p id="verb">来ない、来ます、来る、今日では、出入り</p>
+      <p id="mixed">日本 Market <span id="icon" style="font-family: 'Google Symbols'">search</span></p><pre id="code">日本</pre>`,
   }))
   await page.goto('https://elsewhere.test/')
 }
@@ -183,33 +187,49 @@ function styleOf(page: Page, id: string): Promise<{ fontFamily: string, lineHeig
   }, id)
 }
 
+/** How many glyphs of #id's own text come from web fonts, which only Furifont is on that page, and from the system's. */
+async function glyphsBySource(page: Page, id: string): Promise<{ web: number, system: number }> {
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('DOM.enable')
+  await cdp.send('CSS.enable')
+  const { root } = await cdp.send('DOM.getDocument')
+  const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: `#${id}` })
+  const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId })
+  const count = (web: boolean): number => fonts.filter(font => font.isCustomFont === web).reduce((sum, font) => sum + font.glyphCount, 0)
+  return { web: count(true), system: count(false) }
+}
+
 function hasLoaded(page: Page, family: string): Promise<boolean> {
   return page.evaluate(family => [...document.fonts].some(face => face.family.includes(family) && face.status === 'loaded'), family)
 }
 
 test('sets another site in Furifont from the bookmarklet, and a second click turns it off', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
-  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
   await section.getByRole('radio', { name: 'Serif' }).click()
   const href = await section.getByRole('link', { name: 'Furifont Serif', exact: true }).getAttribute('href')
   const click = (): Promise<void> => page.evaluate(decodeURIComponent(href!.replace(/^javascript:/, '')))
 
   await openElsewhere(page, 'en')
   await click()
-  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: '"Furifont Serif", serif', lineHeight: 'normal' })
-  expect(await styleOf(page, 'latin')).toEqual({ fontFamily: '"Furifont Serif", serif', lineHeight: '24px' })
+  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: `"Furifont Serif", ${PAGE_FONT}`, lineHeight: 'normal' })
+  expect(await styleOf(page, 'latin')).toEqual({ fontFamily: PAGE_FONT, lineHeight: '24px' })
   await expect.poll(() => hasLoaded(page, 'Furifont Serif')).toBe(true)
+  // Furifont draws 日本, one glyph with its ruby, and the system the 14 Latin letters and spaces around it, the icon's ligature among them.
+  expect(await glyphsBySource(page, 'mixed')).toEqual({ web: 1, system: 14 })
+  expect((await styleOf(page, 'icon')).fontFamily).toBe('"Google Symbols"')
+  expect((await styleOf(page, 'code')).fontFamily).toBe('monospace')
 
   await page.evaluate(() => document.body.insertAdjacentHTML('beforeend', '<p id="later">東京</p>'))
   await expect.poll(async () => (await styleOf(page, 'later')).lineHeight).toBe('normal')
 
   await click()
-  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: 'monospace', lineHeight: '24px' })
+  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: PAGE_FONT, lineHeight: '24px' })
 })
 
 test('asks to install Furifont where a CSP blocks fonts from other sites, and links to the downloads', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
-  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
   const href = await section.getByRole('link', { name: 'Furifont Sans', exact: true }).getAttribute('href')
 
   await openElsewhere(page, 'en', 'font-src \'self\'')
@@ -217,7 +237,7 @@ test('asks to install Furifont where a CSP blocks fonts from other sites, and li
   const toast = page.getByRole('alert')
   await expect(toast).toContainText('On those sites, you must install Furifont on your computer.')
   await expect(toast.getByRole('link', { name: 'Download the fonts' })).toHaveAttribute('href', 'https://furifont.antfu.me/#downloads')
-  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: 'monospace', lineHeight: '24px' })
+  expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: PAGE_FONT, lineHeight: '24px' })
   await toast.getByRole('button', { name: 'Close' }).click()
   await expect(toast).toBeHidden()
 
@@ -232,21 +252,21 @@ test('turns the userscript on by itself on Japanese pages, and its menu switches
 
   await openElsewhere(page, 'en')
   await page.evaluate(userscript)
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('monospace')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(PAGE_FONT)
 
   await openElsewhere(page, 'ja-JP')
   await page.evaluate(userscript)
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Sans", sans-serif')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Sans", ${PAGE_FONT}`)
   await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
 
   await page.getByRole('button', { name: 'Furifont Serif Romaji' }).click()
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Serif Romaji", serif')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
   await page.reload()
   await page.evaluate(userscript)
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Serif Romaji", serif')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
 
   await page.getByRole('button', { name: 'Furifont Serif Romaji' }).click()
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('monospace')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(PAGE_FONT)
 })
 
 test('turns the userscript back off with a toast in the browser\'s language when the font fails to download', async ({ browser }) => {
@@ -259,7 +279,7 @@ test('turns the userscript back off with a toast in the browser\'s language when
   await page.route('https://furifont.antfu.me/fonts/**', route => route.abort())
   await page.evaluate(userscript)
   await expect(page.getByRole('alert')).toContainText('パソコンに Furifont をインストールする必要があります。')
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('monospace')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(PAGE_FONT)
   await context.close()
 })
 
@@ -318,12 +338,12 @@ test('leaves a page as it is when a font predates salt or the files do not load'
   await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
   await page.waitForTimeout(300)
   expect((await readVerbs(page)).salts).toEqual([])
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe('"Furifont Sans", sans-serif')
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Sans", ${PAGE_FONT}`)
 })
 
 test('offers the okurigana readings in the bookmarklet, on unless turned off', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
-  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On any page' }) })
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
   const link = section.getByRole('link', { name: 'Furifont Sans', exact: true })
   const on = await link.getAttribute('href')
   await section.getByRole('checkbox', { name: 'Okurigana readings' }).uncheck({ force: true })

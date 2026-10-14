@@ -1,3 +1,6 @@
+/// <reference lib="dom" />
+// The userscript runs `start` in pages; the server types have no DOM.
+import type { FurifontOptions, Toast, toggleFurifont } from '@furifont/webpage'
 import { version } from '../../../../package.json'
 import en from '../../app/locales/en.json'
 import ja from '../../app/locales/ja.json'
@@ -38,12 +41,11 @@ interface Manager {
   }) => void
 }
 
-/** Shipped as source text, like `toggleFurifont`: it MUST NOT use anything from outside its own body. */
+/** Shipped as source text: it MUST NOT use anything from outside its own body. */
 function start(
   manager: Manager,
   toggle: typeof toggleFurifont,
-  reader: typeof createOkuriganaReader,
-  fonts: { family: Family, url: string, readings: string }[],
+  fonts: { family: string, url: string, readings: string }[],
   pairs: string,
   toasts: Record<Locale, Toast>,
   menus: Record<Locale, Menu>,
@@ -59,31 +61,33 @@ function start(
   const fetchText = (url: string): Promise<string> => fetchBytes(url, 'text')
   // On unless the reader turned it off.
   let okurigana = manager.getValue('okurigana', 'on') !== 'off'
-  const settings = (font: typeof fonts[number]): Okurigana | undefined => okurigana ? { readings: font.readings, pairs, reader, fetchText } : undefined
-  const saved = fonts.find(f => f.family.family === manager.getValue('family', '')) ?? fonts[0]!
+  const options = ({ family, url, readings }: typeof fonts[number]): FurifontOptions => ({ family, url, toast, fetchFont, okurigana: okurigana ? { readings, pairs, fetchText } : undefined })
+  const saved = fonts.find(f => f.family === manager.getValue('family', '')) ?? fonts[0]!
   for (const font of fonts) {
-    manager.registerMenuCommand(font.family.family, () => {
-      manager.setValue('family', font.family.family)
-      toggle(font.family, font.url, toast, fetchFont, settings(font))
+    manager.registerMenuCommand(font.family, () => {
+      manager.setValue('family', font.family)
+      toggle(options(font))
     })
   }
   const registerOkurigana = (): void => manager.registerMenuCommand(okurigana ? menu.okuriganaOn : menu.okuriganaOff, () => {
     okurigana = !okurigana
     manager.setValue('okurigana', okurigana ? 'on' : 'off')
     // The family on the page, if Furifont is on: otherwise the setting waits for it.
-    const font = fonts.find(f => f.family.family === window.furifont?.family)
+    const font = fonts.find(f => f.family === window.furifont?.family)
     if (font)
-      window.furifont?.okurigana(settings(font))
+      window.furifont?.okurigana(options(font).okurigana)
     registerOkurigana()
   }, { id: 'okurigana', autoClose: false })
   registerOkurigana()
   if (/^ja(?:-|$)/i.test(document.documentElement.lang))
-    toggle(saved.family, saved.url, toast, fetchFont, settings(saved))
+    toggle(options(saved))
 }
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'content-type', 'text/javascript; charset=utf-8')
-  const fonts = FAMILIES.map(family => ({ family, url: siteFontUrl(family), readings: siteReadingsUrl(family) }))
+  const fonts = FAMILIES.map(family => ({ family: family.family, url: siteFontUrl(family), readings: siteReadingsUrl(family) }))
+  // @furifont/webpage's IIFE build, which puts the engine on `Furifont`.
+  const engine = String(await useStorage('assets:webpage').getItemRaw('index.iife.js'))
   return `// ==UserScript==
 // @name         Furifont
 // @namespace    ${SITE}
@@ -101,6 +105,9 @@ export default defineEventHandler((event) => {
 // @connect      ${new URL(SITE).host}
 // ==/UserScript==
 
-(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, ${toggleFurifont}, ${createOkuriganaReader}, ${JSON.stringify(fonts)}, ${JSON.stringify(SITE_PAIRS_URL)}, ${JSON.stringify(TOASTS)}, ${JSON.stringify(MENUS)}, ${detectLocale})
+(() => {
+${engine}
+;(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, Furifont.toggleFurifont, ${JSON.stringify(fonts)}, ${JSON.stringify(SITE_PAIRS_URL)}, ${JSON.stringify(TOASTS)}, ${JSON.stringify(MENUS)}, ${detectLocale})
+})()
 `
 })

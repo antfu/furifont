@@ -1,139 +1,57 @@
-<p align="center"><img src="logo.svg" alt="Furifont" width="96" height="96"></p>
+![Furifont](./packages/app/public/og.png)
 
 # Furifont
 
-A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, nothing extra to copy, search or read aloud. The font looks each word up in its own rules and draws the reading above the kanji. [Try it on furifont.antfu.me](https://furifont.antfu.me).
+<img src="logo.svg" style="float: right;" alt="Furifont" width="96" height="96">
+
+**Furigana, set by the font.** A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, no JavaScript, no plugin. It works everywhere that supports custom fonts.
+
+**[Try it on furifont.antfu.me](https://furifont.antfu.me)**
 
 ```html
 <p style="font-family: 'Furifont Sans'; line-height: 1.7">今日は日本語の勉強をします。</p>
 ```
 
-Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/source-han-sans) and [Source Han Serif JP](https://github.com/adobe-fonts/source-han-serif), and a dictionary compiled from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [JMnedict](https://www.edrdg.org/enamdict/enamdict_doc.html), [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) and [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project), with JLPT levels from [yomitan-jlpt-vocab](https://github.com/stephenmk/yomitan-jlpt-vocab). The tools that build it work with other base fonts and other word lists.
+## How it works
 
-## Fonts
+Furifont is compiled from Source Han Sans JP or Source Han Serif JP. A build step reads a dictionary of thousands of words and draws the ruby into new glyphs. For each word, the font holds a ligature: 今日 becomes one glyph with きょう above it. Longer words win (日本語 before 日本), and a kanji with no clear reading stays bare. Details on the [website](https://furifont.antfu.me) and in [docs/design.md](docs/design.md).
 
-Each [release](https://github.com/antfu/furigana-font/releases/latest) has each family in Regular and Bold, as OpenType and WOFF2, and as a variable font of every weight from ExtraLight (250) to Heavy (900), as TrueType and WOFF2:
+## Choosing a reading
 
-| Family | Base | Ruby | Weights |
-| --- | --- | --- | --- |
-| Furifont Sans | Source Han Sans JP | Hiragana | Regular, Bold, variable |
-| Furifont Sans Romaji | Source Han Sans JP | Modified Hepburn, with macrons | Regular, Bold, variable |
-| Furifont Serif | Source Han Serif JP | Hiragana | Regular, Bold, variable |
-| Furifont Serif Romaji | Source Han Serif JP | Modified Hepburn, with macrons | Regular, Bold, variable |
+Put a variation selector, an invisible character, right after the first kanji of a word: VS226 gives reading 1, VS227 reading 2, and VS225 removes the ruby. The [reference page](https://furifont.antfu.me/#/reference) lists every reading.
 
-The variable fonts are named apart, such as `Furifont Sans VF`, so they can be installed beside the static ones. Their ruby follows the weight of the text. Each font also comes with a `.ivs.json` file. It lists the readings that the variation selectors pick, as described below. The variable WOFF2s and their `.ivs.json` are also in [`fonts/`](fonts), as the site serves them. Katakana for on'yomi is a build option.
+## Download
 
-### Using them
+Each [release](https://github.com/antfu/furifont/releases/latest) has Sans and Serif, in Hiragana and Romaji, Regular and Bold, as OpenType and WOFF2, and a variable font of every weight from ExtraLight to Heavy (`Furifont Sans VF`), as TrueType and WOFF2, whose ruby follows the weight of the text. Set `line-height` to 1.6 or more so the ruby is not clipped.
 
-- **Line height.** The ruby sits above the line, inside the font's ascender. A `line-height` below about 1.6 clips it, and `line-height: normal` always fits.
-- **Turning ruby off.** `font-feature-settings: "ss01"` shows the plain kanji, and so does `"rclt" 0`.
-- **Line breaks.** A word broken across two lines is read as two words. In Chromium, `word-break: auto-phrase` keeps phrases together.
+## On websites
 
-### On any page
-
-The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both use Furifont when it is installed on your computer, and otherwise load the variable WOFF2 from the site. They give lines with kanji room for the ruby. They also read kanji by their okurigana (来 in 来ない and 来ます, 一人 in 一人も), through `salt` on a span around the kanji; a switch on the demo site's bookmarklet, and the userscript's menu, turn that off. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed for the bookmarklet, but not for the userscript. When neither works, a toast says so and links to the downloads.
-
-### Which words get ruby
-
-Browsers shape Japanese text one script at a time. The font sees a run of kanji, but never the kana next to it. So Furifont works on runs of kanji:
-
-- **Runs of two or more kanji** are matched against a few thousand common words, longest first. 日本語 matches before 日本, and 今日 reads きょう as one word.
-- **Protected words.** Some longer dictionary words would be misread through a shorter match. 大人気 contains 大人, for example. These longer words get their own reading, or stay bare when they can be read more than one way.
-- **Place names.** Station names, and places with only one reading, fill the runs that no common word claims: 新宿, 渋谷, 池袋.
-- **A kanji alone in its run** gets ruby only when one reading clearly dominates the common words it stands alone in. 桜 and 駅 get ruby. 書 (書く, 書) and 行 (行く, 行う) stay bare, but [selectors](#choosing-another-reading) can give them ruby.
-- **Anything not in the dictionary** stays bare, as do kana and Latin text.
-
-### Choosing another reading
-
-To pick another reading, write a variation selector right after the first kanji of a word:
-
-| Selector | Effect |
-| --- | --- |
-| VS225 (`U+E01E0`) | No ruby on this kanji |
-| VS226 (`U+E01E1`) | Reading 1 |
-| VS227 (`U+E01E2`) | Reading 2, and so on to VS240 |
-
-After the first kanji of a word with several readings, the selector picks the word's reading. For example, `市\u{E01E2}場` shows しじょう instead of いちば. After any other kanji, it picks that kanji's own reading.
-
-Selectors are invisible, survive copy and paste, and need no markup. The [reference page](https://furifont.antfu.me/#/reference) lists every reading and copies a word together with its selector.
-
-Selectors add a character to the text, and that shows up in copy and paste. If you control the markup, `font-feature-settings: "salt" n` on a span around a run of kanji does what the selector n after its first kanji does (VS226 is `"salt" 1`), and leaves the text plain. A verb's kanji, such as 来 in 来ない (こ) and 来ます (き), or a word like 一人 in 一人も (ひとり), is a run of its own, because the okurigana is another script. Wrap it: `<span style="font-feature-settings: 'salt' 5">来</span>ない`. The font's `.ivs.json` says which number is which reading, and its `salt` field says whether the font has the feature. Fonts built before it do not.
+The [website](https://furifont.antfu.me) has a bookmarklet and a [userscript](https://furifont.antfu.me/furifont.user.js) that set any page in Furifont, with optional okurigana readings.
 
 ## Build your own
 
-You need Node 22.18 or later. From the command line:
+Choose another base font, word list, ruby letters or sizes. Needs Node 22.18 or later.
 
 ```sh
+npx furifont dev     # Customize: live preview in your browser
 npx furifont build --base "Source Han Serif JP Bold" --script hepburn --family "My Furigana"
 ```
 
-Or open Customize. It runs in your browser with a live preview, the size of the font it would build, the dictionary, your own words, and a build button. It keeps your changes in the browser until you save them:
-
-```sh
-npx furifont dev
-```
-
-Both commands read `furifont.config.json` from the current folder, and Customize writes it for you:
-
-```json
-{
-  "base": "Source Han Sans JP Regular",
-  "family": "Furifont Sans",
-  "rubyScript": "hiragana",
-  "nfMin": 1,
-  "nfMax": 30,
-  "selectTags": ["spec1"],
-  "skipJlpt": "N5",
-  "isolated": true,
-  "isolatedMinShare": 0.8,
-  "places": true,
-  "words": {
-    "add": ["推[お]し活[かつ]"],
-    "pin": ["市[し]場[じょう]"],
-    "remove": ["大人"]
-  },
-  "metrics": { "rubyScale": 0.4, "rubyGap": 0.05, "compressionFloor": 0.6, "maxRubyWidth": 1.6 },
-  "formats": ["otf", "woff2"]
-}
-```
-
-These are the settings:
-
-- `base` names a font to download once, Source Han Sans JP or Source Han Serif JP with a weight (`Source Han Serif JP Bold`) or as a variable font (`Source Han Serif JP VF`), or is the path to another OpenType font. A TrueType base, variable ones included, builds a `.ttf`.
-- `nfMax` sets how many words get ruby. Words are ranked in newspaper frequency buckets of about 500 words each.
-- `nfMin` leaves the most common words bare, for readers who know them: `3` skips the first 1,000.
-- `selectTags` also selects words that have these JMdict priority tags.
-- `skipJlpt` leaves bare the words on the JLPT lists up to this level: `"N4"` skips the N5 and N4 words. It is off by default.
-- `isolated: false` gives no ruby to a kanji alone. `isolatedMinShare` sets how strongly one reading must dominate before it gets some.
-- `places` adds station and place names. They make up most of the rules. Without them, a WOFF2 font is 3.6 MB instead of 5.2 MB, and the build is about four times faster.
-- `words` uses inline notation: `日[に]本[ほん]` gives one reading per kanji, and `今日[きょう]` gives one reading over several kanji.
-- `formats` lists the fonts a build writes: OpenType (`otf`) to install, WOFF2 (`woff2`) for websites, or both. WOFF2 takes most of a build's time. `--formats otf` on the command line overrides it. The reading reference `.ivs.json` is always written.
-
-## Packages
+Settings live in `furifont.config.json`; their defaults are in [`packages/core/src/defaults.ts`](packages/core/src/defaults.ts).
 
 | Package | |
 | --- | --- |
 | [`furifont`](packages/cli) | The CLI and the server behind Customize |
-| [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary. It reads no fonts. |
-| [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font and compiles the rules, in TypeScript with HarfBuzz |
-| [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary and the script that updates it |
-| [`packages/app`](packages/app) | The demo site and Customize (Nuxt) |
+| [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary |
+| [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font |
+| [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary |
+| [`@furifont/webpage`](packages/webpage) | Sets the Japanese text of any web page in Furifont: the bookmarklet's and the userscript's engine |
+| [`packages/app`](packages/app) | The website and Customize (Nuxt) |
 
-[docs/design.md](docs/design.md) explains how it works.
-
-## Development
-
-```sh
-pnpm run setup      # dependencies, test browsers, first build
-pnpm test           # unit and font tests
-pnpm test:e2e       # rendering in Chromium, Firefox and WebKit, and Customize
-pnpm dev            # the app, with live Customize
-```
-
-[CONTRIBUTING.md](CONTRIBUTING.md) explains the setup and the rules a change must keep.
+See [CONTRIBUTING.md](CONTRIBUTING.md) to work on it.
 
 ## License
 
 - **Code:** [MIT](LICENSE.md).
-- **Fonts:** [SIL Open Font License 1.1](OFL.txt), as derivatives of Source Han Sans and Source Han Serif by Adobe. "Source" is a Reserved Font Name and does not appear in Furifont's names.
-- **Dictionary data and the reading rules in the fonts:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict, JMnedict and KANJIDIC2 (EDRDG), JmdictFurigana, and yomitan-jlpt-vocab after Jonathan Waller's JLPT lists.
+- **Fonts:** [SIL OFL 1.1](OFL.txt), derived from Source Han Sans and Serif by Adobe.
+- **Dictionary data and reading rules:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict, JMnedict, KANJIDIC2 (EDRDG), JmdictFurigana and yomitan-jlpt-vocab.

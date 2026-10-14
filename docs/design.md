@@ -43,6 +43,7 @@ The repository is a pnpm monorepo. Each package has one job:
 | `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT word lists into committed JSON. It also holds a short list of curated default readings. |
 | `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
 | `@furifont/compiler` | TS | Draws the plan into the base font, compiles the rules and checks the output with HarfBuzz (harfbuzzjs, WebAssembly). Bytes in, bytes out. |
+| `@furifont/webpage` | TS | Sets any web page's Japanese text in Furifont, for the bookmarklet and the userscript: font loading, the [font stacks](#web-pages) and the okurigana spans. It also builds as one minified IIFE that both inline. |
 | `furifont` | TS | The CLI (`furifont build`, `furifont dev`) and the studio's Devframe definition and RPC functions. It is the Node host: it reads and writes the files and caches the base fonts. |
 | `packages/app` | Nuxt | The demo site and the studio, as one static SPA. The CLI ships it as its Devframe client. |
 
@@ -79,7 +80,7 @@ compiler to subset the base font first.
 
 ### Browser-safe packages
 
-`core`, `compiler` and `dictionary` MUST run in a browser as well as in Node,
+`core`, `compiler`, `dictionary` and `webpage` MUST run in a browser as well as in Node,
 so that a web studio can plan and compile without a server. They use no Node
 APIs, and ESLint rejects `node:` imports in their sources.
 
@@ -223,8 +224,8 @@ readings, as 大人気 does through 大人.
   おとなげ in 大人気ない.
 
 Protected runs become rules themselves, so the check repeats until nothing
-changes. With the default preset, about 1,750 runs are annotated and 2,200
-left bare. Without place names, about 680 and 1,260.
+changes. With the default preset, about 2,400 runs are annotated and 2,300
+left bare. Without place names, about 1,800 and 2,000.
 
 ### Glyphs
 
@@ -289,6 +290,25 @@ lookup comes before `furigana` in the lookup list. It is a full-build feature:
 a preview leaves it out, and `ivs.salt` in `.ivs.json` says whether the font has
 it. The compiler reads `sub X from [...]` for it.
 
+## Web pages
+
+The bookmarklet and the userscript set a page that is not Furifont's in
+Furifont. Each element that holds Japanese, and each text field, gets
+`data-furifont="n"`, and a rule in the page's adopted stylesheet puts Furifont
+in front of that element's own font stack, the nth the page uses:
+`font-family: "Furifont Sans", "Google Sans", Roboto, sans-serif`. The faces
+Furifont adds have a `unicode-range` of kanji, kana, CJK punctuation,
+full-width forms and the variation selectors. So the page's fonts keep
+everything else: Latin text, and the icon fonts that draw ligatures (`search`)
+or private-use code points, as on Google Maps. A stack that is monospaced, by
+its generic family or by its first family's name, sets code and is left alone.
+
+An installed Furifont needs no download: its faces come from `local()`, each
+weight by its full name. Otherwise the site's variable font downloads, which
+draws every weight, bold included. Of the elements Furifont sets, those with a line height under
+1.6 em also get `data-furifont-tight`, which sets `line-height: normal` for the
+ruby.
+
 ## Okurigana pairs
 
 A font cannot read verbs, because their okurigana is in another run. 来 is
@@ -304,9 +324,9 @@ stylesheet turns into `font-feature-settings: "salt" 5`. The text nodes keep
 their characters. A run is read only whole, from its first kanji to the
 hiragana after it: a pair of 一人 does not apply inside 毎日一人も.
 
-The reading logic is one function, `createOkuriganaReader`, which the
-bookmarklet and the userscript ship as source text and the demo's playground
-imports. The playground draws the same spans in its editable text, after a
+The reading logic is one function, `createOkuriganaReader` in
+`@furifont/webpage`, which the bookmarklet and the userscript inline with the
+rest of that package and the demo's playground imports. The playground draws the same spans in its editable text, after a
 pause in typing and not during IME composition, and keeps the caret and the
 undo history when nothing changes. It needs JavaScript, and that is a browser
 limit: a browser shapes each script on its own, so no font can see the kana
@@ -482,8 +502,7 @@ own mount.
   下りた お, 行って null).
 - **compiler**: compiles against four committed subsets of Source Han Sans
   JP: CID-keyed CFF, name-keyed CFF and TrueType without GSUB, and the
-  variable TrueType font. It shapes
-  with harfbuzzjs and checks words, protection, lone kanji, selectors, `ss01`,
+  variable TrueType font. It shapes with harfbuzzjs and checks words, protection, lone kanji, selectors, `ss01`,
   metrics, the WOFF2 and a subset preview; on the variable font, ruby at every
   weight, romaji kept centered as the letters widen, and instance names.
 - **cli**: config loading, and a real `buildFont` at the size estimated.

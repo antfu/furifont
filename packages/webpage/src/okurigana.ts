@@ -26,8 +26,7 @@ export interface OkuriganaReader {
 
 /**
  * Reads runs of kanji in a text by the okurigana after them: 来 is こ in 来ない
- * and き in 来ます, 一人 is ひとり in 一人も. The bookmarklet and the userscript
- * ship this as source text, so it MUST NOT use anything from outside its own body.
+ * and き in 来ます, 一人 is ひとり in 一人も.
  */
 export function createOkuriganaReader(tables: OkuriganaTables): OkuriganaReader {
   // The okurigana of each run met so far, by okurigana: inverting the whole file would cost more than pages need.
@@ -74,4 +73,58 @@ export function createOkuriganaReader(tables: OkuriganaTables): OkuriganaReader 
   }
 
   return { find, saltOf }
+}
+
+/**
+ * Where a page finds what it needs to read 来 as こ in 来ない and き in 来ます,
+ * or 一人 as ひとり in 一人も. The text cannot say it, since the font only sees
+ * kanji, so the page wraps the run of kanji in a span and
+ * `font-feature-settings: "salt" n` picks the nth reading, as the selector
+ * after the first kanji does. The text itself stays plain.
+ */
+export interface Okurigana {
+  /** The font's `.ivs.json`: the readings of a kanji, and of a word with several, in the order `salt` counts them. */
+  readings: string
+  /** The pairs, packed by run of kanji: `{ 来: { こ: ['ない'], き: ['ます'], '': ['に'] } }`, where `''` holds the okurigana that read two ways. */
+  pairs: string
+  /** Fetches the two files past the page's CSP, as a userscript can. */
+  fetchText?: (url: string) => Promise<string>
+}
+
+/** The reading lists of a font's `.ivs.json` that the reader needs, and whether the font has `salt` to pick them. */
+interface ReadingLists {
+  kanji: OkuriganaTables['readings']
+  words: OkuriganaTables['words']
+  lone: OkuriganaTables['lone']
+  salt?: boolean
+}
+
+/** Files by URL, so a family switch does not fetch the pairs again. */
+const files = new Map<string, Promise<unknown>>()
+
+function fetchJson(url: string, fetchText?: (url: string) => Promise<string>): Promise<unknown> {
+  let file = files.get(url)
+  if (!file) {
+    file = (fetchText ? fetchText(url) : fetch(url).then(r => r.ok ? r.text() : Promise.reject(new Error(url)))).then(JSON.parse)
+    // So the next try loads it again.
+    file.catch(() => files.delete(url))
+    files.set(url, file)
+  }
+  return file
+}
+
+/**
+ * The reader for a font, once its reading lists and the pairs have loaded. It is
+ * a bonus, never an error: undefined when a file fails to load (a CSP can block
+ * it) or the font predates `salt`.
+ */
+export async function loadOkuriganaReader({ readings, pairs, fetchText }: Okurigana): Promise<OkuriganaReader | undefined> {
+  try {
+    // The site writes both files; checking their shape would ship a schema library in every bookmarklet.
+    const [lists, packed] = await Promise.all([fetchJson(readings, fetchText), fetchJson(pairs, fetchText)]) as [ReadingLists, OkuriganaTables['pairs']]
+    return lists.salt === true ? createOkuriganaReader({ pairs: packed, readings: lists.kanji, words: lists.words, lone: lists.lone }) : undefined
+  }
+  catch {
+    return undefined
+  }
 }
