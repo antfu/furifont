@@ -22,7 +22,7 @@ const { family, ruby } = useFontSettings()
         {{ $t('selectors.lookUp') }}
       </UiButton>
     </div>
-    <ul class="grid grid-cols-2 lg:grid-cols-5">
+    <ul class="grid grid-cols-2 lg:grid-cols-5 -mb-px -mr-px">
       <li v-for="example in examples" :key="example.code" class="flex flex-col gap-2 border-b border-r border-base p-4 last:border-r-0">
         <FuriText :text="example.text" :family="family.family" :ruby :size="36" />
         <span class="label">{{ $t(example.label) }}</span>
