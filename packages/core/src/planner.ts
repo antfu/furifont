@@ -531,6 +531,16 @@ function smokeChecks(patterns: Patterns, lone: { glyph: PlanGlyph }[], glyphs: G
   return checks
 }
 
+/** Everything the planner decides for one set of options, before a preview narrows it. */
+type Analysis = Pick<ReturnType<typeof selectWords>, 'patterns'>
+  & ReturnType<typeof chooseLoneKanji>
+  & ReturnType<typeof buildRules>
+  & {
+    protectedRuns: ReturnType<typeof findMisreadRuns>
+    glyphs: ReturnType<typeof createGlyphRegistry>
+    lone: { base: string, glyph: ReturnType<ReturnType<typeof createGlyphRegistry>['lone']> }[]
+  }
+
 /**
  * Indexes the dictionary once into Han runs, then plans fonts from it. Every
  * decision about readings happens here: which words get ruby, which reading
@@ -542,8 +552,8 @@ export function createFontPlanner(dictionary: Dictionary) {
     indexEntry(index, entry)
   const sources = Object.entries(dictionary.sources).map(([name, version]) => `${name} ${version}`).join(', ')
 
-  /** Plans a font; with `previewText`, keeps only what that text can trigger. */
-  return function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
+  /** Every decision for one set of options, over the whole dictionary: slow, and the same whatever the preview text. */
+  function analyze(options: PlanOptions, coverage: ReadonlySet<number>): Analysis {
     const ctx = createContext(dictionary, options, coverage)
     const { patterns, lonePins, skipped } = selectWords(index, dictionary, ctx)
     const { isolated, kanjiReadings } = chooseLoneKanji(index, patterns, lonePins, ctx)
@@ -551,6 +561,21 @@ export function createFontPlanner(dictionary: Dictionary) {
     const glyphs = createGlyphRegistry(ctx.render)
     const { rules, ligatures, singles, variants, variantReadings, ivsWords } = buildRules(patterns, kanjiReadings, protectedRuns, glyphs)
     const lone = [...isolated].map(([kanji, ruby]) => ({ base: glyphName(kanji.codePointAt(0)!), glyph: glyphs.lone(kanji, ruby) }))
+    return { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, ivsWords, lone }
+  }
+
+  // A live preview plans on every keystroke and the report on every change, with the same options: keep the last analysis.
+  let last: { options: string, coverage: ReadonlySet<number>, analysis: Analysis } | undefined
+  function analysisFor(options: PlanOptions, coverage: ReadonlySet<number>): Analysis {
+    const key = JSON.stringify(options)
+    if (last?.options !== key || last.coverage !== coverage)
+      last = { options: key, coverage, analysis: analyze(options, coverage) }
+    return last.analysis
+  }
+
+  /** Plans a font; with `previewText`, keeps only what that text can trigger. */
+  return function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
+    const { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, ivsWords, lone } = analysisFor(options, coverage)
 
     const sample = previewText === undefined ? undefined : new Set(codepoints(previewText))
     const inSample = (cps: readonly number[]): boolean => !sample || cps.every(cp => sample.has(cp))

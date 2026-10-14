@@ -7,11 +7,11 @@ const size = ref(32)
   <div>
     <div class="relative min-h-56 px-6 py-8">
       <UiButton variant="ghost" icon="i-ph-shuffle" class="absolute right-3 top-3 w-9 px-0" :aria-label="$t('shuffle')" :title="$t('shuffle')" @click="text = otherSample(text).text" />
-      <p v-if="preview.error" class="mb-4 font-mono text-xs">
-        {{ preview.error }}
-      </p>
       <!-- Until the first preview font loads, the text shows in the prebuilt one. -->
       <FuriText v-model:text="text" :family="preview.family" :size :class="preview.loading && 'opacity-60'" />
+      <p v-if="preview.error" class="mt-4 font-mono text-xs">
+        {{ preview.error }}
+      </p>
     </div>
     <div class="flex flex-wrap items-center gap-4 border-t border-base px-6 py-3">
       <span class="text-xs color-muted">{{ preview.loading ? $t('customize.preview.compiling') : $t('playground.textHint') }}</span>
