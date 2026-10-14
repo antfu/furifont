@@ -19,7 +19,7 @@ const { copied, copy } = useCopy()
         <UiSlider v-model="size" :min="16" :max="64" />
       </UiField>
       <UiToggle v-model="ruby">
-        {{ $t('playground.ruby') }} <span class="font-mono text-xs color-muted">{{ $t('playground.rubyNote') }}</span>
+        {{ $t('playground.ruby') }}
       </UiToggle>
       <p class="text-xs color-muted">
         {{ $t('playground.textHint') }}
@@ -33,7 +33,6 @@ const { copied, copy } = useCopy()
         <UiButton variant="ghost" :icon="copied ? 'i-ph-check' : 'i-ph-copy'" @click="copy(text)">
           {{ copied ? $t('copied') : $t('playground.copy') }}
         </UiButton>
-        <span class="text-xs color-muted">{{ $t('playground.pasteNote') }}</span>
       </div>
     </div>
   </div>

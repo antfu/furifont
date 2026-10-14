@@ -52,7 +52,7 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    public: { devStudioBase: DEV_STUDIO_BASE },
+    public: { devCustomizeBase: DEV_STUDIO_BASE },
   },
   vite: {
     // vue-i18n's bundler build: Composition API only, no legacy mode.

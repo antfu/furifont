@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { text, preview } = useStudio()
+const { text, preview } = useCustomize()
 const size = ref(32)
 </script>
 
@@ -14,10 +14,10 @@ const size = ref(32)
       <FuriText v-model:text="text" :family="preview.family" :size :class="preview.loading && 'opacity-60'" />
     </div>
     <div class="flex flex-wrap items-center gap-4 border-t border-base px-6 py-3">
-      <span class="text-xs color-muted">{{ preview.loading ? $t('studio.preview.compiling') : $t('playground.textHint') }}</span>
-      <UiSlider v-model="size" :min="16" :max="64" :aria-label="$t('studio.preview.size')" class="ml-auto w-28" />
+      <span class="text-xs color-muted">{{ preview.loading ? $t('customize.preview.compiling') : $t('playground.textHint') }}</span>
+      <UiSlider v-model="size" :min="16" :max="64" :aria-label="$t('customize.preview.size')" class="ml-auto w-28" />
       <span class="font-mono text-xs color-muted tabular-nums">
-        {{ preview.ms === undefined ? '' : $t('studio.preview.stats', { glyphs: preview.glyphs ?? 0, ms: preview.ms }) }}
+        {{ preview.ms === undefined ? '' : $t('customize.preview.stats', { glyphs: preview.glyphs ?? 0, ms: preview.ms }) }}
       </span>
     </div>
   </div>

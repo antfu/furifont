@@ -1,12 +1,11 @@
 {
   "meta": {
     "title": "Furifont: furigana built into the font",
-    "description": "A Japanese font that shows furigana by itself. The text does not change."
+    "description": "A Japanese font that shows furigana by itself."
   },
   "nav": {
-    "demo": "Demo",
-    "reference": "Reference",
-    "studio": "Studio",
+    "demo": "Intro",
+    "customize": "Customize",
     "github": "GitHub repository",
     "light": "Switch to light",
     "dark": "Switch to dark",
@@ -15,7 +14,7 @@
     "rubyOn": "Show the ruby"
   },
   "footer": {
-    "fonts": "The fonts use the {license}. They come from Source Han Sans and Source Han Serif by Adobe.",
+    "fonts": "The fonts use the {license}. They come from Source Han Sans and Source Han Serif.",
     "data": "The readings come from {jmdict}, {jmnedict}, {kanjidic} (EDRDG) and {furigana}. They use the CC BY-SA 4.0 license.",
     "code": "The tools use the MIT license.",
     "source": "Source on GitHub",
@@ -37,7 +36,7 @@
   "hero": {
     "title1": "Furigana,",
     "title2": "set by the font.",
-    "body": "Furifont is a Japanese font that shows furigana by itself. Furigana are the small letters above a kanji (a Chinese-style character) that tell you how to say it. The text stays plain. When you copy it, search it, or have it read aloud, you get the exact text that you wrote.",
+    "body": "Furifont is a Japanese font that shows furigana on the font itself. With the ligatures to adopt to pronunciation of words. Works everywhere supporting custom fonts.",
     "download": "Download the fonts",
     "build": "Build your own"
   },
@@ -52,16 +51,18 @@
     "script": "Ruby letters",
     "face": "Font style",
     "size": "Size / {size}px",
-    "ruby": "Ruby",
-    "rubyNote": "(the small letters above the kanji)",
-    "textHint": "Click the text to edit it. The font alone makes the ruby.",
-    "copy": "Copy the text",
-    "pasteNote": "Paste it anywhere. Only the text that you wrote comes with it."
+    "ruby": "Furigana",
+    "textHint": "Click the text to edit it.",
+    "copy": "Copy the text"
   },
   "how": {
-    "runs": {
-      "title": "One group of kanji at a time",
-      "body": "A browser gives Japanese text to a font in separate parts. One part holds only kanji. The font cannot see the kana (the simple Japanese letters) next to it. So Furifont reads each group of kanji as one whole."
+    "build": {
+      "title": "Customized build",
+      "body": "Furifont is compiled from a base font, Source Han Sans or Serif. A build step reads a dictionary of thousands of words and draws the ruby into new glyphs. The result is a normal font file. It needs no JavaScript and no plugin."
+    },
+    "ligatures": {
+      "title": "Ligatures do the work",
+      "body": "For each word, the font holds a ligature. For example, 今日 becomes one glyph with きょう above it. The swap happens when the text is drawn, so the text itself does not change."
     },
     "longest": {
       "title": "Longest word first",
@@ -70,10 +71,6 @@
     "bare": {
       "title": "No ruby when unsure",
       "body": "A single kanji gets ruby only when one reading is clearly the most likely. 大人気 can be read だいにんき or おとなげ, so Furifont shows no ruby."
-    },
-    "pick": {
-      "title": "Readings you can choose",
-      "body": "A word can have more than one reading. Put a variation selector after the first kanji of the word to choose another reading, or to remove the ruby. A variation selector is an invisible character. It stays when you copy and paste."
     }
   },
   "selectors": {
@@ -86,9 +83,7 @@
   "downloads": {
     "family": "Family",
     "ruby": "Ruby",
-    "buildOwn": "Or build your own font. You can choose another base font, a list with fewer or more words, other ruby letters, or other sizes.",
-    "cliBuild": "a font from the command line",
-    "cliDev": "the studio: change the settings, preview, build the font"
+    "buildOwn": "Or build your own font. You can choose another base font, a list with fewer or more words, other ruby letters, or other sizes."
   },
   "anyPage": {
     "body": "You can use Furifont on any website. Lines with kanji get extra space for the ruby. If Furifont is installed on your computer, nothing downloads. If it is not, the font loads from this site. It is about 5 MB the first time.",
@@ -110,25 +105,25 @@
     "search": "Search a word or kanji: 市場, 今日, 生",
     "searchLabel": "Search readings",
     "hint": "Click a reading to copy the word with its selector.",
-    "unavailable": "The reference comes with the ready-made fonts, and it could not load here ({error}). Build the fonts with {command}, or open the studio.",
+    "unavailable": "The reference comes with the ready-made fonts, and it could not load here ({error}). Build the fonts with {command}, or open Customize.",
     "loading": "Loading",
     "words": "Words with several readings / {count}",
     "kanji": "Kanji / {count}",
     "copyWith": "Copy {text} with {selector}",
     "default": "default"
   },
-  "studio": {
+  "customize": {
     "connecting": "Connecting to furifont dev",
-    "title": "Studio",
+    "title": "Customize",
     "offline": {
-      "eyebrow": "Studio / offline",
+      "eyebrow": "Customize / offline",
       "title": "Build your own Furifont",
-      "body": "The studio is a tool that runs on your computer. It reads your base fonts and saves the fonts that it builds. Start it in any folder. Then this page opens with a live preview, the dictionary, and a Build button. The new fonts go in {folder}.",
+      "body": "Customize is a tool that runs on your computer. It reads your base fonts and saves the fonts that it builds. Start it in any folder. Then this page opens with a live preview, the dictionary, and a Build button. The new fonts go in {folder}.",
       "needs": "You need Node 22.18 or later (a free program that runs JavaScript tools).",
-      "run": "Start the studio in any folder"
+      "run": "Start Customize in any folder"
     },
     "auth": {
-      "eyebrow": "Studio / locked",
+      "eyebrow": "Customize / locked",
       "title": "Enter the code from your terminal",
       "body": "{command} showed a six-digit code in your terminal (the window where you started it).",
       "code": "Code",
@@ -187,7 +182,7 @@
       "squeeze": "Narrowest squeeze (× normal)",
       "maxWidth": "Widest ruby (em)",
       "reset": "Reset to defaults",
-      "resetHint": "Go back to the settings that the studio loaded. Your words stay."
+      "resetHint": "Go back to the settings that Customize loaded. Your words stay."
     },
     "preview": {
       "compiling": "Making a preview",

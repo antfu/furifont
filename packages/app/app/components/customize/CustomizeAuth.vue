@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { unlock } = useStudio()
+const { unlock } = useCustomize()
 const code = ref('')
 const failed = ref(false)
 const busy = ref(false)
@@ -13,21 +13,21 @@ async function submit(): Promise<void> {
 
 <template>
   <form class="mx-auto flex max-w-sm flex-col gap-4 px-6 py-24" @submit.prevent="submit">
-    <span class="label">{{ $t('studio.auth.eyebrow') }}</span>
+    <span class="label">{{ $t('customize.auth.eyebrow') }}</span>
     <h1 class="text-2xl font-semibold tracking-tight">
-      {{ $t('studio.auth.title') }}
+      {{ $t('customize.auth.title') }}
     </h1>
-    <i18n-t keypath="studio.auth.body" tag="p" class="text-sm color-muted">
+    <i18n-t keypath="customize.auth.body" tag="p" class="text-sm color-muted">
       <template #command>
         <code class="font-mono">furifont dev</code>
       </template>
     </i18n-t>
-    <input v-model="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" :aria-label="$t('studio.auth.code')" class="input text-center font-mono text-xl tracking-[0.5em]">
+    <input v-model="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" :aria-label="$t('customize.auth.code')" class="input text-center font-mono text-xl tracking-[0.5em]">
     <p v-if="failed" class="text-sm">
-      {{ $t('studio.auth.failed') }}
+      {{ $t('customize.auth.failed') }}
     </p>
     <button type="submit" class="btn-solid focus-ring" :disabled="busy || code.trim().length !== 6">
-      {{ $t('studio.auth.unlock') }}
+      {{ $t('customize.auth.unlock') }}
     </button>
   </form>
 </template>
