@@ -1,6 +1,11 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 const text = SAMPLES[0]!.text
 const size = 64
+
+const i18n = useI18n()
+i18n.locale.value = 'en'
 </script>
 
 <template>
@@ -21,6 +26,9 @@ const size = 64
           <h1 class="display text-[64px] font-semibold">
             {{ $t('hero.title1') }}<br>{{ $t('hero.title2') }}
           </h1>
+          <p class="max-w-[46ch] leading-relaxed color-muted">
+            {{ $t('hero.body') }}
+          </p>
         </div>
       </div>
       <div class="relative isolate flex flex-col justify-center overflow-hidden px-10">
