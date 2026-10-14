@@ -5,13 +5,13 @@
   "description": "Plan furigana glyphs and OpenType rules from a Japanese dictionary",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/antfu/furigana-font#readme",
+  "homepage": "https://github.com/antfu/furifont#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antfu/furigana-font.git",
+    "url": "git+https://github.com/antfu/furifont.git",
     "directory": "packages/core"
   },
-  "bugs": "https://github.com/antfu/furigana-font/issues",
+  "bugs": "https://github.com/antfu/furifont/issues",
   "sideEffects": false,
   "exports": {
     ".": "./dist/index.mjs",

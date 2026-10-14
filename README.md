@@ -12,7 +12,7 @@ Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/sourc
 
 ## Fonts
 
-Each [release](https://github.com/antfu/furigana-font/releases/latest) has eight fonts, as OpenType and WOFF2:
+Each [release](https://github.com/antfu/furifont/releases/latest) has eight fonts, as OpenType and WOFF2:
 
 | Family | Base | Ruby | Weights |
 | --- | --- | --- | --- |
