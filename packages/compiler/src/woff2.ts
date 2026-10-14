@@ -20,7 +20,7 @@ function base128(w: Writer, value: number): void {
  * Wraps an OpenType font as WOFF2, with no table transforms. `brotli` compresses
  * the tables; `@furifont/compiler/node` has one for Node.
  */
-export async function toWoff2(sfnt: Uint8Array, brotli: (data: Uint8Array) => Promise<Uint8Array>): Promise<Uint8Array> {
+export async function toWoff2(sfnt: Uint8Array, brotli: (data: Uint8Array<ArrayBuffer>) => Promise<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
   const { flavor, tables } = readSfnt(sfnt)
   const tags = [...tables.keys()].sort()
   const directory = new Writer()

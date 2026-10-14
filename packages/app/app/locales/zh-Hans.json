@@ -206,7 +206,11 @@
       "glyphs": "振假名字形",
       "rules": "规则",
       "planning": "规划中",
-      "estimate": "≈ {woff2} WOFF2 · {otf} OTF",
+      "estimate": {
+        "woff2": "≈ {size} WOFF2",
+        "otf": "{size} OTF"
+      },
+      "formats": "格式",
       "estimating": "正在估算大小",
       "run": "构建字体",
       "save": "保存设置"

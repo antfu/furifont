@@ -59,16 +59,18 @@ async function compileOpenType({ plan, base }: { plan: Plan, base: string }, onP
   return compileFont({ plan, base: await readFile(base), subsetWasm, onProgress })
 }
 
-/** Builds `<Family>-<Style>.otf`, `.woff2` and the selector reference `.ivs.json` into `outDir`. */
+/** Builds `<Family>-<Style>.otf` and `.woff2`, as `config.formats` lists, and the selector reference `.ivs.json` into `outDir`. */
 export async function buildFont(config: FurifontConfig, options: { cwd: string, outDir: string, onProgress?: (p: CompileProgress) => void }): Promise<BuildResult> {
   const planned = await planWithBase(config, options.cwd)
   const { font, style } = await compileOpenType(planned, options.onProgress)
-  options.onProgress?.({ step: 'woff2', done: null, total: null })
-  const outputs: [string, Uint8Array][] = [
-    ['otf', font],
-    ['woff2', await toWoff2(font, brotli)],
-    ['ivs.json', new TextEncoder().encode(`${JSON.stringify(planned.report.ivs)}\n`)],
-  ]
+  const outputs: [string, Uint8Array][] = []
+  if (config.formats.includes('otf'))
+    outputs.push(['otf', font])
+  if (config.formats.includes('woff2')) {
+    options.onProgress?.({ step: 'woff2', done: null, total: null })
+    outputs.push(['woff2', await toWoff2(font, brotli)])
+  }
+  outputs.push(['ivs.json', new TextEncoder().encode(`${JSON.stringify(planned.report.ivs)}\n`)])
   const stem = fileStem(config, style)
   await mkdir(options.outDir, { recursive: true })
   const files: BuiltFile[] = []

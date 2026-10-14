@@ -80,8 +80,17 @@ function applyChanges(base: JsonObject, changed: JsonObject): JsonObject {
   return out
 }
 
+type FontFormat = NonNullable<FurifontConfigInput['formats']>[number]
+
+/** The fonts a build can write, in the order it writes them. */
+export const FONT_FORMATS = ['otf', 'woff2'] as const satisfies readonly FontFormat[]
+
 // The server's config schema again: the app cannot bundle the CLI's, which reads files.
-const SavedSchema = withNfWindow(v.object({ ...PlanOptionsSchema.entries, base: v.pipe(v.string(), v.nonEmpty()) }))
+const SavedSchema = withNfWindow(v.object({
+  ...PlanOptionsSchema.entries,
+  base: v.pipe(v.string(), v.nonEmpty()),
+  formats: v.pipe(v.array(v.picklist(FONT_FORMATS)), v.minLength(1)),
+}))
 
 /** The loaded config with the changes saved for it; all of them dropped when any no longer applies. */
 function restore(key: string, base: FurifontConfigInput): FurifontConfigInput {
@@ -169,7 +178,8 @@ function createCustomize() {
     if (id === refreshes)
       refreshEstimate()
   }, DEBOUNCE)
-  watch(config, refresh, { deep: true })
+  // The formats change only which files a build writes: not the plan, the preview or the estimate.
+  watch(() => JSON.stringify({ ...config.value, formats: undefined }), refresh)
   watch(text, debounce(refreshPreview, DEBOUNCE))
 
   function persist(): void {

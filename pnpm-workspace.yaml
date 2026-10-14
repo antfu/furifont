@@ -136,6 +136,7 @@ catalogs:
   inlined:
     '@antfu/utils': ^9.3.0
   prod:
+    brotli-wasm: ^3.0.1
     cac: ^7.1.0
     devframe: ^1.2.4
     harfbuzzjs: ^1.6.3

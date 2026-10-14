@@ -6,9 +6,9 @@ import { cac } from 'cac'
 import * as v from 'valibot'
 import pkg from '../package.json' with { type: 'json' }
 import { buildFont } from './build'
-import { CONFIG_FILE, FurifontConfigSchema, loadConfig } from './config'
+import { CONFIG_FILE, FONT_FORMATS, FurifontConfigSchema, loadConfig } from './config'
 
-const STUDIO_PAGE = 'studio'
+const STUDIO_PAGE = 'customize'
 
 const cli = cac('furifont')
 
@@ -19,14 +19,16 @@ cli
   .option('--family <name>', 'Font family name')
   .option('--script <script>', `Ruby script: ${RUBY_SCRIPTS.join(', ')}`)
   .option('--nf <bucket>', 'Annotate words up to this newspaper frequency bucket (1-48)')
+  .option('--formats <list>', `Fonts to write, comma-separated: ${FONT_FORMATS.join(', ')}`)
   .option('--out <dir>', 'Output directory', { default: 'fonts' })
-  .action(async (flags: { config: string, base?: string, family?: string, script?: string, nf?: number, out: string }) => {
+  .action(async (flags: { config: string, base?: string, family?: string, script?: string, nf?: number, formats?: string, out: string }) => {
     const cwd = process.cwd()
     const overrides: FurifontConfigInput = {
       ...(flags.base && { base: flags.base }),
       ...(flags.family && { family: flags.family }),
       ...(flags.script && { rubyScript: v.parse(v.picklist(RUBY_SCRIPTS), flags.script) }),
       ...(flags.nf && { nfMax: Number(flags.nf) }),
+      ...(flags.formats && { formats: v.parse(v.array(v.picklist(FONT_FORMATS)), flags.formats.split(',')) }),
     }
     const config = v.parse(FurifontConfigSchema, { ...await loadConfig(cwd, flags.config), ...overrides })
     const { files, report } = await buildFont(config, {
