@@ -1,9 +1,9 @@
 /**
  * Builds the prebuilt fonts: hiragana and romaji ruby on Source Han Sans JP and
- * Source Han Serif JP.
+ * Source Han Serif JP, each as Regular, Bold and a variable font of every weight.
  *
- *   node scripts/build-fonts.ts [outDir]   every weight, OpenType and WOFF2, for the release (default: dist/fonts)
- *   node scripts/build-fonts.ts --site     the Regular WOFF2s the site serves, into fonts/, which git keeps
+ *   node scripts/build-fonts.ts [outDir]   all of them, OpenType and WOFF2, for the release (default: dist/fonts)
+ *   node scripts/build-fonts.ts --site     the variable WOFF2s the site serves, into fonts/, which git keeps
  */
 import { copyFile, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -28,10 +28,12 @@ await mkdir(outDir, { recursive: true })
 await copyFile(new URL('../OFL.txt', import.meta.url), join(outDir, 'OFL.txt'))
 await copyFile(new URL('../packages/dictionary/LICENSE.md', import.meta.url), join(outDir, 'DATA-LICENSE.md'))
 
-for (const weight of site ? ['Regular'] : ['Regular', 'Bold']) {
-  await Promise.all(families.map(async ({ base, ...family }) => {
+for (const style of site ? ['VF'] : ['Regular', 'Bold', 'VF']) {
+  await Promise.all(families.map(async ({ base, family, ...rest }) => {
+    // The variable family is named apart, as Source Han's is, so it can be installed beside the static ones.
+    const names = style === 'VF' ? { family: `${family} VF`, base: `${base} VF` } : { family, base: `${base} ${style}` }
     // The site loads WOFF2; git keeps no OpenType, which the release carries.
-    const config = v.parse(FurifontConfigSchema, { ...family, base: `${base} ${weight}`, ...(site && { formats: ['woff2'] }) })
+    const config = v.parse(FurifontConfigSchema, { ...rest, ...names, ...(site && { formats: ['woff2'] }) })
     const { files } = await buildFont(config, { cwd: cwd(), outDir })
     console.log(files.map(f => f.name).join('  '))
   }))

@@ -89,10 +89,11 @@
   "downloads": {
     "family": "Family",
     "ruby": "Ruby",
+    "variable": "Variable",
     "buildOwn": "Or build your own font. You can choose another base font, a list with fewer or more words, other ruby letters, or other sizes."
   },
   "anyPage": {
-    "body": "You can use Furifont on any website. Lines with kanji get extra space for the ruby. If Furifont is installed on your computer, nothing downloads. If it is not, the font loads from this site. It is about 5 MB the first time.",
+    "body": "You can use Furifont on any website. Lines with kanji get extra space for the ruby. If Furifont is installed on your computer, nothing downloads. If it is not, the font loads from this site. It is 6 to 8 MB the first time.",
     "bookmarklet": "Bookmarklet",
     "bookmarkletHint": "Drag it to your bookmarks bar. On any page, click it to turn Furifont on. Click it again to turn Furifont off. Some sites, such as X and GitHub, do not let fonts load from other sites. On those sites, install Furifont on your computer.",
     "okurigana": "Okurigana readings",

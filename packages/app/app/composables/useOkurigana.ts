@@ -25,7 +25,7 @@ export function useOkurigana(family: MaybeRefOrGetter<Family>) {
   async function load(): Promise<void> {
     const { stem } = toValue(family)
     try {
-      const [list, pairs] = await Promise.all([fetchJson(`${base}fonts/${stem}-Regular.ivs.json`), fetchJson(`${base}okurigana.json`)]) as [{ kanji: OkuriganaTables['readings'], words: OkuriganaTables['words'], lone: OkuriganaTables['lone'], salt?: boolean }, OkuriganaTables['pairs']]
+      const [list, pairs] = await Promise.all([fetchJson(`${base}fonts/${stem}VF.ivs.json`), fetchJson(`${base}okurigana.json`)]) as [{ kanji: OkuriganaTables['readings'], words: OkuriganaTables['words'], lone: OkuriganaTables['lone'], salt?: boolean }, OkuriganaTables['pairs']]
       // A newer pick of family wins.
       if (stem === toValue(family).stem)
         reader.value = list.salt === true ? createOkuriganaReader({ pairs, readings: list.kanji, words: list.words, lone: list.lone }) : undefined

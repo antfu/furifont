@@ -12,6 +12,9 @@
           <th v-for="w in WEIGHTS" :key="w.style" class="label px-3 py-3 font-normal">
             {{ w.style }}
           </th>
+          <th class="label px-3 py-3 font-normal">
+            {{ $t('downloads.variable') }}
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -25,6 +28,11 @@
           <td v-for="w in WEIGHTS" :key="w.style" class="px-3 py-3">
             <span class="flex gap-3 font-mono text-xs">
               <a v-for="ext in ['otf', 'woff2']" :key="ext" :href="releaseUrl(`${f.stem}-${w.style}.${ext}`)" class="focus-ring underline underline-offset-3 hover:color-muted">{{ ext }}</a>
+            </span>
+          </td>
+          <td class="px-3 py-3">
+            <span class="flex gap-3 font-mono text-xs">
+              <a v-for="ext in ['ttf', 'woff2']" :key="ext" :href="releaseUrl(`${f.stem}VF.${ext}`)" class="focus-ring underline underline-offset-3 hover:color-muted">{{ ext }}</a>
             </span>
           </td>
         </tr>

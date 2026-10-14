@@ -184,7 +184,8 @@ export async function toggleFurifont(
     return
   }
   try {
-    document.fonts.add(await new FontFace(family, fetchFont ? await fetchFont(url) : `url("${url}")`).load())
+    // The site's fonts are variable: one file draws every weight.
+    document.fonts.add(await new FontFace(family, fetchFont ? await fetchFont(url) : `url("${url}")`, { weight: '250 900' }).load())
     state.okurigana(okurigana)
   }
   catch {

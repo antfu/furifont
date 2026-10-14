@@ -19,8 +19,8 @@ rules. It differs in three ways:
 ## Goals
 
 - Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and
-  Bold, from Source Han Sans JP and Source Han Serif JP, with hiragana or
-  Hepburn romaji ruby. Katakana for on'yomi is a build option.
+  Bold, and a variable font of every weight, from Source Han Sans JP and
+  Source Han Serif JP, with hiragana or Hepburn romaji ruby. Katakana for on'yomi is a build option.
 - A build anyone can run with another base font, word list or options.
 - A local studio, served by Devframe, to tune, preview and build.
 - A static demo site that loads the prebuilt fonts.
@@ -382,8 +382,9 @@ Brotli it is given. It writes the tables it changes itself and copies every
 other table as bytes. For a build, it does this:
 
 1. **Load.** It loads the base font, subsetting it first for previews with
-   hb-subset, keeping every layout feature and name. Variable fonts, WOFF,
-   WOFF2 and collections are refused.
+   hb-subset, keeping every layout feature and name. CFF2 variable fonts,
+   WOFF, WOFF2 and collections are refused; TrueType variable fonts are
+   built on, see [Variable fonts](#variable-fonts).
 2. **Check the budget.** It fails if the glyphs would pass 65,535.
 3. **Draw.** HarfBuzz draws the base glyphs. Each planned glyph puts the bases
    side by side and centers each ruby over its span. Points are rounded once,
@@ -391,8 +392,8 @@ other table as bytes. For a build, it does this:
 4. **Append the glyphs.** CFF fonts keep their charstrings and subroutines as
    bytes. New charstrings use the shortest line and curve operators, in the
    Private DICT of their first base. In CID-keyed fonts they take free CIDs,
-   since a subset keeps the original ones. TrueType fonts get new glyf
-   entries and a long `loca`. `hmtx`, `vmtx`, `maxp`, `post` names and the
+   since a subset keeps the original ones. TrueType fonts get composite glyphs,
+   which refer to their bases and ruby scaled and moved, and a long `loca`. `hmtx`, `vmtx`, `maxp`, `post` names and the
    bounding boxes grow to match. `hdmx` and `LTSH`, which list every glyph,
    are dropped.
 5. **Map the variants** in `cmap` format 14, beside the font's own sequences.
@@ -410,6 +411,27 @@ other table as bytes. For a build, it does this:
 8. **Finish.** The ascender is raised and names are set. Source's Reserved
    Font Name must not appear in them. The font is shaped against the plan's
    smoke checks and returned. `toWoff2` wraps it as WOFF2.
+
+### Variable fonts
+
+A TrueType variable font, such as Source Han's, varies its own glyphs. The new
+composites follow them: a heavier kanji brings its heavier ruby. What the
+composites cannot vary by themselves is where each component sits, since kana
+and kanji keep their advances but Latin letters widen with the weight.
+
+- The compiler lays each glyph out again at both ends of every axis. The
+  components' moves there go into `gvar`, with a peak at -1 or 1 on that axis.
+  That is exact for a two-master design such as Source Han, whose glyphs vary
+  linearly between ExtraLight and Heavy.
+- A component's scale cannot vary, so each ruby is squeezed as tight as its
+  widest end needs.
+- The bases' advances must not vary, so the new glyphs keep a fixed advance.
+  In `HVAR` and `VVAR` each new glyph takes its first base's advance
+  variation, which is none. Side-bearing maps, which would not cover the new
+  glyphs, are dropped.
+- The named instances' PostScript names are renamed after the family
+  (`FurifontSansVF-Bold`), since Source Han's carry the Reserved Font Name.
+  The other names describe the default instance, ExtraLight.
 
 A full Source Han Sans JP build takes about 1.5 s, plus about 25 s for the
 WOFF2. It gives 19.9 MB as OpenType and 4.7 MB as WOFF2, and uses about 41,700
@@ -458,10 +480,12 @@ own mount.
 - **dictionary**: the compiled data plans sensible defaults (今日 きょう,
   明日 あした, 出来 でき), reads places (新宿 しんじゅく) and pairs (来ない こ,
   下りた お, 行って null).
-- **compiler**: compiles against three committed subsets of Source Han Sans
-  JP: CID-keyed CFF, and name-keyed CFF and TrueType without GSUB. It shapes
+- **compiler**: compiles against four committed subsets of Source Han Sans
+  JP: CID-keyed CFF, name-keyed CFF and TrueType without GSUB, and the
+  variable TrueType font. It shapes
   with harfbuzzjs and checks words, protection, lone kanji, selectors, `ss01`,
-  metrics, the WOFF2 and a subset preview.
+  metrics, the WOFF2 and a subset preview; on the variable font, ruby at every
+  weight, romaji kept centered as the letters widen, and instance names.
 - **cli**: config loading, and a real `buildFont` at the size estimated.
 - **e2e** (Playwright, on Chromium, Firefox and WebKit, with the font as
   WOFF2):
@@ -469,7 +493,8 @@ own mount.
   - VS227 differs from the default, and VS225 matches plain text;
   - selection returns the source text;
   - ruby is not clipped at `line-height: normal`;
-  - wrapped lines do not overlap.
+  - wrapped lines do not overlap;
+  - a variable font's ruby changes with `font-weight` and stays in its line.
 
   In Chromium, the studio previews, plans, estimates and builds a font, and
   keeps its settings across reloads.
@@ -477,17 +502,17 @@ own mount.
 ## Release
 
 A human runs `pnpm release`. It builds the packages, bumps every version, and
-rebuilds the four Regular fonts into `fonts/` as WOFF2 with their `.ivs.json`.
+rebuilds the four variable fonts into `fonts/` as WOFF2 with their `.ivs.json`.
 The bump and the fonts land in one commit, so each tag carries the fonts the
-site serves. Git keeps no OpenType and no Bold: all eight fonts in both formats
-would add over 200 MB to the history per release, against 25 MB.
+site serves. Git keeps no OpenType and no static weights: all twelve fonts in
+both formats would add over 300 MB to the history per release, against 27 MB.
 
 The tag runs `release.yml`:
 
 - npm publishing and the changelog, through `sxzz/workflows`;
-- all eight fonts, OpenType and WOFF2 in both weights, built again from the
-  tagged code and attached to the GitHub Release with the OFL and the data
-  license.
+- all twelve fonts, Regular and Bold as OpenType and WOFF2 and the variable
+  fonts as TrueType and WOFF2, built again from the tagged code and attached
+  to the GitHub Release with the OFL and the data license.
 
 The site is deployed by Vercel (`vercel.json`) on every push to `main`, at
 https://furifont.antfu.me. Its build needs no font build: it serves `fonts/`

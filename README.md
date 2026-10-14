@@ -12,16 +12,16 @@ Furifont is built from [Source Han Sans JP](https://github.com/adobe-fonts/sourc
 
 ## Fonts
 
-Each [release](https://github.com/antfu/furigana-font/releases/latest) has eight fonts, as OpenType and WOFF2:
+Each [release](https://github.com/antfu/furigana-font/releases/latest) has each family in Regular and Bold, as OpenType and WOFF2, and as a variable font of every weight from ExtraLight (250) to Heavy (900), as TrueType and WOFF2:
 
 | Family | Base | Ruby | Weights |
 | --- | --- | --- | --- |
-| Furifont Sans | Source Han Sans JP | Hiragana | Regular, Bold |
-| Furifont Sans Romaji | Source Han Sans JP | Modified Hepburn, with macrons | Regular, Bold |
-| Furifont Serif | Source Han Serif JP | Hiragana | Regular, Bold |
-| Furifont Serif Romaji | Source Han Serif JP | Modified Hepburn, with macrons | Regular, Bold |
+| Furifont Sans | Source Han Sans JP | Hiragana | Regular, Bold, variable |
+| Furifont Sans Romaji | Source Han Sans JP | Modified Hepburn, with macrons | Regular, Bold, variable |
+| Furifont Serif | Source Han Serif JP | Hiragana | Regular, Bold, variable |
+| Furifont Serif Romaji | Source Han Serif JP | Modified Hepburn, with macrons | Regular, Bold, variable |
 
-Each font also comes with a `.ivs.json` file. It lists the readings that the variation selectors pick, as described below. The Regular WOFF2s and their `.ivs.json` are also in [`fonts/`](fonts), as the site serves them. Katakana for on'yomi is a build option.
+The variable fonts are named apart, such as `Furifont Sans VF`, so they can be installed beside the static ones. Their ruby follows the weight of the text. Each font also comes with a `.ivs.json` file. It lists the readings that the variation selectors pick, as described below. The variable WOFF2s and their `.ivs.json` are also in [`fonts/`](fonts), as the site serves them. Katakana for on'yomi is a build option.
 
 ### Using them
 
@@ -31,7 +31,7 @@ Each font also comes with a `.ivs.json` file. It lists the readings that the var
 
 ### On any page
 
-The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both use Furifont when it is installed on your computer, and otherwise load the Regular WOFF2 from the site. They give lines with kanji room for the ruby. They also read kanji by their okurigana (来 in 来ない and 来ます, 一人 in 一人も), through `salt` on a span around the kanji; a switch on the demo site's bookmarklet, and the userscript's menu, turn that off. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed for the bookmarklet, but not for the userscript. When neither works, a toast says so and links to the downloads.
+The [demo site](https://furifont.antfu.me) has a bookmarklet that sets the page you are reading in Furifont, and turns it off on a second click. The [userscript](https://furifont.antfu.me/furifont.user.js), for Tampermonkey or Violentmonkey, turns it on by itself on Japanese pages, and its menu switches the family. Both use Furifont when it is installed on your computer, and otherwise load the variable WOFF2 from the site. They give lines with kanji room for the ruby. They also read kanji by their okurigana (来 in 来ない and 来ます, 一人 in 一人も), through `salt` on a span around the kanji; a switch on the demo site's bookmarklet, and the userscript's menu, turn that off. Sites that block fonts from other sites, such as X and GitHub, need Furifont installed for the bookmarklet, but not for the userscript. When neither works, a toast says so and links to the downloads.
 
 ### Which words get ruby
 
@@ -99,7 +99,7 @@ Both commands read `furifont.config.json` from the current folder, and Customize
 
 These are the settings:
 
-- `base` names a font to download once, Source Han Sans JP or Source Han Serif JP with a weight (`Source Han Serif JP Bold`), or is the path to another OpenType font.
+- `base` names a font to download once, Source Han Sans JP or Source Han Serif JP with a weight (`Source Han Serif JP Bold`) or as a variable font (`Source Han Serif JP VF`), or is the path to another OpenType font. A TrueType base, variable ones included, builds a `.ttf`.
 - `nfMax` sets how many words get ruby. Words are ranked in newspaper frequency buckets of about 500 words each.
 - `nfMin` leaves the most common words bare, for readers who know them: `3` skips the first 1,000.
 - `selectTags` also selects words that have these JMdict priority tags.

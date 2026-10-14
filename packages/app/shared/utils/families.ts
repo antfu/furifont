@@ -1,6 +1,6 @@
 export interface Family {
   family: string
-  /** File name stem: `<stem>-Regular.woff2`. */
+  /** File name stem: `<stem>-Regular.otf`, and the variable font's `<stem>VF.woff2`. */
   stem: string
   face: 'sans' | 'serif'
   script: 'hiragana' | 'hepburn'
@@ -14,7 +14,7 @@ export const FAMILIES: Family[] = [
   { family: 'Furifont Serif Romaji', stem: 'FurifontSerifRomaji', face: 'serif', script: 'hepburn' },
 ]
 
-/** Weights on the release; the site serves Regular only. */
+/** Static weights on the release, beside the variable font of every weight that the site serves. */
 export const WEIGHTS = [
   { weight: 400, style: 'Regular' },
   { weight: 700, style: 'Bold' },
@@ -30,12 +30,12 @@ export function releaseUrl(file: string): string {
 }
 
 export function siteFontUrl(family: Family): string {
-  return `${SITE}/fonts/${family.stem}-Regular.woff2`
+  return `${SITE}/fonts/${family.stem}VF.woff2`
 }
 
-/** The reading lists of a family's Regular, which say what `salt` n picks. */
+/** The reading lists of a family's variable font, which say what `salt` n picks. */
 export function siteReadingsUrl(family: Family): string {
-  return `${SITE}/fonts/${family.stem}-Regular.ivs.json`
+  return `${SITE}/fonts/${family.stem}VF.ivs.json`
 }
 
 /** The okurigana pairs of one kanji, for pages that pick its reading with `salt`. */

@@ -4,20 +4,20 @@ import type { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
-import { TEST_FONT, TEST_OTF, TEST_READINGS, WOFF2_PAGE } from './setup'
+import { TEST_FONT, TEST_OTF, TEST_READINGS, TEST_VARIABLE_FONT, WOFF2_PAGE } from './setup'
 
 const ORIGIN = 'https://furifont.test'
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
 
-/** Shows `body` on a page that has the test font as `Furifont`, at 40px. */
-async function show(page: Page, body: string): Promise<void> {
-  const font = await readFile(TEST_FONT)
+/** Shows `body` on a page that has the test font, or another, as `Furifont`, at 40px. */
+async function show(page: Page, body: string, file = TEST_FONT): Promise<void> {
+  const font = await readFile(file)
   await page.route(`${ORIGIN}/**`, route => route.request().url().endsWith('.woff2')
     ? route.fulfill({ body: font, contentType: 'font/woff2' })
     : route.fulfill({
         contentType: 'text/html; charset=utf-8',
         body: `<!doctype html><meta charset="utf-8"><style>
-          @font-face { font-family: Furifont; src: url(/test.woff2) }
+          @font-face { font-family: Furifont; src: url(/test.woff2); font-weight: 250 900 }
           body { margin: 16px; font: 40px/normal Furifont; }
           p { margin: 0 0 8px; width: fit-content; }
           .off { font-feature-settings: "ss01"; }
@@ -72,6 +72,19 @@ test('picks the reading of a word with salt on a span around its kanji, and leav
   // WebKit draws a word's selector as the first kanji's own reading: the selector is what is wrong there, not salt.
   if (browserName !== 'webkit')
     expect(await shot(page, '#salt')).toEqual(await shot(page, '#selector'))
+})
+
+test('draws a variable font\'s ruby at the weight of the text, inside its line', async ({ page }) => {
+  await show(page, `
+    <p id="light" style="font-weight:250">日本</p><p id="heavy" style="font-weight:900">日本</p>
+    <p id="clipped" style="font-weight:900;overflow:hidden">日本</p>`, TEST_VARIABLE_FONT)
+  /** The band above the em box, where the ruby is. */
+  const ruby = async (selector: string): Promise<Buffer> => {
+    const box = (await page.locator(selector).boundingBox())!
+    return page.screenshot({ clip: { x: box.x, y: box.y, width: box.width, height: box.height * 0.3 } })
+  }
+  expect(await ruby('#heavy')).not.toEqual(await ruby('#light'))
+  expect(await shot(page, '#clipped')).toEqual(await shot(page, '#heavy'))
 })
 
 test('keeps the text plain for selection and copy', async ({ page }) => {

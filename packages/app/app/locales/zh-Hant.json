@@ -89,10 +89,11 @@
   "downloads": {
     "family": "字型家族",
     "ruby": "振假名",
+    "variable": "可變",
     "buildOwn": "你也可以自己製作字型。可以選擇其他基礎字型、詞的數量、振假名所用文字或尺寸。"
   },
   "anyPage": {
-    "body": "你可以在任何網站上使用 Furifont。有漢字的行會留出放振假名的空間。如果電腦上已安裝 Furifont，就不用下載。否則字型會從本站載入，第一次約 5 MB。",
+    "body": "你可以在任何網站上使用 Furifont。有漢字的行會留出放振假名的空間。如果電腦上已安裝 Furifont，就不用下載。否則字型會從本站載入，第一次約 6 到 8 MB。",
     "bookmarklet": "書籤小工具",
     "bookmarkletHint": "把它拖到書籤列。在任何頁面點選它，就會開啟 Furifont；再點一次就會關閉。有些網站（如 X 和 GitHub）不允許載入其他網站的字型。在這些網站上，請在電腦上安裝 Furifont。",
     "okurigana": "送假名讀音",
