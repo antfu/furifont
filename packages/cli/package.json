@@ -5,13 +5,13 @@
   "description": "Build Japanese fonts that show furigana by themselves, from the command line or a local studio",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/antfu/furigana-font#readme",
+  "homepage": "https://github.com/antfu/furifont#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antfu/furigana-font.git",
+    "url": "git+https://github.com/antfu/furifont.git",
     "directory": "packages/cli"
   },
-  "bugs": "https://github.com/antfu/furigana-font/issues",
+  "bugs": "https://github.com/antfu/furifont/issues",
   "keywords": [
     "font",
     "furigana",

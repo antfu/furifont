@@ -14,7 +14,7 @@ export const FAMILIES: Family[] = PREBUILT.fonts.map(({ family, face, rubyScript
 /** Weights on the release; the site serves Regular only. */
 export const WEIGHTS = PREBUILT.weights
 
-export const REPOSITORY = 'https://github.com/antfu/furigana-font'
+export const REPOSITORY = 'https://github.com/antfu/furifont'
 
 /** The demo site: other pages load the fonts from here. */
 export const SITE = 'https://furifont.antfu.me'
