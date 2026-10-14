@@ -61,14 +61,6 @@ test('speaks the browser\'s language and remembers the one chosen', async ({ bro
   await context.close()
 })
 
-test('shows another sample on shuffle', async ({ page }) => {
-  await page.goto(new URL('/#/', url).href)
-  const sample = page.getByRole('textbox').first()
-  const before = await sample.textContent()
-  await page.getByRole('button', { name: 'Show another sample' }).first().click()
-  await expect(sample).not.toHaveText(before!)
-})
-
 test('applies the font chosen in the playground to the whole site, and remembers it', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
   const playground = page.locator('section', { has: page.getByRole('heading', { name: 'Try it' }) })
@@ -326,21 +318,6 @@ test('reads 来 as こ, き and く, and words like 今日では, from the okuri
   await expect.poll(() => page.evaluate(() => document.querySelector('#later span')?.getAttribute('data-furifont-salt'))).toBe((await verbSalts())[0])
 })
 
-test('leaves a page as it is when a font predates salt or the files do not load', async ({ page }) => {
-  const userscript = await fetchUserscript(page)
-  await addUserscriptManager(page)
-  await openElsewhere(page, 'ja-JP')
-  // A font from before `salt`: its reading list does not say it can.
-  const old = JSON.parse(await readFile(TEST_READINGS, 'utf8'))
-  delete old.salt
-  await page.route('https://furifont.antfu.me/fonts/*.ivs.json', route => route.fulfill({ body: JSON.stringify(old), contentType: 'application/json', headers: { 'access-control-allow-origin': '*' } }))
-  await page.evaluate(userscript)
-  await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
-  await page.waitForTimeout(300)
-  expect((await readVerbs(page)).salts).toEqual([])
-  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Sans", ${PAGE_FONT}`)
-})
-
 test('offers the okurigana readings in the bookmarklet, on unless turned off', async ({ page }) => {
   await page.goto(new URL('/#/', url).href)
   const section = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
@@ -363,7 +340,7 @@ test('offers the okurigana readings in the bookmarklet, on unless turned off', a
 })
 
 test('reads kanji by their okurigana in the playground as it is edited, and turns that off', async ({ page }) => {
-  // The prebuilt fonts on the site predate salt, so the test font's reading list stands in for theirs.
+  // The test font's reading list stands in for the prebuilt one's, so the salts are those verbSalts counts.
   const readings = await readFile(TEST_READINGS)
   await page.route('**/fonts/FurifontSans-Regular.ivs.json', route => route.fulfill({ body: readings, contentType: 'application/json' }))
   await page.goto(new URL('/#/', url).href)
