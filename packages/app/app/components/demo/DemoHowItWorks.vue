@@ -1,13 +1,13 @@
 <script setup lang="ts">
-const steps = ['build', 'ligatures', 'longest', 'bare'] as const
+const steps = ['build', 'ligatures', 'longest', 'bare', 'okurigana'] as const
 </script>
 
 <template>
-  <ol class="grid sm:grid-cols-2 lg:grid-cols-4">
+  <ol class="grid sm:grid-cols-2 lg:grid-cols-5">
     <li
       v-for="(step, i) in steps"
       :key="step"
-      class="flex flex-col gap-3 border-base p-6 [&:not(:last-child)]:border-b sm:[&:nth-child(odd)]:border-r lg:border-b-0 lg:[&:not(:last-child)]:border-r"
+      class="flex flex-col gap-3 border-base p-6 [&:not(:last-child)]:border-b sm:max-lg:[&:nth-child(odd):not(:last-child)]:border-r sm:max-lg:last:col-span-2 lg:border-b-0 lg:[&:not(:last-child)]:border-r"
     >
       <span class="font-mono text-xs color-muted">{{ String(i + 1).padStart(2, '0') }}</span>
       <h3 class="text-[15px] font-semibold tracking-tight">

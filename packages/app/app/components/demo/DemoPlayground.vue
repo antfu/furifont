@@ -31,15 +31,16 @@ const { copied, copy } = useCopy()
           {{ $t('playground.okuriganaHint') }}
         </p>
       </div>
-      <p class="text-xs color-muted">
-        {{ $t('playground.textHint') }}
-      </p>
     </div>
     <div class="flex min-w-0 flex-col">
       <div class="min-h-72 flex-1 px-6 py-8">
         <FuriText v-model:text="text" :family="family.family" :ruby :size :okurigana="okurigana ? reader : undefined" />
       </div>
       <div class="flex items-center gap-3 border-t border-base px-6 py-3">
+        <div class="text-xs color-muted">
+          {{ $t('playground.textHint') }}
+        </div>
+        <div class="flex-auto" />
         <UiButton variant="ghost" :icon="copied ? 'i-ph-check' : 'i-ph-copy'" @click="copy(text)">
           {{ copied ? $t('copied') : $t('playground.copy') }}
         </UiButton>

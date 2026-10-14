@@ -113,7 +113,7 @@ function toggle(source: Source): void {
           :key="source"
           type="button"
           class="focus-ring border px-2 py-1 text-xs transition-colors"
-          :class="isOn(source) ? 'border-strong bg-inverse color-inverse' : 'border-base color-muted hover:border-strong'"
+          :class="isOn(source) ? 'border-inverse bg-inverse color-inverse' : 'border-base color-muted hover:border-strong'"
           :title="$t(`customize.options.source.${source}.hint`)"
           :aria-pressed="isOn(source)"
           @click="toggle(source)"
