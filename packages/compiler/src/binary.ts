@@ -96,7 +96,7 @@ export class Writer {
     return this
   }
 
-  finish(): Uint8Array {
+  finish(): Uint8Array<ArrayBuffer> {
     return this.data.slice(0, this.length)
   }
 }

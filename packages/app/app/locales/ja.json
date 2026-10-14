@@ -198,7 +198,11 @@
       "glyphs": "ルビのグリフ",
       "rules": "ルール",
       "planning": "計画中",
-      "estimate": "≈ {woff2} WOFF2 · {otf} OTF",
+      "estimate": {
+        "woff2": "≈ {size} WOFF2",
+        "otf": "{size} OTF"
+      },
+      "formats": "形式",
       "estimating": "サイズを見積もり中",
       "run": "フォントをビルド",
       "save": "設定を保存"

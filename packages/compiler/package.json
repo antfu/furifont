@@ -15,6 +15,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./dist/index.mjs",
+    "./browser": "./dist/browser.mjs",
     "./node": "./dist/node.mjs",
     "./package.json": "./package.json"
   },
@@ -25,9 +26,20 @@
   "scripts": {
     "build": "tsdown"
   },
+  "peerDependencies": {
+    "brotli-wasm": "catalog:prod"
+  },
+  "peerDependenciesMeta": {
+    "brotli-wasm": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "@furifont/core": "workspace:*",
     "harfbuzzjs": "catalog:prod",
     "valibot": "catalog:prod"
+  },
+  "devDependencies": {
+    "brotli-wasm": "catalog:prod"
   }
 }

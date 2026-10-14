@@ -90,7 +90,8 @@ Both commands read `furifont.config.json` from the current folder, and Customize
     "pin": ["市[し]場[じょう]"],
     "remove": ["大人"]
   },
-  "metrics": { "rubyScale": 0.4, "rubyGap": 0.05, "compressionFloor": 0.6, "maxRubyWidth": 1.6 }
+  "metrics": { "rubyScale": 0.4, "rubyGap": 0.05, "compressionFloor": 0.6, "maxRubyWidth": 1.6 },
+  "formats": ["otf", "woff2"]
 }
 ```
 
@@ -104,6 +105,7 @@ These are the settings:
 - `isolated: false` gives no ruby to a kanji alone. `isolatedMinShare` sets how strongly one reading must dominate before it gets some.
 - `places` adds station and place names. They make up most of the rules. Without them, a WOFF2 font is 3.6 MB instead of 5.2 MB, and the build is about four times faster.
 - `words` uses inline notation: `日[に]本[ほん]` gives one reading per kanji, and `今日[きょう]` gives one reading over several kanji.
+- `formats` lists the fonts a build writes: OpenType (`otf`) to install, WOFF2 (`woff2`) for websites, or both. WOFF2 takes most of a build's time. `--formats otf` on the command line overrides it. The reading reference `.ivs.json` is always written.
 
 ## Packages
 
