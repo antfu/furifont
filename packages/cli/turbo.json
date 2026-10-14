@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       // The build also generates the app and copies it into dist/client, so those count as inputs.
-      "inputs": ["$TURBO_DEFAULT$", "../app/app/**", "../app/public/**", "../app/nuxt.config.ts", "../app/uno.config.ts", "../../fonts/**"],
+      "inputs": ["$TURBO_DEFAULT$", "../app/app/**", "../app/server/**", "../app/shared/**", "../app/public/**", "../app/nuxt.config.ts", "../app/uno.config.ts", "../dictionary/data/okurigana.json", "../../fonts/**"],
       "outputs": ["dist/**", "../app/.output/**"]
     }
   }

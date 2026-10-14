@@ -39,7 +39,9 @@ export default defineNuxtConfig({
     preset: 'static',
     // The prebuilt fonts are committed at the repository root on release.
     publicAssets: [{ dir: fileURLToPath(new URL('../../fonts', import.meta.url)), baseURL: 'fonts' }],
-    prerender: { routes: ['/furifont.user.js'] },
+    // Only the okurigana pairs, which `dict:update` packs the way pages read them: the rest of the data is megabytes.
+    serverAssets: [{ baseName: 'dictionary', dir: fileURLToPath(new URL('../dictionary/data', import.meta.url)), pattern: 'okurigana.json' }],
+    prerender: { routes: ['/furifont.user.js', '/okurigana.json'] },
   },
   app: {
     head: {

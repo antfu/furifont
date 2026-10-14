@@ -1,14 +1,15 @@
 /**
  * Downloads JMdict, JMnedict, their JmdictFurigana alignments, KANJIDIC2 and
  * the JLPT word lists, and compiles them into data/dictionary.json,
- * data/places.json, data/okurigana.json and data/jlpt.json, one entry per line
- * so updates diff well.
+ * data/places.json, data/okurigana.json (packed by run of kanji, as pages
+ * read it) and data/jlpt.json, one entry per line so updates diff well.
  *
  *   node scripts/update.ts
  */
 import { writeFile } from 'node:fs/promises'
 import { gunzipSync } from 'node:zlib'
 import { hanRuns, parseFurigana } from '@furifont/core'
+import { formatPacked, packOkurigana } from '../src/pack.ts'
 
 const JMDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz'
 const JMNEDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMnedict.xml.gz'
@@ -368,6 +369,6 @@ const lines = [
 ]
 await writeFile(OUTPUT, `${lines.join('\n')}\n`)
 await writeFile(PLACES, `[\n${places.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
-await writeFile(OKURIGANA, `[\n${okurigana.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
+await writeFile(OKURIGANA, formatPacked(packOkurigana(okurigana)))
 await writeFile(JLPT, `[\n${jlpt.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
 console.log(`Wrote ${entries.length} entries, ${places.length} places, ${okurigana.length} okurigana pairs, ${jlpt.length} JLPT words, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)

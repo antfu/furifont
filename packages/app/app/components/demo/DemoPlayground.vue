@@ -2,6 +2,8 @@
 const text = ref('今日は日本語の勉強をします。\n明日は東京の大学へ行きます。\n私は毎朝新聞を読みます。桜が咲きました。')
 const { face, script, family, faces, scripts } = useFamilyPicker()
 const ruby = ref(true)
+const okurigana = ref(true)
+const { reader } = useOkurigana(family)
 const size = ref(30)
 const { copied, copy } = useCopy()
 </script>
@@ -21,13 +23,21 @@ const { copied, copy } = useCopy()
       <UiToggle v-model="ruby">
         {{ $t('playground.ruby') }}
       </UiToggle>
+      <div class="flex flex-col gap-1.5">
+        <UiToggle v-model="okurigana">
+          {{ $t('playground.okurigana') }}
+        </UiToggle>
+        <p class="text-xs leading-relaxed color-muted">
+          {{ $t('playground.okuriganaHint') }}
+        </p>
+      </div>
       <p class="text-xs color-muted">
         {{ $t('playground.textHint') }}
       </p>
     </div>
     <div class="flex min-w-0 flex-col">
       <div class="min-h-72 flex-1 px-6 py-8">
-        <FuriText v-model:text="text" :family="family.family" :ruby :size />
+        <FuriText v-model:text="text" :family="family.family" :ruby :size :okurigana="okurigana ? reader : undefined" />
       </div>
       <div class="flex items-center gap-3 border-t border-base px-6 py-3">
         <UiButton variant="ghost" :icon="copied ? 'i-ph-check' : 'i-ph-copy'" @click="copy(text)">
