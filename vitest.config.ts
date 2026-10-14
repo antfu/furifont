@@ -11,6 +11,7 @@ export default defineConfig({
       '@furifont/compiler/node': source('compiler', 'node'),
       '@furifont/compiler': source('compiler'),
       '@furifont/dictionary': source('dictionary'),
+      '@furifont/webpage': source('webpage'),
       'furifont': source('cli'),
     },
   },
