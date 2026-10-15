@@ -1,11 +1,10 @@
 <script setup lang="ts">
 const { dark, toggle } = useDarkMode()
 
-const links = ([
-  { to: '/', label: 'nav.demo' },
-  { to: '/docs', label: 'nav.docs' },
-  { to: '/customize', label: 'nav.customize' },
-] as const).filter(link => !__STUDIO__ || link.to !== '/docs')
+const links: { to: string, label: `nav.${'demo' | 'docs' | 'customize'}` }[] = [{ to: '/', label: 'nav.demo' }]
+if (!__STUDIO__)
+  links.push({ to: '/docs', label: 'nav.docs' })
+links.push({ to: '/customize', label: 'nav.customize' })
 // The studio keeps running in its own tab.
 const siteTarget = __STUDIO__ ? '_blank' : undefined
 </script>
