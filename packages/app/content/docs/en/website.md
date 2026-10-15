@@ -106,7 +106,7 @@ The variable font has every weight from 250 (ExtraLight) to 900 (Heavy). The rub
 
 The ruby is part of the font, so it scales with `font-size`. Nothing else needs to change.
 
-### Choose a reading
+### Choose a reading {#choose-a-reading}
 
 Furifont shows the most common reading of each word. To show another one, set `salt` (stylistic alternates) on a `<span>` around the word. `'salt' 2` shows reading 2:
 
