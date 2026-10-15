@@ -1,13 +1,21 @@
 import { createRubyReader } from '@furifont/compiler'
-import { createFontPlanner, resolveOptions, toHiragana } from '@furifont/core'
+import { createFontPlanner, parseNotation, resolveOptions, toHiragana } from '@furifont/core'
 import { describe, expect, it } from 'vitest'
 import { SAMPLES } from '../../app/app/utils/samples'
 import { loadDictionary } from '../src'
+import { OVERRIDE_READINGS } from '../src/overrides'
+
+/** Words the site itself sets in the font, where a wrong reading is on show. */
+const INTERFACE_WORDS: { text: string, reading: string }[] = [
+  { text: 'ローマ字', reading: 'ろーまじ' },
+  { text: '明朝', reading: 'みんちょう' },
+]
 
 const planFont = createFontPlanner(await loadDictionary())
 const options = resolveOptions()
 const coverage = new Set([
   ...SAMPLES.flatMap(s => [...s.text]),
+  ...OVERRIDE_READINGS.flatMap(n => [...parseNotation(n).form]),
   ...Array.from({ length: 0x30FF - 0x3041 + 1 }, (_, i) => String.fromCharCode(0x3041 + i)),
 ].map(c => c.codePointAt(0)!))
 
@@ -31,6 +39,13 @@ function matches(shown: string, reading: string): boolean {
 
 describe('sample texts', () => {
   it.each(SAMPLES)('shows no wrong reading in $text', ({ text, reading }) => {
+    const shown = readAs(text)
+    expect(matches(shown, reading), `${shown}\n${reading}`).toBe(true)
+  })
+})
+
+describe('interface words', () => {
+  it.each(INTERFACE_WORDS)('shows the right reading in $text', ({ text, reading }) => {
     const shown = readAs(text)
     expect(matches(shown, reading), `${shown}\n${reading}`).toBe(true)
   })

@@ -1,10 +1,10 @@
 /**
- * Default readings the compiled data ranks wrong, in inline notation. JMdict's
+ * Readings that override the compiled data where it ranks them wrong, in inline notation. JMdict's
  * frequency tags belong to a written form, so across entries they cannot tell
  * two readings apart; and a form that drops its okurigana usually meets it in
  * running text, where the font cannot see it. Users' pins override these.
  */
-export const DEFAULT_READINGS: string[] = [
+export const OVERRIDE_READINGS: string[] = [
   // 出来る, 出来た: しゅったい is rare.
   '出[で]来[き]',
   // なにびと is literary.
@@ -17,6 +17,11 @@ export const DEFAULT_READINGS: string[] = [
   '外[そと]付[づ]',
   // 支払い, 支払う.
   '支[し]払[はら]',
+  // Alone, 字 is a character; あざ is a village section and ranks higher. A run
+  // of kanji never includes the kana before it, so ローマ字 reaches the font as 字.
+  '字[じ]',
+  // 明朝体 is read みんちょう; みょうちょう is the dynasty's old reading.
+  '明[みん]朝[ちょう]',
 ]
 
 /**
