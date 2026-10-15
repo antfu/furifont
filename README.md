@@ -45,7 +45,7 @@ Settings live in `furifont.config.json`; their defaults are in [`packages/core/s
 | [`@furifont/core`](packages/core) | Plans glyphs and OpenType rules from a dictionary |
 | [`@furifont/compiler`](packages/compiler) | Draws the planned glyphs into a base font |
 | [`@furifont/dictionary`](packages/dictionary) | The compiled dictionary |
-| [`@furifont/webpage`](packages/webpage) | Sets the Japanese text of any web page in Furifont: the bookmarklet's and the userscript's engine |
+| [`@furifont/helper-web`](packages/helper-web) | Sets the Japanese text of any web page in Furifont: the bookmarklet's and the userscript's engine |
 | [`packages/app`](packages/app) | The website and Customize (Nuxt) |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) to work on it.

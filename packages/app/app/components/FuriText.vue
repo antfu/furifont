@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { OkuriganaReader } from '@furifont/webpage'
+import type { OkuriganaReader } from '@furifont/helper-web'
 
 const { family = FAMILIES[0]!.family, ruby = true, size = 32, weight = 400, okurigana } = defineProps<{
   family?: string

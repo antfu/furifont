@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 // The userscript runs `start` in pages; the server types have no DOM.
-import type { FurifontOptions, Toast, toggleFurifont } from '@furifont/webpage'
+import type { FurifontOptions, Toast, toggleFurifont } from '@furifont/helper-web'
 import { version } from '../../../../package.json'
 import en from '../../app/locales/en.json'
 import ja from '../../app/locales/ja.json'
@@ -86,8 +86,8 @@ function start(
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'content-type', 'text/javascript; charset=utf-8')
   const fonts = FAMILIES.map(family => ({ family: family.family, url: siteFontUrl(family), readings: siteReadingsUrl(family) }))
-  // @furifont/webpage's IIFE build, which puts the engine on `Furifont`.
-  const engine = String(await useStorage('assets:webpage').getItemRaw('index.iife.js'))
+  // @furifont/helper-web's IIFE build, which puts the engine on `Furifont`.
+  const engine = String(await useStorage('assets:helper-web').getItemRaw('index.iife.js'))
   return `// ==UserScript==
 // @name         Furifont
 // @namespace    ${SITE}

@@ -1,5 +1,5 @@
 {
-  "name": "@furifont/webpage",
+  "name": "@furifont/helper-web",
   "type": "module",
   "version": "0.0.1",
   "description": "Set the Japanese text of any web page in Furifont, leaving Latin, icon and code fonts alone",
@@ -9,7 +9,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/antfu/furifont.git",
-    "directory": "packages/webpage"
+    "directory": "packages/helper-web"
   },
   "bugs": "https://github.com/antfu/furifont/issues",
   "sideEffects": false,
