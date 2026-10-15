@@ -52,7 +52,7 @@ export default defineNuxtConfig({
       // The engine the userscript inlines, as @furifont/helper-web builds it.
       { baseName: 'helper-web', dir: fileURLToPath(new URL('../helper-web/dist', import.meta.url)), pattern: 'index.iife.js' },
     ],
-    prerender: { routes: ['/furifont.user.js', '/okurigana.json'] },
+    prerender: { routes: ['/furifont.user.js', '/okurigana.json', '/version.json'] },
   },
   app: {
     head: {

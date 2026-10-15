@@ -106,7 +106,10 @@
     "toast": {
       "message": "このページでは Furifont のフォントを読み込めませんでした。X や GitHub のように、他のサイトのフォントを読み込めないサイトがあります。そのようなサイトでは、パソコンに Furifont をインストールする必要があります。",
       "download": "フォントをダウンロード",
-      "close": "閉じる"
+      "close": "閉じる",
+      "outdated": "Furifont の新しいバージョンがあります。",
+      "userscript": "ユーザースクリプトを更新",
+      "bookmarklet": "新しいブックマークレットを入手"
     },
     "menu": {
       "okuriganaOn": "送り仮名の読み：オン",

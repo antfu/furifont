@@ -4,6 +4,7 @@ import type { FontNames } from './names'
 import type { Outline } from './outline'
 import type { Sfnt } from './sfnt'
 import type { SubsetWasm } from './subset'
+import { VERSION_PROBE } from '@furifont/core'
 import * as hb from 'harfbuzzjs'
 import { tagAt, view } from './binary'
 import { Cff } from './cff'
@@ -19,6 +20,7 @@ import { subsetFont } from './subset'
 import { appendAdvanceMap, appendGlyphVariations } from './variations'
 
 const MAX_GLYPHS = 65535
+const PROBE_NAME = 'furifont.version'
 /** Per-glyph tables a new glyph count would invalidate; all optional. */
 const PER_GLYPH_TABLES = ['hdmx', 'LTSH']
 
@@ -105,7 +107,8 @@ async function openBase({ plan, base, subsetWasm }: CompileOptions): Promise<{ s
     throw new Error('only CFF and TrueType base fonts are supported')
   const face = new hb.Face(new hb.Blob(data))
   const baseCount = view(sfnt.tables.get('maxp')!).getUint16(4)
-  const added = plan.glyphs.length + plan.variants.length
+  // The plan's glyphs, and the version probe.
+  const added = plan.glyphs.length + plan.variants.length + 1
   if (baseCount + added > MAX_GLYPHS)
     throw new Error(`${baseCount} base glyphs plus ${added} new ones exceed ${MAX_GLYPHS}: lower nfMax`)
   return { sfnt, face, upm: face.upem, baseCount }
@@ -128,7 +131,7 @@ function nameGlyphs(plan: Plan, font: hb.Font, baseCount: number, taken: Set<str
     named.add(glyph)
   }
   const ids = new Map<string, number>()
-  for (const { name } of [...plan.glyphs, ...plan.variants]) {
+  for (const { name } of [...plan.glyphs, ...plan.variants, { name: PROBE_NAME }]) {
     if (taken.has(name))
       throw new Error(`the base font already has a glyph named ${name}`)
     ids.set(name, names.length)
@@ -310,7 +313,10 @@ export async function buildFont(options: CompileOptions): Promise<BuiltFont> {
     const base = glyphOf(v.base)!
     glyphs.add(v.name, emptyOutline(font.glyphHAdvance(base)), base)
   }
-  tables.set('cmap', addVariationSequences(tables.get('cmap')!, plan.variants.map(v => ({ ...v, glyph: resolve(v.name) }))))
+  // So pages can tell the font's version: see VERSION_PROBE.
+  glyphs.add(PROBE_NAME, emptyOutline(Math.round(upm * (2 + Number(revision)))), 0)
+  const sequences = [...plan.variants, { ...VERSION_PROBE, name: PROBE_NAME }]
+  tables.set('cmap', addVariationSequences(tables.get('cmap')!, sequences.map(v => ({ ...v, glyph: resolve(v.name) }))))
 
   await progress('features')
   tables.set('GSUB', buildGsub(plan.fea, tables.get('GSUB'), resolve))

@@ -62,3 +62,11 @@ export const PREBUILT = {
   variable: { style: string, weights: readonly [number, number] }
   options: Omit<PlanOptionsInput, 'family' | 'rubyScript'>
 }
+
+/**
+ * The sequence, 。 and VS1, a page measures to tell which version of Furifont
+ * it has: the font maps it to an empty glyph two ems wide plus the revision in
+ * ems (`0.1.2`, revision 0.102, is 2.102 ems). A font from before it draws the
+ * 。 alone, an em wide at most.
+ */
+export const VERSION_PROBE = { base: 0x3002, selector: 0xFE00 } as const

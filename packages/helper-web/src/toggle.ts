@@ -2,10 +2,12 @@
 import type { FontSource } from './load'
 import type { Okurigana, OkuriganaReader } from './okurigana'
 import type { Toast } from './toast'
+import type { Update } from './version'
 import { loadFurifont } from './load'
 import { loadOkuriganaReader } from './okurigana'
 import { familyName, isMonospace, JAPANESE, parseFontStack } from './stack'
-import { showToast } from './toast'
+import { downloadLink, showToast } from './toast'
+import { showUpdates } from './version'
 
 declare global {
   interface Window {
@@ -26,10 +28,11 @@ declare global {
 type State = NonNullable<Window['furifont']>
 
 export interface FurifontOptions extends FontSource {
-  /** The toast's words, for when the font cannot load. */
   toast: Toast
   /** With it, the kanji of verbs and adjectives, and the words before their okurigana, get their reading as well. */
   okurigana?: Okurigana
+  /** With it, a toast says when the script or the installed font is older than the site's release. */
+  update?: Update
 }
 
 /** The text nodes under `roots` that sit in an element. */
@@ -201,10 +204,11 @@ function install(family: string): State {
  * asks to install it.
  *
  * The okurigana readings are a bonus: when their files do not load, or the font
- * predates `salt`, the page is left as it is.
+ * predates `salt`, the page is left as it is. So is the check for updates when
+ * the site cannot say which release it serves.
  */
 export async function toggleFurifont(options: FurifontOptions): Promise<void> {
-  const { family, url, toast, okurigana } = options
+  const { family, url, toast, okurigana, update } = options
   let state = window.furifont
   if (state?.family === family) {
     state.sheet.disabled = !state.sheet.disabled
@@ -218,11 +222,12 @@ export async function toggleFurifont(options: FurifontOptions): Promise<void> {
   state.sheet.disabled = false
   if (await loadFurifont(options)) {
     state.okurigana(okurigana)
+    if (update)
+      await showUpdates(options, update)
     return
   }
   state.sheet.disabled = true
   // So the next click tries again.
   state.family = ''
-  // The site that serves the font lists the downloads.
-  showToast(toast, new URL('/#downloads', url).href)
+  showToast(toast.message, [downloadLink(url, toast)], toast.close)
 }

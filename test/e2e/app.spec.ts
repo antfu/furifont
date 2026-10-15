@@ -128,7 +128,12 @@ test('estimates the size, keeps settings across reloads, and resets them but not
 /** The other site's own font, which its Latin text keeps. */
 const PAGE_FONT = '"Page Font", sans-serif'
 
-/** Opens a page on another site, in `lang`, with tight lines, code, an icon font and maybe a CSP; the demo site's fonts are the test font. */
+/** Says the demo site serves `version`: a route added later wins. */
+async function serveRelease(page: Page, version: string): Promise<void> {
+  await page.route('https://furifont.antfu.me/version.json', route => route.fulfill({ json: { version }, headers: { 'access-control-allow-origin': '*' } }))
+}
+
+/** Opens a page on another site, in `lang`, with tight lines, code, an icon font and maybe a CSP; the demo site's fonts are the test font, and its release is that font's, 0.0.0. */
 async function openElsewhere(page: Page, lang: string, csp?: string): Promise<void> {
   const font = await readFile(TEST_FONT)
   const readings = await readFile(TEST_READINGS)
@@ -138,6 +143,7 @@ async function openElsewhere(page: Page, lang: string, csp?: string): Promise<vo
     ? route.fulfill({ body: readings, contentType: 'application/json', headers: cors })
     : route.fulfill({ body: font, contentType: 'font/otf', headers: cors }))
   await page.route('https://furifont.antfu.me/okurigana.json', route => route.fulfill({ body: pairs, contentType: 'application/json', headers: cors }))
+  await serveRelease(page, '0.0.0')
   await page.route('https://elsewhere.test/**', route => route.fulfill({
     contentType: 'text/html; charset=utf-8',
     headers: csp ? { 'content-security-policy': csp } : {},
@@ -237,6 +243,55 @@ test('asks to install Furifont where a CSP blocks fonts from other sites, and li
 
   await page.goto(new URL('/#downloads', url).href)
   await expect(page.locator('#downloads')).toBeInViewport()
+})
+
+test('says when the bookmarklet or the installed font is older than the site\'s release, and links to newer ones', async ({ page }) => {
+  const { version } = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')) as { version: string }
+  await page.goto(new URL('/#/', url).href)
+  const section = page.locator('section', { has: page.getByRole('heading', { name: 'On Websites' }) })
+  const href = await section.getByRole('link', { name: 'Furifont Sans', exact: true }).getAttribute('href')
+  const click = (): Promise<void> => page.evaluate(decodeURIComponent(href!.replace(/^javascript:/, '')))
+  const toast = page.getByRole('alert')
+
+  await openElsewhere(page, 'en')
+  await click()
+  await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
+  await page.waitForTimeout(300)
+  await expect(toast).toHaveCount(0)
+
+  await openElsewhere(page, 'en')
+  await serveRelease(page, '99.0.0')
+  await click()
+  await expect(toast).toContainText('A newer version of Furifont is out.')
+  await expect(toast.getByRole('link', { name: 'Get the new bookmarklet' })).toHaveAttribute('href', 'https://furifont.antfu.me/#any-page')
+  await expect(toast.getByRole('link', { name: 'Download the fonts' })).toHaveAttribute('href', 'https://furifont.antfu.me/#downloads')
+
+  // The bookmarklet is the site's own release, and the test font, 0.0.0, older.
+  await openElsewhere(page, 'en')
+  await serveRelease(page, version)
+  await click()
+  await expect(toast.getByRole('link', { name: 'Download the fonts' })).toBeVisible()
+  await expect(toast.getByRole('link', { name: 'Get the new bookmarklet' })).toHaveCount(0)
+
+  await page.goto(new URL('/#any-page', url).href)
+  await expect(page.locator('#any-page')).toBeInViewport()
+})
+
+test('says once a day when the userscript is older than the site\'s release, and links to the newer one', async ({ page }) => {
+  const userscript = await fetchUserscript(page)
+  await addUserscriptManager(page)
+  const toast = page.getByRole('alert')
+
+  await openElsewhere(page, 'ja-JP')
+  await serveRelease(page, '99.0.0')
+  await page.evaluate(userscript)
+  await expect(toast.getByRole('link', { name: 'Update the userscript' })).toHaveAttribute('href', 'https://furifont.antfu.me/furifont.user.js')
+
+  await page.reload()
+  await page.evaluate(userscript)
+  await expect.poll(() => hasLoaded(page, 'Furifont Sans')).toBe(true)
+  await page.waitForTimeout(300)
+  await expect(toast).toHaveCount(0)
 })
 
 test('turns the userscript on by itself on Japanese pages, and its menu switches family', async ({ page }) => {

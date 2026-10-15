@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test'
 import type { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { VERSION_PROBE } from '@furifont/core'
 import { expect, test } from '@playwright/test'
 import { TEST_FONT, TEST_OTF, TEST_READINGS, TEST_VARIABLE_FONT, WOFF2_PAGE } from './setup'
 
@@ -91,6 +92,16 @@ test('fits the ruby in the default line height', async ({ page }) => {
   // Clipped to its line box, the ruby must still show in full.
   await show(page, '<p id="clipped" style="overflow:hidden">日本</p><p id="free" style="overflow:visible">日本</p>')
   expect(await shot(page, '#clipped')).toEqual(await shot(page, '#free'))
+})
+
+test('tells a canvas its version by the width of its probe', async ({ page }) => {
+  await show(page, '<p>日本</p>')
+  // The test font is 0.0.0: two ems and no thousandths, which WebKit measures a little short.
+  expect(await page.evaluate((probe) => {
+    const context = document.createElement('canvas').getContext('2d')!
+    context.font = '1000px Furifont'
+    return Math.round(context.measureText(probe).width)
+  }, String.fromCodePoint(VERSION_PROBE.base, VERSION_PROBE.selector))).toBe(2000)
 })
 
 // Firefox compresses with its own Brotli; Chromium and Playwright's WebKit have no Brotli compression stream and load brotli-wasm.

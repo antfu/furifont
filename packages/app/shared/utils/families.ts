@@ -1,6 +1,9 @@
 import { PREBUILT } from '@furifont/core'
 import { version } from '../../../../package.json'
 
+/** The release the site serves, which `/version.json` tells the bookmarklet and the userscript. */
+export const VERSION = version
+
 export interface Family {
   family: string
   /** File name stem: `<stem>-Regular.otf`, and the variable font's `<stem>VF.woff2`. */
@@ -33,7 +36,7 @@ export function releaseUrl(file: string): string {
  * serves these immutable, so a font and its readings change together.
  */
 export function fontPath(family: Family, ext: 'woff2' | 'ivs.json'): string {
-  return `fonts/${family.stem}VF.${ext}?v=${version}`
+  return `fonts/${family.stem}VF.${ext}?v=${VERSION}`
 }
 
 export function siteFontUrl(family: Family): string {

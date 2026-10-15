@@ -1,7 +1,6 @@
 /// <reference lib="dom" />
 // The userscript runs `start` in pages; the server types have no DOM.
-import type { FurifontOptions, Toast, toggleFurifont } from '@furifont/helper-web'
-import { version } from '../../../../package.json'
+import type { FurifontOptions, Toast, toggleFurifont, Update } from '@furifont/helper-web'
 import en from '../../app/locales/en.json'
 import ja from '../../app/locales/ja.json'
 import zhHans from '../../app/locales/zh-Hans.json'
@@ -12,7 +11,7 @@ const TOASTS = {
   'ja': ja.anyPage.toast,
   'zh-Hans': zhHans.anyPage.toast,
   'zh-Hant': zhHant.anyPage.toast,
-} satisfies Record<Locale, Toast>
+} satisfies Record<Locale, Toast & { userscript: string }>
 
 const MENUS = {
   'en': en.anyPage.menu,
@@ -47,7 +46,8 @@ function start(
   toggle: typeof toggleFurifont,
   fonts: { family: string, url: string, readings: string }[],
   pairs: string,
-  toasts: Record<Locale, Toast>,
+  script: Pick<Update, 'version' | 'href'>,
+  toasts: typeof TOASTS,
   menus: Record<Locale, Menu>,
   detect: typeof detectLocale,
 ): void {
@@ -59,6 +59,13 @@ function start(
     manager.xmlHttpRequest({ url, responseType, onload: r => resolve(r.response as T), onerror: reject }))
   const fetchFont = (url: string): Promise<ArrayBuffer> => fetchBytes(url, 'arraybuffer')
   const fetchText = (url: string): Promise<string> => fetchBytes(url, 'text')
+  // Once a day at most, as Furifont turns on.
+  const update = (): Update | undefined => {
+    if (Date.now() - Number(manager.getValue('checked', '0')) < 86_400_000)
+      return undefined
+    manager.setValue('checked', String(Date.now()))
+    return { ...script, text: toast.userscript, fetchText }
+  }
   // On unless the reader turned it off.
   let okurigana = manager.getValue('okurigana', 'on') !== 'off'
   const options = ({ family, url, readings }: typeof fonts[number]): FurifontOptions => ({ family, url, toast, fetchFont, okurigana: okurigana ? { readings, pairs, fetchText } : undefined })
@@ -66,7 +73,7 @@ function start(
   for (const font of fonts) {
     manager.registerMenuCommand(font.family, () => {
       manager.setValue('family', font.family)
-      toggle(options(font))
+      toggle({ ...options(font), update: update() })
     })
   }
   const registerOkurigana = (): void => manager.registerMenuCommand(okurigana ? menu.okuriganaOn : menu.okuriganaOff, () => {
@@ -80,7 +87,7 @@ function start(
   }, { id: 'okurigana', autoClose: false })
   registerOkurigana()
   if (/^ja(?:-|$)/i.test(document.documentElement.lang))
-    toggle(options(saved))
+    toggle({ ...options(saved), update: update() })
 }
 
 export default defineEventHandler(async (event) => {
@@ -91,7 +98,7 @@ export default defineEventHandler(async (event) => {
   return `// ==UserScript==
 // @name         Furifont
 // @namespace    ${SITE}
-// @version      ${version}
+// @version      ${VERSION}
 // @description  Furigana on any page: Furifont turns on by itself on Japanese pages, and the menu switches family, turns it off, or turns okurigana readings (来る, 来ない) off.
 // @homepageURL  ${SITE}
 // @downloadURL  ${SITE}/furifont.user.js
@@ -107,7 +114,7 @@ export default defineEventHandler(async (event) => {
 
 (() => {
 ${engine}
-;(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, Furifont.toggleFurifont, ${JSON.stringify(fonts)}, ${JSON.stringify(SITE_PAIRS_URL)}, ${JSON.stringify(TOASTS)}, ${JSON.stringify(MENUS)}, ${detectLocale})
+;(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, Furifont.toggleFurifont, ${JSON.stringify(fonts)}, ${JSON.stringify(SITE_PAIRS_URL)}, ${JSON.stringify({ version: VERSION, href: `${SITE}/furifont.user.js` })}, ${JSON.stringify(TOASTS)}, ${JSON.stringify(MENUS)}, ${detectLocale})
 })()
 `
 })
