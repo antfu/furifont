@@ -28,10 +28,17 @@ export interface CompileProgress {
   total: number | null
 }
 
+/** A version the font's revision can carry: `major.minor.patch`, minor below 10 and patch below 100. */
+export const FONT_VERSION = /^(\d+)\.(\d)\.(\d{1,2})$/
+
 export interface CompileOptions {
   plan: Plan
   /** The base font, OpenType or TrueType. */
   base: Uint8Array
+  /** The font's version, matching {@link FONT_VERSION}: `0.1.2` is `Version 0.102`. */
+  version: string
+  /** Written as the font's modification time: the same date and inputs give the same bytes. */
+  date: Date
   /** Loads hb-subset, which a preview's plan (one with `subset`) needs. */
   subsetWasm: SubsetWasm
   onProgress?: (progress: CompileProgress) => void
@@ -221,8 +228,8 @@ class NewGlyphs {
     }
   }
 
-  /** Writes the outlines, metrics, variations, glyph count and names into the font's tables. */
-  write(names: FontNames, glyphNames: string[], peaks: number[][]): void {
+  /** Writes the outlines, metrics, variations, glyph count, names, revision and date into the font's tables. */
+  write(names: FontNames, glyphNames: string[], peaks: number[][], revision: string, date: Date): void {
     const { tables } = this
     const maxp = tables.get('maxp')!.slice()
     view(maxp).setUint16(4, this.baseCount + this.horizontal.length)
@@ -234,8 +241,9 @@ class NewGlyphs {
       this.writeTrueType(this.glyf!, maxp, peaks)
     }
     tables.set('maxp', maxp)
-    // LONGDATETIME: seconds since 1904.
-    view(this.head).setBigUint64(28, BigInt(Math.floor(Date.now() / 1000) + 2082844800))
+    // Fixed 16.16, then LONGDATETIME: seconds since 1904.
+    view(this.head).setInt32(4, Math.round(Number(revision) * 0x10000))
+    view(this.head).setBigUint64(28, BigInt(Math.floor(date.getTime() / 1000) + 2082844800))
     tables.set('head', this.head)
     const hmtx = appendMetrics(tables.get('hmtx')!, tables.get('hhea')!, this.baseCount, this.horizontal)
     tables.set('hmtx', hmtx.table)
@@ -263,9 +271,18 @@ function raiseAscender(tables: Map<string, Uint8Array>, top: number): void {
   tables.set('OS/2', os2)
 }
 
+/** `0.1.2` as OpenType writes a revision, with three decimals: `0.102`. */
+function revisionOf(version: string): string {
+  const [, major, minor, patch] = FONT_VERSION.exec(version) ?? []
+  if (!patch)
+    throw new Error(`version ${version} is not major.minor.patch with a minor below 10 and a patch below 100`)
+  return `${major}.${minor}${patch.padStart(2, '0')}`
+}
+
 /** Draws the plan's glyphs into the base font, compiles its rules, and checks the result with HarfBuzz. */
 export async function buildFont(options: CompileOptions): Promise<BuiltFont> {
   const { plan, onProgress } = options
+  const revision = revisionOf(options.version)
   // Yielding between steps lets a server send the progress, or a page show it, while a big font builds.
   const progress = async (step: CompileProgress['step'], done: number | null = null, total: number | null = null): Promise<void> => {
     onProgress?.({ step, done, total })
@@ -300,8 +317,8 @@ export async function buildFont(options: CompileOptions): Promise<BuiltFont> {
 
   const fontName = fontNames(tables.get('name')!, plan.names.family)
   const fvar = tables.get('fvar')
-  tables.set('name', renameFont(tables.get('name')!, fontName, plan.names.description, fvar ? instancePostScriptNames(fvar, tables.get('name')!, fontName) : []))
-  glyphs.write(fontName, names, masters.map(m => m.peak))
+  tables.set('name', renameFont(tables.get('name')!, fontName, revision, plan.names.description, fvar ? instancePostScriptNames(fvar, tables.get('name')!, fontName) : []))
+  glyphs.write(fontName, names, masters.map(m => m.peak), revision, options.date)
   raiseAscender(tables, Math.ceil(em[1] + (plan.metrics.rubyGap + plan.metrics.rubyScale) * upm))
 
   await progress('save')

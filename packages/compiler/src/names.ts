@@ -9,8 +9,8 @@ interface NameRecord {
 }
 
 const RIBBI = new Set(['Regular', 'Bold', 'Italic', 'Bold Italic'])
-/** The family and style names Furifont rewrites. */
-const REPLACED = new Set([1, 2, 3, 4, 6, 10, 16, 17])
+/** The names Furifont rewrites. */
+const REPLACED = new Set([1, 2, 3, 4, 5, 6, 10, 16, 17])
 
 function readNames(table: Uint8Array): NameRecord[] {
   const d = view(table)
@@ -81,18 +81,18 @@ export function instancePostScriptNames(fvar: Uint8Array, table: Uint8Array, nam
 }
 
 /**
- * Replaces the family and style names, and the `extra` ones by ID; a style
- * beyond the four RIBBI ones gets typographic names.
+ * Replaces the family, style and version names, and the `extra` ones by ID; a
+ * style beyond the four RIBBI ones gets typographic names.
  */
-export function renameFont(table: Uint8Array, names: FontNames, description: string, extra: [number, string][]): Uint8Array {
+export function renameFont(table: Uint8Array, names: FontNames, revision: string, description: string, extra: [number, string][]): Uint8Array {
   const { family, style, full, postScript } = names
   const ribbi = RIBBI.has(style)
-  const version = (nameOf(table, 5) ?? 'Version 1.000').split(';')[0]!.replace(/^Version /, '')
   const entries: [number, string][] = [
     [1, ribbi ? family : full],
     [2, ribbi ? style : 'Regular'],
-    [3, `${version};${postScript}`],
+    [3, `${revision};${postScript}`],
     [4, full],
+    [5, `Version ${revision}`],
     [6, postScript],
     [10, description],
   ]

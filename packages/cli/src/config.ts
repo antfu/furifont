@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { FONT_VERSION } from '@furifont/compiler'
 import { DEFAULTS, PlanOptionsSchema, withNfWindow } from '@furifont/core'
 import * as v from 'valibot'
 
@@ -14,6 +15,11 @@ export const FurifontConfigSchema = withNfWindow(v.object({
   base: v.optional(v.pipe(v.string(), v.nonEmpty()), DEFAULTS.build.base),
   /** The fonts a build writes, beside the selector reference `.ivs.json`. */
   formats: v.optional(v.pipe(v.array(v.picklist(FONT_FORMATS)), v.minLength(1)), () => [...DEFAULTS.build.formats]),
+  /**
+   * The font's version, `major.minor.patch` (minor below 10, patch below 100).
+   * Left out, it is Furifont's own at build time, so a saved config does not pin it.
+   */
+  version: v.optional(v.pipe(v.string(), v.regex(FONT_VERSION, 'version must be major.minor.patch, with a minor below 10 and a patch below 100'))),
 }))
 export type FurifontConfig = v.InferOutput<typeof FurifontConfigSchema>
 export type FurifontConfigInput = v.InferInput<typeof FurifontConfigSchema>

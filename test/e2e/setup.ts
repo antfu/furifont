@@ -28,7 +28,7 @@ export default async function setup(): Promise<void> {
   const compile = async (path: string): Promise<{ font: Uint8Array, ivs: PlanReport['ivs'] }> => {
     const base = await readFile(path)
     const { plan, report } = planFont(resolveOptions(), new Set(readFontInfo(base).codepoints))
-    return { font: (await compileFont({ plan, base, subsetWasm })).font, ivs: report.ivs }
+    return { font: (await compileFont({ plan, base, subsetWasm, version: '0.0.0', date: new Date(0) })).font, ivs: report.ivs }
   }
   const [{ font, ivs }, variable] = await Promise.all([compile(FIXTURE_FONT), compile(fixture('SourceHanSansJP-VF-Subset.ttf'))])
   await mkdir(cache(''), { recursive: true })
