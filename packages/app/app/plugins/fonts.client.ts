@@ -6,8 +6,8 @@
  */
 export default defineNuxtPlugin(() => {
   const base = useRuntimeConfig().app.baseURL
-  const css = FAMILIES.map(({ family, stem }) =>
-    `@font-face{font-family:"${family}";font-display:swap;font-weight:250 900;ascent-override:88%;descent-override:12%;line-gap-override:0%;src:url("${base}fonts/${stem}VF.woff2") format("woff2")}`,
+  const css = FAMILIES.map(family =>
+    `@font-face{font-family:"${family.family}";font-display:swap;font-weight:250 900;ascent-override:88%;descent-override:12%;line-gap-override:0%;src:url("${base}${fontPath(family, 'woff2')}") format("woff2")}`,
   ).join('\n')
   useHead({ style: [{ key: 'furifont-faces', innerHTML: css }] })
 })

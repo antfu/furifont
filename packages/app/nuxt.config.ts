@@ -1,6 +1,7 @@
 import type { NuxtConfig } from 'nuxt/schema'
 import { fileURLToPath } from 'node:url'
 import { addVitePlugin } from '@nuxt/kit'
+import { version } from '../../package.json'
 
 /**
  * In `nuxt dev`, serve the studio's RPC from the CLI's own definition (built:
@@ -43,8 +44,8 @@ export default defineNuxtConfig({
   nitro: {
     // Always plain static files in .output/public: on Vercel, Nitro would otherwise write its own output format elsewhere.
     preset: 'static',
-    // The prebuilt fonts are committed at the repository root on release.
-    publicAssets: [{ dir: fileURLToPath(new URL('../../fonts', import.meta.url)), baseURL: 'fonts' }],
+    // The prebuilt fonts of this version's release, as `scripts/fetch-fonts.ts` downloads them.
+    publicAssets: [{ dir: fileURLToPath(new URL(`../../.cache/fonts/v${version}`, import.meta.url)), baseURL: 'fonts' }],
     // Only the okurigana pairs, which `dict:update` packs the way pages read them: the rest of the data is megabytes.
     serverAssets: [
       { baseName: 'dictionary', dir: fileURLToPath(new URL('../dictionary/data', import.meta.url)), pattern: 'okurigana.json' },

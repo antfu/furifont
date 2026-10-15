@@ -11,10 +11,10 @@ export function useOkurigana(family: MaybeRefOrGetter<Family>) {
   const base = useRuntimeConfig().app.baseURL
   const reader = shallowRef<OkuriganaReader>()
   async function load(): Promise<void> {
-    const { stem } = toValue(family)
-    const loaded = await loadOkuriganaReader({ readings: `${base}fonts/${stem}VF.ivs.json`, pairs: `${base}okurigana.json` })
+    const picked = toValue(family)
+    const loaded = await loadOkuriganaReader({ readings: `${base}${fontPath(picked, 'ivs.json')}`, pairs: `${base}okurigana.json` })
     // A newer pick of family wins.
-    if (stem === toValue(family).stem)
+    if (picked.stem === toValue(family).stem)
       reader.value = loaded
   }
   onMounted(load)

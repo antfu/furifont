@@ -57,7 +57,7 @@ packages/dictionary/data/{dictionary,places,okurigana,jlpt}.json (committed, one
 createFontPlanner(dictionary)(options, coverage[, previewText]) -> { plan, report }
         |                                     ^ codepoints of the base font (readFontInfo)
         v
-compileFont({ plan, base, subsetWasm })  ->  font  ->  HarfBuzz smoke checks
+compileFont({ plan, base, subsetWasm, version, date })  ->  font  ->  HarfBuzz smoke checks
         |
         v
 toWoff2(font, brotli)
@@ -85,7 +85,8 @@ so that a web studio can plan and compile without a server. They use no Node
 APIs, and ESLint rejects `node:` imports in their sources.
 
 - The compiler takes and returns bytes: `readFontInfo(font)`,
-  `compileFont({ plan, base, subsetWasm })` and `toWoff2(font, brotli)`.
+  `compileFont({ plan, base, subsetWasm, version, date })` and `toWoff2(font, brotli)`.
+  The build date is an input like the rest, so the same inputs give the same bytes.
 - The two things that differ by platform are passed in: `subsetWasm` loads
   harfbuzzjs' hb-subset module, which previews need, and `brotli` compresses
   WOFF2. `@furifont/compiler/node` has both for Node, with Brotli in font mode
@@ -521,22 +522,34 @@ own mount.
 ## Release
 
 A human runs `pnpm release`. It builds the packages, bumps every version, and
-rebuilds the four variable fonts into `fonts/` as WOFF2 with their `.ivs.json`.
-The bump and the fonts land in one commit, so each tag carries the fonts the
-site serves. Git keeps no OpenType and no static weights: all twelve fonts in
-both formats would add over 300 MB to the history per release, against 27 MB.
+commits, tags and pushes the bump. Git keeps no fonts: each change to them would
+add the whole files to the history, about 27 MB for the site's alone.
 
 The tag runs `release.yml`:
 
 - npm publishing and the changelog, through `sxzz/workflows`;
 - all eight fonts, Regular as OpenType and WOFF2 and the variable
-  fonts as TrueType and WOFF2, built again from the tagged code and attached
-  to the GitHub Release with the OFL and the data license.
+  fonts as TrueType and WOFF2, built from the tagged code and attached
+  to the GitHub Release with the OFL and the data license;
+- a redeploy of the site, through a Vercel deploy hook.
+
+Each font carries the version it was released with: `0.1.2` is `head.fontRevision`
+0.102 and the name `Version 0.102`, so an operating system that caches installed
+fonts by version takes a new one. Its `head.modified` is the tag's commit time
+(`SOURCE_DATE_EPOCH`), so the same tag builds the same bytes. A font built with
+the CLI carries Furifont's version, or the config's `version`.
 
 The site is deployed by Vercel (`vercel.json`) on every push to `main`, at
-https://furifont.antfu.me. Its build needs no font build: it serves `fonts/`
-as committed. So a change to the `.ivs.json` format reaches the
-site only with the next release.
+https://furifont.antfu.me. Its build compiles no font: `scripts/fetch-fonts.ts`
+downloads the variable WOFF2s and their `.ivs.json` from the release of the
+version in `package.json`, and the site serves them at `/fonts`. Vercel's build
+of the release commit runs before CI has attached the fonts and fails, leaving
+the last deploy up; the deploy hook builds it again once they are there.
+
+The site's pages, the bookmarklet and the userscript ask for
+`/fonts/<file>?v=<version>`, which the site serves as immutable: a font and its
+`.ivs.json` change together, with the version. Without `?v=` a browser checks
+the file on every load.
 
 ## Licensing
 

@@ -134,7 +134,7 @@ async function openElsewhere(page: Page, lang: string, csp?: string): Promise<vo
   const readings = await readFile(TEST_READINGS)
   const pairs = await (await page.request.get(new URL('/okurigana.json', url).href)).body()
   const cors = { 'access-control-allow-origin': '*' }
-  await page.route('https://furifont.antfu.me/fonts/**', route => route.request().url().endsWith('.ivs.json')
+  await page.route('https://furifont.antfu.me/fonts/**', route => new URL(route.request().url()).pathname.endsWith('.ivs.json')
     ? route.fulfill({ body: readings, contentType: 'application/json', headers: cors })
     : route.fulfill({ body: font, contentType: 'font/otf', headers: cors }))
   await page.route('https://furifont.antfu.me/okurigana.json', route => route.fulfill({ body: pairs, contentType: 'application/json', headers: cors }))
@@ -342,7 +342,7 @@ test('offers the okurigana readings in the bookmarklet, on unless turned off', a
 test('reads kanji by their okurigana in the playground as it is edited, and turns that off', async ({ page }) => {
   // The test font's reading list stands in for the prebuilt one's, so the salts are those verbSalts counts.
   const readings = await readFile(TEST_READINGS)
-  await page.route('**/fonts/FurifontSansVF.ivs.json', route => route.fulfill({ body: readings, contentType: 'application/json' }))
+  await page.route(url => url.pathname.endsWith('/fonts/FurifontSansVF.ivs.json'), route => route.fulfill({ body: readings, contentType: 'application/json' }))
   await page.goto(new URL('/#/', url).href)
   const section = page.locator('section', { has: page.getByRole('heading', { name: 'Try it' }) })
   const text = section.getByRole('textbox')

@@ -29,7 +29,8 @@ jobs:
         with:
           path: ~/.cache/furifont
           key: source-han-jp-vf
-      - run: pnpm fonts
+      # The tag's commit time stamps the fonts, so the same tag builds the same bytes.
+      - run: SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) pnpm fonts
       - uses: actions/upload-artifact@v4
         with:
           name: fonts
@@ -48,3 +49,7 @@ jobs:
       - run: gh release upload "$GITHUB_REF_NAME" fonts/* --clobber --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ github.token }}
+      # The site's build downloads these fonts: Vercel's build of the release commit ran before they were here.
+      - run: curl --fail --silent --show-error --request POST "$VERCEL_DEPLOY_HOOK"
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
