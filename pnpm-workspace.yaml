@@ -141,6 +141,7 @@ catalogs:
   inlined:
     '@antfu/utils': ^9.3.0
   prod:
+    '@upstash/redis': ^1.39.0
     brotli-wasm: ^3.0.1
     cac: ^7.1.0
     devframe: ^1.2.5

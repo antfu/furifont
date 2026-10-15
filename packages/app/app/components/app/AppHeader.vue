@@ -2,9 +2,11 @@
 const { dark, toggle } = useDarkMode()
 
 const links = [
-  { to: '/', label: 'nav.demo' },
-  { to: '/docs', label: 'nav.docs' },
-  { to: '/customize', label: 'nav.customize' },
+  { to: '/', label: 'nav.demo', class: '' },
+  { to: '/docs', label: 'nav.docs', class: '' },
+  { to: '/customize', label: 'nav.customize', class: '' },
+  // Phones have no room for it: the footer and the notice link there too.
+  { to: '/report', label: 'nav.report', class: 'hidden sm:block' },
 ] as const
 </script>
 
@@ -22,6 +24,7 @@ const links = [
           v-for="link in links"
           :key="link.to"
           :to="link.to"
+          :class="link.class"
           class="focus-ring whitespace-nowrap px-1 py-1 font-mono text-xs uppercase tracking-[0.04em] color-muted transition-colors hover:color-base sm:px-2 sm:tracking-[0.12em]"
           active-class="!color-base"
         >

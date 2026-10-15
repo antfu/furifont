@@ -7,6 +7,7 @@
     "demo": "简介",
     "docs": "文档",
     "customize": "自定义",
+    "report": "报告",
     "github": "GitHub 仓库",
     "light": "切换到浅色",
     "dark": "切换到深色",
@@ -18,6 +19,7 @@
     "fonts": "字体采用{license}，源自 Source Han Sans 和 Source Han Serif。",
     "data": "读音数据来自 {jmdict}、{jmnedict}、{kanjidic}（EDRDG）和 {furigana}，采用 CC BY-SA 4.0 许可。",
     "code": "工具采用 MIT 许可。",
+    "report": "报告错误读音",
     "source": "GitHub 上的源代码",
     "made": "作者：{author}",
     "supported": "由 {vercel} 和{sponsors}支持",
@@ -132,6 +134,46 @@
     "kanji": "汉字 / {count}",
     "copyWith": "复制带 {selector} 的「{text}」",
     "default": "默认"
+  },
+  "report": {
+    "eyebrow": "报告",
+    "title": "报告错误读音",
+    "body": "如果 Furifont 显示了错误的假名注音，或该有注音的词没有注音，请告诉我们这些词和正确的读音。可以一次报告多个词。我们会根据报告修正词典。",
+    "link": "报告错误读音。",
+    "sections": {
+      "words": "词语 / {count}",
+      "environment": "出现的位置",
+      "note": "其他"
+    },
+    "word": "词语",
+    "expected": "正确读音",
+    "shown": "显示的读音（可选）",
+    "context": "句子（可选）",
+    "remove": "删除 {word}",
+    "add": "添加词语",
+    "environment": "环境",
+    "environments": {
+      "playground": "本站的试用区",
+      "website": "其他网站",
+      "desktop": "桌面应用",
+      "mobile": "移动应用"
+    },
+    "family": "字体",
+    "url": "页面地址（可选）",
+    "app": "应用（可选）",
+    "appPlaceholder": {
+      "desktop": "Word、Pages、VS Code",
+      "mobile": "备忘录、Kindle"
+    },
+    "os": "系统（可选）",
+    "notePlaceholder": "任何有帮助的信息，例如浏览器，或读音错误的原因。",
+    "send": "发送报告",
+    "sending": "发送中",
+    "sent": "谢谢，我们已收到你的报告。",
+    "again": "继续报告",
+    "failed": "报告发送失败，请稍后再试。",
+    "limited": "你在短时间内发送了太多报告，请一小时后再试。",
+    "privacy": "我们会保存你填写的内容、字体版本和浏览器名称，不会保存你的 IP 地址。"
   },
   "docs": {
     "install": "安装字体",
