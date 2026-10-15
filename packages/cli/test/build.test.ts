@@ -36,6 +36,11 @@ describe('loadConfig', () => {
     await expect(loadConfig(cwd, 'bad.json')).rejects.toThrow(/bad\.json.*rubyScript/s)
   })
 
+  it('refuses a version that a font revision cannot carry', async () => {
+    await writeFile(join(cwd, 'version.json'), JSON.stringify({ version: '1.10.0' }))
+    await expect(loadConfig(cwd, 'version.json')).rejects.toThrow(/version\.json.*version/s)
+  })
+
   it('refuses a config that builds no format at all', async () => {
     await writeFile(join(cwd, 'none.json'), JSON.stringify({ formats: [] }))
     await expect(loadConfig(cwd, 'none.json')).rejects.toThrow(/none\.json.*formats/s)

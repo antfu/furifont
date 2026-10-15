@@ -33,7 +33,7 @@ export const DEFAULTS = {
   },
 } as const
 
-/** The prebuilt fonts: the release's, and the site's subset of them. */
+/** The prebuilt fonts, which each release carries; the site serves their variable WOFF2s. */
 export const PREBUILT = {
   /** Each Source Han face in each ruby script. The first is the default family. */
   fonts: [
@@ -54,17 +54,11 @@ export const PREBUILT = {
     style: 'VF',
     weights: [250, 900],
   },
-  /** What `fonts/` holds, which git keeps and the site serves: the variable WOFF2s. */
-  site: {
-    styles: ['VF'],
-    formats: ['woff2'],
-  },
   /** Options set on every prebuilt font over the defaults above, such as `{ nfMax: 24 }`. */
   options: {},
 } as const satisfies {
   fonts: readonly { family: string, base: string, face: 'sans' | 'serif', rubyScript: 'hiragana' | 'hepburn' }[]
   weights: readonly { style: string, weight: number }[]
   variable: { style: string, weights: readonly [number, number] }
-  site: { styles: readonly string[], formats: readonly ('otf' | 'woff2')[] }
   options: Omit<PlanOptionsInput, 'family' | 'rubyScript'>
 }

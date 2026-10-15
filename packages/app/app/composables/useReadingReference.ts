@@ -14,7 +14,7 @@ export function useReadingReference() {
   const error = ref<string>()
   onMounted(async () => {
     try {
-      const response = await fetch(`${base}fonts/${FAMILIES[0]!.stem}VF.ivs.json`)
+      const response = await fetch(`${base}${fontPath(FAMILIES[0]!, 'ivs.json')}`)
       if (!response.ok)
         throw new Error(`${response.status} ${response.statusText}`)
       reference.value = await response.json()

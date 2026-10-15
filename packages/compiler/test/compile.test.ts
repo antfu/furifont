@@ -10,6 +10,8 @@ import { brotli, subsetWasm } from '../src/node'
 
 const fixture = (name: string): Promise<Buffer> => readFile(new URL(`./fixtures/${name}`, import.meta.url))
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
+const VERSION = '0.1.2'
+const DATE = new Date('2026-10-15T00:00:00Z')
 
 const dictionary: Dictionary = {
   sources: { fixture: '1' },
@@ -40,7 +42,7 @@ interface Built {
 async function build(file: string, previewText?: string, options?: PlanOptionsInput): Promise<Built> {
   const base = await fixture(file)
   const { plan, report } = planFont(resolveOptions(options), new Set(readFontInfo(base).codepoints), previewText)
-  const { font, glyphNames } = await compileFont({ plan, base, subsetWasm })
+  const { font, glyphNames } = await compileFont({ plan, base, subsetWasm, version: VERSION, date: DATE })
   return { plan, readings: report.ivs.kanji, names: glyphNames, otf: font, font: new hb.Font(new hb.Face(new hb.Blob(font))) }
 }
 
@@ -170,10 +172,20 @@ describe.each([
     expect(woff2Stream(woff2).equals(Buffer.concat(tables))).toBe(true)
   })
 
+  it('carries its version and date, so the same build gives the same bytes', async () => {
+    const face = new hb.Face(new hb.Blob(built.otf))
+    const head = Buffer.from(face.referenceTable('head')!)
+    expect(head.readInt32BE(4) / 0x10000).toBeCloseTo(0.102, 3)
+    expect(new Date((Number(head.readBigUInt64BE(28)) - 2082844800) * 1000)).toEqual(DATE)
+    expect(face.getName(5, 'en')).toBe('Version 0.102')
+    expect(face.getName(3, 'en')).toMatch(/^0\.102;/)
+    expect(Buffer.from((await build(file)).otf).equals(Buffer.from(built.otf))).toBe(true)
+  })
+
   it('leaves the base font it was given as it was, even as a Buffer', async () => {
     const base = await fixture(file)
     const original = Buffer.from(base)
-    await compileFont({ plan: built.plan, base, subsetWasm })
+    await compileFont({ plan: built.plan, base, subsetWasm, version: VERSION, date: DATE })
     expect(base.equals(original)).toBe(true)
   })
 })

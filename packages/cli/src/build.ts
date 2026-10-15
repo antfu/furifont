@@ -9,6 +9,7 @@ import { BASE_FONTS, compileFont, readFontInfo, toWoff2 } from '@furifont/compil
 import { brotli, subsetWasm } from '@furifont/compiler/node'
 import { createFontPlanner } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
+import pkg from '../package.json' with { type: 'json' }
 import { fetchBaseFont } from './base-fonts'
 
 export interface BuiltFile {
@@ -57,8 +58,14 @@ function fileStem(config: FurifontConfig, { style, variable }: BuiltFont): strin
   return variable ? family : `${family}-${style.replaceAll(' ', '')}`
 }
 
-async function compileOpenType({ plan, base }: { plan: Plan, base: string }, onProgress?: (p: CompileProgress) => void): Promise<BuiltFont> {
-  return compileFont({ plan, base: await readFile(base), subsetWasm, onProgress })
+/** The reproducible-builds convention: SOURCE_DATE_EPOCH, in seconds, stands for now. */
+function buildDate(): Date {
+  const epoch = process.env.SOURCE_DATE_EPOCH
+  return epoch ? new Date(Number(epoch) * 1000) : new Date()
+}
+
+async function compileOpenType({ plan, base }: { plan: Plan, base: string }, config: FurifontConfig, onProgress?: (p: CompileProgress) => void): Promise<BuiltFont> {
+  return compileFont({ plan, base: await readFile(base), subsetWasm, version: config.version ?? pkg.version, date: buildDate(), onProgress })
 }
 
 /**
@@ -67,7 +74,7 @@ async function compileOpenType({ plan, base }: { plan: Plan, base: string }, onP
  */
 export async function buildFont(config: FurifontConfig, options: { cwd: string, outDir: string, onProgress?: (p: CompileProgress) => void }): Promise<BuildResult> {
   const planned = await planWithBase(config, options.cwd)
-  const built = await compileOpenType(planned, options.onProgress)
+  const built = await compileOpenType(planned, config, options.onProgress)
   const { font } = built
   const outputs: [string, Uint8Array][] = []
   if (config.formats.includes('otf'))
@@ -91,7 +98,7 @@ export async function buildFont(config: FurifontConfig, options: { cwd: string, 
 /** Compiles a small font covering only `text`, for a live preview. */
 export async function previewFont(config: FurifontConfig, text: string, cwd: string): Promise<{ font: Uint8Array, report: PlanReport, variable: boolean }> {
   const planned = await planWithBase(config, cwd, text)
-  const { font, variable } = await compileOpenType(planned)
+  const { font, variable } = await compileOpenType(planned, config)
   return { font, report: planned.report, variable }
 }
 
@@ -110,6 +117,6 @@ const FAST_WOFF2_RATIO = 0.885
 
 /** Compiles the OpenType font `config` builds, and estimates its WOFF2 from a fast Brotli pass. */
 export async function estimateFont(config: FurifontConfig, cwd: string): Promise<SizeEstimate> {
-  const { font } = await compileOpenType(await planWithBase(config, cwd))
+  const { font } = await compileOpenType(await planWithBase(config, cwd), config)
   return { otf: font.length, woff2: Math.round((await brotli(font, 8)).length * FAST_WOFF2_RATIO) }
 }

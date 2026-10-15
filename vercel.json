@@ -2,7 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "npx pnpm@12.8.1 install --frozen-lockfile",
-  "buildCommand": "npx pnpm@12.8.1 -F @furifont/app run generate",
+  "buildCommand": "npx pnpm@12.8.1 fonts:fetch && npx pnpm@12.8.1 -F @furifont/app run generate",
   "outputDirectory": "packages/app/.output/public",
+  "headers": [
+    {
+      "source": "/fonts/(.*)",
+      "has": [{ "type": "query", "key": "v" }],
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ],
   "rewrites": [{ "source": "/(.*)", "destination": "/200.html" }]
 }

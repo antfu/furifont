@@ -28,7 +28,7 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 
 | Command | |
 | --- | --- |
-| `pnpm dev` | The app on `localhost:3000`, with the studio on live RPC. Run `pnpm build` again after you change a package. |
+| `pnpm dev` | The app on `localhost:3000`, with the studio on live RPC and the fonts of this version's release, downloaded once into `.cache/fonts`. Run `pnpm build` again after you change a package. |
 | `pnpm test` | Unit and font tests. |
 | `pnpm test:e2e` | Rendering in Chromium, Firefox and WebKit, and the studio. Run `pnpm build` first. |
 | `pnpm fonts` | All eight prebuilt fonts, OpenType and WOFF2, into `dist/fonts`, as the release builds them. It takes about 2 minutes. |
@@ -56,11 +56,12 @@ The interface is in English, Japanese, Simplified Chinese and Traditional Chines
 
 ## Releases
 
-Maintainers release with `pnpm release`. It builds the packages, asks for the new version, and rebuilds the site's fonts into `fonts/` (the four variable WOFF2s and their `.ivs.json`, about a minute). The bump and the fonts go into one commit and tag, which it pushes. `fonts/` changes only this way: don't commit fonts you built yourself.
+Maintainers release with `pnpm release`. It builds the packages, asks for the new version, and commits, tags and pushes the bump. Git keeps no fonts.
 
 The tag then makes CI:
 
 - publish the npm packages;
-- build all eight fonts and attach them to the GitHub Release.
+- build all eight fonts, stamped with the version and the tag's commit time, and attach them to the GitHub Release;
+- redeploy the site through the `VERCEL_DEPLOY_HOOK` secret.
 
-Vercel deploys the site from `main` on every push, with the fonts in `fonts/`.
+Vercel deploys the site from `main` on every push. Its build downloads the variable WOFF2s and their `.ivs.json` from the release of the version in `package.json` (`pnpm fonts:fetch`), so its build of the release commit fails until CI has attached them and redeploys. `pnpm dev` downloads them the same way.

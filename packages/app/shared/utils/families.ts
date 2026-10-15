@@ -1,4 +1,5 @@
 import { PREBUILT } from '@furifont/core'
+import { version } from '../../../../package.json'
 
 export interface Family {
   family: string
@@ -26,13 +27,21 @@ export function releaseUrl(file: string): string {
   return `${REPOSITORY}/releases/latest/download/${file}`
 }
 
-export function siteFontUrl(family: Family): string {
-  return `${SITE}/fonts/${family.stem}VF.woff2`
+/**
+ * A family's variable font (`woff2`) or its reading lists (`ivs.json`, which say
+ * what `salt` n picks), relative to the site. The version busts caches: the site
+ * serves these immutable, so a font and its readings change together.
+ */
+export function fontPath(family: Family, ext: 'woff2' | 'ivs.json'): string {
+  return `fonts/${family.stem}VF.${ext}?v=${version}`
 }
 
-/** The reading lists of a family's variable font, which say what `salt` n picks. */
+export function siteFontUrl(family: Family): string {
+  return `${SITE}/${fontPath(family, 'woff2')}`
+}
+
 export function siteReadingsUrl(family: Family): string {
-  return `${SITE}/fonts/${family.stem}VF.ivs.json`
+  return `${SITE}/${fontPath(family, 'ivs.json')}`
 }
 
 /** The okurigana pairs of one kanji, for pages that pick its reading with `salt`. */

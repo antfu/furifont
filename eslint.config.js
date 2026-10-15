@@ -9,7 +9,6 @@ export default antfu(
     antislop: true,
     ignores: [
       'packages/dictionary/data/**',
-      'fonts/**',
       '**/test/fixtures/**',
       '**/.nuxt/**',
       '**/.output/**',
