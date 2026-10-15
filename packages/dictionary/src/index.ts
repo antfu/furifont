@@ -11,21 +11,23 @@ const DataSchema = v.object({
 
 const PlacesSchema = v.array(v.tuple([v.string(), v.string()]))
 const JlptSchema = v.array(v.tuple([v.string(), v.string(), v.picklist([1, 2, 3, 4, 5])]))
+const ExamplesSchema = v.array(v.tuple([v.string(), v.string(), v.pipe(v.number(), v.integer(), v.minValue(1))]))
 
 /**
  * A data file as a JSON module, which Node loads and bundlers split into a
  * lazy chunk. The path is a template so that TypeScript leaves the 11 MB file
  * untyped rather than inferring it.
  */
-async function readData<T extends v.GenericSchema>(name: 'dictionary' | 'places' | 'jlpt', schema: T): Promise<v.InferOutput<T>> {
+async function readData<T extends v.GenericSchema>(name: 'dictionary' | 'places' | 'jlpt' | 'examples', schema: T): Promise<v.InferOutput<T>> {
   const { default: data } = await import(`../data/${name}.json`, { with: { type: 'json' } })
   return v.parse(schema, data)
 }
 
-/** Loads the compiled dictionary: JMdict and JMnedict place names, aligned by JmdictFurigana, with KANJIDIC2's on'yomi and JLPT levels. */
+/** Loads the compiled dictionary: JMdict and JMnedict place names, aligned by JmdictFurigana, with KANJIDIC2's on'yomi, JLPT levels and uses in Tatoeba's sentences. */
 export async function loadDictionary(): Promise<Dictionary> {
-  const [data, places, jlpt] = await Promise.all([readData('dictionary', DataSchema), readData('places', PlacesSchema), readData('jlpt', JlptSchema)])
+  const [data, places, jlpt, examples] = await Promise.all([readData('dictionary', DataSchema), readData('places', PlacesSchema), readData('jlpt', JlptSchema), readData('examples', ExamplesSchema)])
   const levels = new Map(jlpt.map(([form, furigana, level]) => [`${form}|${furigana}`, level]))
+  const uses = new Map(examples.map(([form, furigana, n]) => [`${form}|${furigana}`, n]))
   return {
     sources: data.sources,
     onyomi: data.onyomi,
@@ -34,6 +36,7 @@ export async function loadDictionary(): Promise<Dictionary> {
     places: places.map(([form, furigana]) => ({ form, furigana })),
     entries: data.entries.map(([form, furigana, nf, priority, order, conjugates]) => {
       const level = levels.get(`${form}|${furigana}`)
+      const n = uses.get(`${form}|${furigana}`)
       return {
         form,
         furigana,
@@ -42,6 +45,7 @@ export async function loadDictionary(): Promise<Dictionary> {
         order,
         ...(conjugates && { conjugatesReading: true }),
         ...(level && { jlpt: level }),
+        ...(n && { examples: n }),
       }
     }),
   }

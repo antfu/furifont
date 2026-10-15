@@ -10,7 +10,7 @@ const { report } = planFont(resolveOptions(), coverage)
 
 describe('compiled dictionary', () => {
   it('records the sources it was compiled from', () => {
-    expect(Object.keys(dictionary.sources)).toEqual(['JMdict', 'JMnedict', 'JmdictFurigana', 'KANJIDIC2', 'JLPT'])
+    expect(Object.keys(dictionary.sources)).toEqual(['JMdict', 'JMnedict', 'JmdictFurigana', 'KANJIDIC2', 'JLPT', 'Tatoeba'])
     expect(dictionary.entries.length).toBeGreaterThan(100_000)
   })
 
@@ -50,6 +50,15 @@ describe('compiled dictionary', () => {
     expect(known.ivs.words['今日']).toBeUndefined()
     expect(known.ivs.lone['私']).toBeUndefined()
     expect(report.ivs.lone['私']).toBe('わたし')
+  })
+
+  it('counts the uses of each reading in the example sentences, as the font sees them', () => {
+    const uses = (form: string, furigana: string): number | undefined => dictionary.entries.find(e => e.form === form && e.furigana === furigana)?.examples
+    expect(uses('今日', '0-1:きょう')).toBeGreaterThan(uses('今日', '0:こん;1:にち') ?? 0)
+    expect(uses('資金不足', '0:し;1:きん;2:ぶ;3:そく')).toBeGreaterThanOrEqual(3)
+    // The sentences use 為る thousands of times, always written する.
+    expect(dictionary.entries.some(e => e.form === '為る')).toBe(true)
+    expect(uses('為る', '0:す')).toBeUndefined()
   })
 
   it('reads a kanji with its okurigana as one word', () => {

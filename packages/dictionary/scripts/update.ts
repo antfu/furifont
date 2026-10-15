@@ -1,8 +1,9 @@
 /**
- * Downloads JMdict, JMnedict, their JmdictFurigana alignments, KANJIDIC2 and
- * the JLPT word lists, and compiles them into data/dictionary.json,
- * data/places.json, data/okurigana.json (packed by run of kanji, as pages
- * read it) and data/jlpt.json, one entry per line so updates diff well.
+ * Downloads JMdict, JMnedict, their JmdictFurigana alignments, KANJIDIC2, the
+ * JLPT word lists and Tatoeba's example sentences, and compiles them into
+ * data/dictionary.json, data/places.json, data/okurigana.json (packed by run
+ * of kanji, as pages read it), data/jlpt.json and data/examples.json, one
+ * entry per line so updates diff well.
  *
  *   node scripts/update.ts
  */
@@ -14,6 +15,9 @@ import { formatPacked, packOkurigana } from '../src/pack.ts'
 const JMDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz'
 const JMNEDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMnedict.xml.gz'
 const KANJIDIC2 = 'http://www.edrdg.org/kanjidic/kanjidic2.xml.gz'
+/** Tatoeba's Japanese sentences with their words indexed to JMdict, as EDRDG distributes them. */
+const EXAMPLES = 'http://ftp.edrdg.org/pub/Nihongo/examples.utf.gz'
+const EXAMPLES_DATE = 'http://www.edrdg.org/examples/examples_date'
 const FURIGANA_RELEASE = 'https://api.github.com/repos/Doublevil/JmdictFurigana/releases/latest'
 /** Jonathan Waller's JLPT lists, tied to JMdict entries; pinned, as the lists no longer change. */
 const JLPT_VOCAB = '2025.08.01.0'
@@ -22,6 +26,7 @@ const OUTPUT = new URL('../data/dictionary.json', import.meta.url)
 const PLACES = new URL('../data/places.json', import.meta.url)
 const OKURIGANA = new URL('../data/okurigana.json', import.meta.url)
 const JLPT = new URL('../data/jlpt.json', import.meta.url)
+const EXAMPLES_OUTPUT = new URL('../data/examples.json', import.meta.url)
 
 const HAN = /\p{Script=Han}/u
 const ALL_HAN = /^\p{Script=Han}{2,}$/u
@@ -56,6 +61,7 @@ type Entry = [form: string, furigana: string, nf: number, priority: string, orde
 interface Word {
   entry: number
   form: string
+  reading: string
   furigana: string
   order: number
   common: boolean
@@ -116,7 +122,7 @@ function parseJmdict(xml: string, furigana: Map<string, string>, jlptLevels: Map
         if (conjugatesReading)
           row.push(1)
         entries.push(row)
-        words.push({ entry, form, furigana: aligned, order, common: tags.length > 0, classes })
+        words.push({ entry, form, reading, furigana: aligned, order, common: tags.length > 0, classes })
         const level = jlptLevels.get(`${seq}|${form}|${reading}`)
         if (level)
           jlpt.push([form, aligned, level])
@@ -124,6 +130,50 @@ function parseJmdict(xml: string, furigana: Map<string, string>, jlptLevels: Map
     }
   }
   return { entries, words, jlpt }
+}
+
+type ExampleEntry = [form: string, furigana: string, uses: number]
+
+/** `headword(reading)[sense]{as written}~`, where `(#seq)` names a JMdict entry rather than a reading. */
+const INDEXED_WORD = /^([^({[~]+)((?:\([^)]*\))*)(?:\[\d+\])?(?:\{([^}]*)\})?~?$/
+const hanOf = (text: string): string => text.replace(/\P{Script=Han}/gu, '')
+
+/**
+ * How often the sentences' `B:` lines use each word as JMdict spells it in
+ * kanji, by `form|reading`; `form|` where the line gives no reading, which
+ * it does when the form reads one way or as its first reading.
+ */
+function countUses(examples: string): Map<string, number> {
+  const uses = new Map<string, number>()
+  for (const line of examples.split('\n')) {
+    if (!line.startsWith('B: '))
+      continue
+    for (const word of line.slice(3).split(' ')) {
+      const [, form, notes, written = form] = INDEXED_WORD.exec(word) ?? []
+      // Only the spelling a font sees counts: 兎 written ウサギ is no use of 兎.
+      if (!form || !hanOf(form) || hanOf(form) !== hanOf(written!))
+        continue
+      const key = `${form}|${/\(([^)#][^)]*)\)/.exec(notes!)?.[1] ?? ''}`
+      uses.set(key, (uses.get(key) ?? 0) + 1)
+    }
+  }
+  return uses
+}
+
+/** Uses of each (form, reading) pair; a use with no reading counts only when the form's entries agree on their first one. */
+function compileExamples(examples: string, words: Word[]): ExampleEntry[] {
+  const uses = countUses(examples)
+  const firsts = new Map<string, Set<string>>()
+  for (const word of words.filter(w => w.order === 0))
+    getOrCreate(firsts, word.form).add(word.reading)
+  const counted = new Map<string, ExampleEntry>()
+  for (const { form, reading, furigana, order } of words) {
+    const implied = order === 0 && firsts.get(form)!.size === 1 ? uses.get(`${form}|`) ?? 0 : 0
+    const n = (uses.get(`${form}|${reading}`) ?? 0) + implied
+    if (n)
+      counted.set(`${form}|${furigana}`, [form, furigana, n])
+  }
+  return [...counted.values()]
 }
 
 const GODAN_ROWS: Record<string, string> = { う: 'わいうえお', く: 'かきくけこ', ぐ: 'がぎぐげご', す: 'さしすせそ', つ: 'たちつてと', ぬ: 'なにぬねの', ぶ: 'ばびぶべぼ', む: 'まみむめも', る: 'らりるれろ' }
@@ -335,18 +385,21 @@ function assetUrl(name: string): string {
   return asset.browser_download_url
 }
 
-console.log('Downloading JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT lists...')
-const [jmdict, jmnedict, furigana, namesFurigana, kanjidic, ...jlptLists] = await Promise.all([
+console.log('Downloading JMdict, JMnedict, JmdictFurigana, KANJIDIC2, the JLPT lists and the Tatoeba sentences...')
+const [jmdict, jmnedict, furigana, namesFurigana, kanjidic, examplesText, examplesDate, ...jlptLists] = await Promise.all([
   download(JMDICT, true),
   download(JMNEDICT, true),
   download(assetUrl('JmdictFurigana.txt')),
   download(assetUrl('JmnedictFurigana.txt')),
   download(KANJIDIC2, true),
+  download(EXAMPLES, true),
+  download(EXAMPLES_DATE),
   ...JLPT_LEVELS.map(n => download(`https://raw.githubusercontent.com/stephenmk/yomitan-jlpt-vocab/${JLPT_VOCAB}/original_data/n${n}.csv`)),
 ])
 
 const { entries, words, jlpt } = parseJmdict(jmdict, parseAlignments(furigana), parseJlpt(jlptLists))
 const okurigana = compileOkurigana(words)
+const examples = compileExamples(examplesText, words)
 const places = parseJmnedict(jmnedict, parseAlignments(namesFurigana))
 const onyomi = parseKanjidic(kanjidic)
 const used = new Set(entries.flatMap(([form]) => [...form]))
@@ -356,6 +409,7 @@ const sources = {
   JmdictFurigana: release.tag_name,
   KANJIDIC2: /<date_of_creation>([\d-]+)</.exec(kanjidic)?.[1] ?? 'unknown',
   JLPT: `yomitan-jlpt-vocab ${JLPT_VOCAB}`,
+  Tatoeba: new Date(examplesDate.trim()).toISOString().slice(0, 10),
 }
 
 const lines = [
@@ -371,4 +425,5 @@ await writeFile(OUTPUT, `${lines.join('\n')}\n`)
 await writeFile(PLACES, `[\n${places.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
 await writeFile(OKURIGANA, formatPacked(packOkurigana(okurigana)))
 await writeFile(JLPT, `[\n${jlpt.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
-console.log(`Wrote ${entries.length} entries, ${places.length} places, ${okurigana.length} okurigana pairs, ${jlpt.length} JLPT words, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)
+await writeFile(EXAMPLES_OUTPUT, `[\n${examples.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
+console.log(`Wrote ${entries.length} entries, ${places.length} places, ${okurigana.length} okurigana pairs, ${jlpt.length} JLPT words, ${examples.length} words in example sentences, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)
