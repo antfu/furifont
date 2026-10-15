@@ -21,6 +21,8 @@ export interface Dictionary {
   onyomi: Record<string, string[]>
   /** Source datasets and the version each was compiled from. */
   sources: Record<string, string>
+  /** Written forms never to annotate, such as 月, whose reading alone is a guess; users' removals add to them. */
+  bare?: string[]
   /** Curated default readings in inline notation, for words the data ranks wrong; pins override them. */
   defaults?: string[]
   /** Place names, each with the one reading to show; common words take precedence over them. */

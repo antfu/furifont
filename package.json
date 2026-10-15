@@ -1,7 +1,7 @@
 {
   "name": "@furifont/monorepo",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "packageManager": "pnpm@12.11.2",
   "description": "A Japanese font that shows furigana without changing the text",
@@ -32,7 +32,7 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc && pnpm -F @furifont/app run typecheck",
     "ci": "pnpm run lint && pnpm run build && pnpm run typecheck && pnpm run knip && pnpm run test",
-    "prepare": "git config core.hooksPath .githooks && simple-git-hooks && skills-npm"
+    "prepare": "git config core.hooksPath .githooks && simple-git-hooks && skills experimental_sync -y"
   },
   "scripts-info": {
     "setup": "Install dependencies and the test browsers, then build; run it as `pnpm run setup`",
@@ -66,7 +66,7 @@
     "nano-staged": "catalog:cli",
     "publint": "catalog:cli",
     "simple-git-hooks": "catalog:cli",
-    "skills-npm": "catalog:agentic",
+    "skills": "catalog:agentic",
     "taze": "catalog:cli",
     "tsdown": "catalog:cli",
     "turbo": "catalog:cli",

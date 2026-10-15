@@ -6,6 +6,9 @@
 
 **Furigana, set by the font.** A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, no JavaScript, no plugin. It works everywhere that supports custom fonts.
 
+> [!WARNING]
+> Furigana might be incorrect, due to the limits of fonts: a font sees one run of kanji at a time, not the sentence around it. Keep that in mind when you read.
+
 Check out the demo and playground on **[furifont.antfu.me](https://furifont.antfu.me)**
 
 <!-- eslint-skip -->

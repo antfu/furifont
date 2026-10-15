@@ -209,7 +209,7 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
   const known = options.skipJlpt ? Number(options.skipJlpt.slice(1)) : Infinity
   return {
     options,
-    removed: new Set(options.words.remove),
+    removed: new Set([...(dictionary.bare ?? []), ...options.words.remove]),
     covered,
     selected: r => (r.nf >= options.nfMin && r.nf <= options.nfMax) || options.selectTags.some(t => r.tags.has(t)),
     skipped: r => (r.nf > 0 && r.nf < options.nfMin) || r.jlpt >= known,

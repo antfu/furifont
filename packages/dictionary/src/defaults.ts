@@ -18,3 +18,14 @@ export const DEFAULT_READINGS: string[] = [
   // 支払い, 支払う.
   '支[し]払[はら]',
 ]
+
+/**
+ * Kanji left bare when alone in a run, though one reading dominates the
+ * dictionary: the reading depends on the word around it, which a font cannot
+ * see past the run. 月 is つき in a poem and がつ in a date.
+ */
+export const BARE_FORMS: string[] = [
+  '月',
+  '日',
+  '年',
+]
