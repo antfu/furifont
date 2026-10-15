@@ -35,23 +35,3 @@ jobs:
         with:
           name: fonts
           path: dist/fonts
-
-  attach:
-    needs: [release, fonts]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: fonts
-          path: fonts
-      # Everything in one archive, for the site's "Download all" button.
-      - run: cd fonts && zip --quiet ../Furifont.zip *
-      - run: gh release upload "$GITHUB_REF_NAME" fonts/* Furifont.zip --clobber --repo "$GITHUB_REPOSITORY"
-        env:
-          GH_TOKEN: ${{ github.token }}
-      # The site's build downloads these fonts: Vercel's build of the release commit ran before they were here.
-      - run: curl --fail --silent --show-error --request POST "$VERCEL_DEPLOY_HOOK"
-        env:
-          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
