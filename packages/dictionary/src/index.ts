@@ -1,6 +1,6 @@
 import type { Dictionary } from '@furifont/core'
 import * as v from 'valibot'
-import { DEFAULT_READINGS } from './defaults'
+import { BARE_FORMS, DEFAULT_READINGS } from './defaults'
 
 const DataSchema = v.object({
   sources: v.record(v.string(), v.string()),
@@ -30,6 +30,7 @@ export async function loadDictionary(): Promise<Dictionary> {
     sources: data.sources,
     onyomi: data.onyomi,
     defaults: DEFAULT_READINGS,
+    bare: BARE_FORMS,
     places: places.map(([form, furigana]) => ({ form, furigana })),
     entries: data.entries.map(([form, furigana, nf, priority, order, conjugates]) => {
       const level = levels.get(`${form}|${furigana}`)
