@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "npx pnpm@12.8.1 install --frozen-lockfile",
-  "buildCommand": "npx pnpm@12.8.1 fonts:fetch && npx pnpm@12.8.1 -F @furifont/app run generate",
+  "build": { "env": { "ENABLE_EXPERIMENTAL_COREPACK": "1" } },
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm fonts:fetch && pnpm build",
   "outputDirectory": "packages/app/.output/public",
   "headers": [
     {
