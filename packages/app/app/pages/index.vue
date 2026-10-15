@@ -23,6 +23,10 @@ onMounted(() => {
     <UiSection index="03" :title="$t('sections.selectors')">
       <DemoSelectors />
     </UiSection>
+    <p class="flex items-center gap-2 border-t border-base px-6 py-3 text-center text-xs color-muted bg-amber:5">
+      <span class="i-ph-warning shrink-0 text-base text-amber" aria-hidden="true" />
+      {{ $t('notice') }}
+    </p>
     <UiSection id="downloads" index="04" :title="$t('sections.download')">
       <DemoDownloads />
     </UiSection>

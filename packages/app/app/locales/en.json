@@ -40,6 +40,7 @@
     "download": "Download the fonts",
     "build": "Build your own"
   },
+  "notice": "Furigana might be incorrect due to the limits of fonts, so keep that in mind.",
   "sections": {
     "try": "Try it",
     "how": "How it works",

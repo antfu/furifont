@@ -4,7 +4,7 @@ const steps = ['build', 'ligatures', 'longest', 'bare', 'okurigana'] as const
 
 <template>
   <div class="overflow-hidden">
-    <ol class="-mb-px -mr-px grid sm:grid-cols-2 lg:grid-cols-3 overflow-hidden">
+    <ol class="-mb-px -mr-px grid sm:grid-cols-2 lg:grid-cols-3">
       <li
         v-for="(step, i) in steps"
         :key="step"

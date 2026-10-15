@@ -13,7 +13,7 @@ const { family, ruby } = useFontSettings()
 </script>
 
 <template>
-  <div class="grid sm:grid-cols-[1fr_2fr]">
+  <div class="grid sm:grid-cols-[1fr_2fr] overflow-hidden">
     <div class="flex flex-col gap-4 border-b border-base p-6 sm:border-b-0 sm:border-r">
       <p class="text-sm leading-relaxed color-muted">
         {{ $t('selectors.body') }}
