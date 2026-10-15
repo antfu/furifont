@@ -11,6 +11,9 @@ const RATE_WINDOW_SECONDS = 60 * 60
 export interface StoredReport extends Omit<Report, 'nickname'> {
   createdAt: string
   userAgent?: string
+  /** Set by `scripts/reports.ts`: no status means the report is open. */
+  status?: 'done' | 'invalid'
+  handledAt?: string
 }
 
 /** The commands this endpoint needs, which Upstash's client provides. */

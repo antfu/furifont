@@ -66,12 +66,6 @@ Under `pnpm dev`, the page posts to the dev server instead. With no database set
    Vercel's Upstash integration calls them `KV_REST_API_URL` and `KV_REST_API_TOKEN`. Either pair works.
 3. Restart `pnpm dev`. The reports now go through the same code as on the site, with the same limit of 10 reports an hour from one address.
 
-To list the stored reports:
-
-```sh
-curl -H "Authorization: Bearer $UPSTASH_REDIS_REST_TOKEN" "$UPSTASH_REDIS_REST_URL/scan/0/match/report:*/count/1000"
-```
-
 ## Pull requests
 
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org).
