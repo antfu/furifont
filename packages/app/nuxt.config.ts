@@ -55,7 +55,10 @@ export default defineNuxtConfig({
     // The studio is plain static files in the CLI's client; the site is a server, for the report endpoint (Vercel's preset on Vercel).
     preset: DEVFRAME ? 'static' : undefined,
     // The devframe's own output directory, so it never clobbers the site's.
-    output: DEVFRAME ? { dir: '.output-devframe', publicDir: fileURLToPath(new URL('../cli/dist/client', import.meta.url)) } : undefined,
+    output: DEVFRAME
+      ? { dir: '.output-devframe', publicDir: fileURLToPath(new URL('../cli/dist/client', import.meta.url)) }
+      // Vercel reads the Build Output from the repository root, not from this package.
+      : process.env.VERCEL ? { dir: fileURLToPath(new URL('../../.vercel/output', import.meta.url)) } : undefined,
     // The prebuilt fonts of this version's release, as `scripts/fetch-fonts.ts` downloads them; the studio serves the ones you build.
     publicAssets: DEVFRAME ? [] : [{ dir: fileURLToPath(new URL(`../../.cache/fonts/v${version}`, import.meta.url)), baseURL: 'fonts' }],
     // Only the okurigana pairs, which `dict:update` packs the way pages read them: the rest of the data is megabytes.

@@ -5,7 +5,7 @@
     // The demo site; the CLI's build generates the studio.
     "build": {
       "inputs": ["$TURBO_DEFAULT$", "../dictionary/data/okurigana.json", "../../.cache/fonts/**"],
-      "outputs": [".output/**", ".vercel/output/**"]
+      "outputs": [".output/**"]
     }
   }
 }
