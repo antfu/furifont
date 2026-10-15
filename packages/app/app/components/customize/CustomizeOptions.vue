@@ -35,6 +35,10 @@ const isolated = computed({
   get: () => config.value.isolated ?? DEFAULTS.plan.isolated,
   set: value => config.value.isolated = value,
 })
+const share = computed({
+  get: () => config.value.isolatedMinShare ?? DEFAULTS.plan.isolatedMinShare,
+  set: value => config.value.isolatedMinShare = value,
+})
 
 const scripts = computed(() => (['hiragana', 'katakanaOn', 'hepburn'] as const).map(value => ({ value, label: t(`customize.options.${value}`) })))
 // JMdict priority tags, plus the JMnedict place names: each is a source of words.
@@ -132,9 +136,16 @@ function toggle(source: Source): void {
     <UiToggle v-model="isolated">
       {{ $t('customize.options.isolated') }}
     </UiToggle>
-    <UiField :label="$t('customize.options.share')" :hint="$t('customize.options.shareHint')">
-      <input v-model.number="config.isolatedMinShare" type="number" min="0.5" max="1" step="0.05" class="input font-mono disabled:opacity-40" :placeholder="String(DEFAULTS.plan.isolatedMinShare)" :disabled="!isolated">
-    </UiField>
+    <UiRange
+      v-model="share"
+      :label="$t('customize.options.share')"
+      :display="share.toFixed(2)"
+      :hint="$t('customize.options.shareHint')"
+      :min="0.5"
+      :max="1"
+      :step="0.05"
+      :disabled="!isolated"
+    />
     <div class="h-px bg-[var(--ff-line)]" />
     <UiRange
       v-for="range in metricRanges"
