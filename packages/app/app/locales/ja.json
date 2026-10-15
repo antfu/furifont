@@ -195,8 +195,8 @@
           "name": "外来語",
           "hint": "JMdict「gai1」：他の言語から入った、よく使う言葉です。"
         },
-        "examples": {
-          "name": "例文の言葉",
+        "tatoeba": {
+          "name": "Tatoeba の例文",
           "hint": "Tatoeba：例文によく出てくる言葉です。上のリストにない留守中なども入ります。箱のような一字の読みも決めます。"
         },
         "places": {

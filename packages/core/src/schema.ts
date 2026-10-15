@@ -49,7 +49,7 @@ export const PlanOptionsSchema = withNfWindow(v.object({
    * place name (国中 くになか, not くにじゅう). The sentences also decide how a
    * lone kanji reads, where they use it alone often enough. 0 turns them off.
    */
-  minExamples: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)), DEFAULTS.plan.minExamples),
+  minTatoeba: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)), DEFAULTS.plan.minTatoeba),
   /** Words on the JLPT lists of this level and every easier one stay bare. */
   skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate place names from the dictionary where no common word claims the run. */

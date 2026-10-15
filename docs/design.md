@@ -51,7 +51,7 @@ The repository is a pnpm monorepo. Each package has one job:
 JMdict + JMnedict + JmdictFurigana + KANJIDIC2 + JLPT lists + Tatoeba sentences
         | dict:update (maintainers, network)
         v
-packages/dictionary/data/{dictionary,places,okurigana,jlpt,examples}.json (committed, one entry per line)
+packages/dictionary/data/{dictionary,places,okurigana,jlpt,tatoeba}.json (committed, one entry per line)
         |
         v
 createFontPlanner(dictionary)(options, coverage[, previewText]) -> { plan, report }
@@ -143,7 +143,7 @@ their entry is selected:
 - it has a priority tag in `selectTags` (default `ichi1`, `news1`, `spec1`
   and `gai1`), or
 - Tatoeba's example sentences use it, spelled and read that way, at least
-  `minExamples` times (default 3).
+  `minTatoeba` times (default 3).
 
 `spec1` is needed because 日本 ranks `nf25`. The sentences catch everyday
 words that no list tags, such as 留守中 and 夕食後, which would otherwise be

@@ -14,7 +14,7 @@ export interface DictionaryEntry {
   /** The JLPT level whose word list has this pair: 5 for N5 down to 1 for N1. */
   jlpt?: number
   /** How many times Tatoeba's example sentences use the pair, spelled this way. */
-  examples?: number
+  tatoeba?: number
 }
 
 export interface Dictionary {

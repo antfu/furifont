@@ -53,7 +53,7 @@ describe('compiled dictionary', () => {
   })
 
   it('counts the uses of each reading in the example sentences, as the font sees them', () => {
-    const uses = (form: string, furigana: string): number | undefined => dictionary.entries.find(e => e.form === form && e.furigana === furigana)?.examples
+    const uses = (form: string, furigana: string): number | undefined => dictionary.entries.find(e => e.form === form && e.furigana === furigana)?.tatoeba
     expect(uses('今日', '0-1:きょう')).toBeGreaterThan(uses('今日', '0:こん;1:にち') ?? 0)
     expect(uses('資金不足', '0:し;1:きん;2:ぶ;3:そく')).toBeGreaterThanOrEqual(3)
     // The sentences use 為る thousands of times, always written する.

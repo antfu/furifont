@@ -49,28 +49,28 @@ describe('planner', () => {
     const planner = (uses: number) => createFontPlanner({
       ...dictionary,
       entries: [
-        ...dictionary.entries.map(e => e.furigana === '0:こん;1:じつ' ? { ...e, examples: uses } : e),
-        { form: '本日', furigana: '0:ほん;1:じつ', nf: 0, priority: '', order: 0, examples: uses },
+        ...dictionary.entries.map(e => e.furigana === '0:こん;1:じつ' ? { ...e, tatoeba: uses } : e),
+        { form: '本日', furigana: '0:ほん;1:じつ', nf: 0, priority: '', order: 0, tatoeba: uses },
       ],
     })
     const often = planner(3)(resolveOptions(), coverage)
     expect(drawn(often.plan)).toContain('日:じつ')
     expect(often.report.ivs.words['今日']).toEqual(['今日[きょう]', '今[こん]日[にち]', '今[こん]日[じつ]'])
     expect(drawn(planner(2)(resolveOptions(), coverage).plan)).not.toContain('日:じつ')
-    expect(drawn(planner(3)(resolveOptions({ minExamples: 0 }), coverage).plan)).not.toContain('日:じつ')
+    expect(drawn(planner(3)(resolveOptions({ minTatoeba: 0 }), coverage).plan)).not.toContain('日:じつ')
   })
 
   it('reads a lone kanji as the example sentences use it alone, given enough uses', () => {
     const planner = (kaku: number, sho: number) => createFontPlanner({
       ...dictionary,
-      entries: dictionary.entries.map(e => e.form === '書く' ? { ...e, examples: kaku } : e.form === '書' ? { ...e, examples: sho } : e),
+      entries: dictionary.entries.map(e => e.form === '書く' ? { ...e, tatoeba: kaku } : e.form === '書' ? { ...e, tatoeba: sho } : e),
     })
     const often = planner(30, 2)(resolveOptions(), coverage).report.ivs
     expect(often.lone['書']).toBe('か')
     expect(often.kanji['書']).toEqual(['か', 'しょ'])
     expect(planner(16, 2)(resolveOptions(), coverage).report.ivs.lone['書']).toBeUndefined()
     expect(planner(30, 20)(resolveOptions(), coverage).report.ivs.lone['書']).toBeUndefined()
-    expect(planner(30, 2)(resolveOptions({ minExamples: 0 }), coverage).report.ivs.lone['書']).toBeUndefined()
+    expect(planner(30, 2)(resolveOptions({ minTatoeba: 0 }), coverage).report.ivs.lone['書']).toBeUndefined()
   })
 
   it('skips the words on the JLPT lists the reader knows', () => {

@@ -195,8 +195,8 @@
           "name": "Loanwords",
           "hint": "JMdict \"gai1\": common words that Japanese borrowed from other languages."
         },
-        "examples": {
-          "name": "Example sentences",
+        "tatoeba": {
+          "name": "Tatoeba sentences",
           "hint": "Tatoeba: words that its example sentences use often, such as 留守中, even when no list above has them, and how a kanji alone reads, such as 箱."
         },
         "places": {

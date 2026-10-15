@@ -62,7 +62,7 @@ describe('sample texts', () => {
   })
 
   it('needs the example sentences for those words', () => {
-    const without = resolveOptions({ minExamples: 0 })
+    const without = resolveOptions({ minTatoeba: 0 })
     for (const { text, reading } of EVERYDAY)
       expect(readAs(text, without)).not.toBe(reading)
   })

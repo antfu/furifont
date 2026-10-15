@@ -35,7 +35,7 @@ interface RunReading {
   /** Priority tags of the entries with this reading. */
   tags: Set<string>
   /** Most uses in Tatoeba's sentences among the entries with this reading. */
-  examples?: number
+  tatoeba?: number
   /** Made the default by the dictionary's curated list (1) or by the user (2). */
   pinned?: number
   /** A place name: its readings are no evidence for the kanji's own. */
@@ -113,7 +113,7 @@ interface PlanContext {
   options: PlanOptions
   removed: Set<string>
   covered: (text: string) => boolean
-  selected: (reading: { nf: number, tags: Set<string>, examples?: number }) => boolean
+  selected: (reading: { nf: number, tags: Set<string>, tatoeba?: number }) => boolean
   /** Among the most common words, or on the JLPT lists the reader knows: left bare. */
   skipped: (reading: { nf: number, jlpt: number }) => boolean
   render: RenderRuby
@@ -165,7 +165,7 @@ function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
 
 function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
   const order = run.text === entry.form ? entry.order : OTHER_FORM_ORDER + entry.order
-  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry), examples: entry.examples ?? 0 }
+  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry), tatoeba: entry.tatoeba ?? 0 }
   const readings = getOrCreate(index.runs, run.text, () => new Map())
   const current = readings.get(spanKey(run.spans))
   if (!current) {
@@ -175,7 +175,7 @@ function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): 
   keepBest(current, reading)
   current.tagged ||= reading.tagged
   current.order = Math.min(current.order, reading.order)
-  current.examples = Math.max(current.examples ?? 0, reading.examples)
+  current.tatoeba = Math.max(current.tatoeba ?? 0, reading.tatoeba)
 }
 
 function indexSingle(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
@@ -201,9 +201,9 @@ function indexEntry(index: DictionaryIndex, entry: DictionaryEntry): void {
       continue
     }
     // 来る's dictionary form says nothing of 来た.
-    if (entry.examples && !entry.conjugatesReading) {
+    if (entry.tatoeba && !entry.conjugatesReading) {
       const uses = getOrCreate(index.loneUses, run.text, () => new Map<string, number>())
-      uses.set(run.spans[0]!.ruby, (uses.get(run.spans[0]!.ruby) ?? 0) + entry.examples)
+      uses.set(run.spans[0]!.ruby, (uses.get(run.spans[0]!.ruby) ?? 0) + entry.tatoeba)
     }
     if (entry.priority)
       indexSingle(index, run, entry)
@@ -231,7 +231,7 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
     covered,
     selected: r => (r.nf >= options.nfMin && r.nf <= options.nfMax)
       || options.selectTags.some(t => r.tags.has(t))
-      || (options.minExamples > 0 && (r.examples ?? 0) >= options.minExamples),
+      || (options.minTatoeba > 0 && (r.tatoeba ?? 0) >= options.minTatoeba),
     skipped: r => (r.nf > 0 && r.nf < options.nfMin) || r.jlpt >= known,
     render,
     renderable: run => covered(run.text) && run.spans.every((_, i) => covered(render(run, i))),
@@ -314,7 +314,7 @@ function loneReadings(kanji: string, readings: Map<string, SingleReading>, ctx: 
 function usedReading(kanji: string, uses: Map<string, number> | undefined, ctx: PlanContext): { ruby: string, share: number } | undefined {
   const drawable = [...uses ?? []].filter(([ruby]) => ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] }))
   const total = drawable.reduce((sum, [, n]) => sum + n, 0)
-  if (ctx.options.minExamples === 0 || total < LONE_MIN_USES)
+  if (ctx.options.minTatoeba === 0 || total < LONE_MIN_USES)
     return
   const [ruby, n] = drawable.sort((a, b) => b[1] - a[1])[0]!
   return { ruby, share: n / total }

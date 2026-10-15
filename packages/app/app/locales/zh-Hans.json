@@ -195,8 +195,8 @@
           "name": "外来语",
           "hint": "JMdict“gai1”：日语从其他语言借来的常用词。"
         },
-        "examples": {
-          "name": "例句词语",
+        "tatoeba": {
+          "name": "Tatoeba 例句",
           "hint": "Tatoeba：在例句中经常出现的词语，例如 留守中，即使上面的列表都没有收录；也决定单个汉字（如 箱）的读音。"
         },
         "places": {
