@@ -29,6 +29,8 @@ interface RunReading {
   jlpt: number
   /** Priority tags of the entries with this reading. */
   tags: Set<string>
+  /** Most uses in Tatoeba's sentences among the entries with this reading. */
+  examples?: number
   /** Made the default by the dictionary's curated list (1) or by the user (2). */
   pinned?: number
   /** A place name: its readings are no evidence for the kanji's own. */
@@ -103,7 +105,7 @@ interface PlanContext {
   options: PlanOptions
   removed: Set<string>
   covered: (text: string) => boolean
-  selected: (reading: { nf: number, tags: Set<string> }) => boolean
+  selected: (reading: { nf: number, tags: Set<string>, examples?: number }) => boolean
   /** Among the most common words, or on the JLPT lists the reader knows: left bare. */
   skipped: (reading: { nf: number, jlpt: number }) => boolean
   render: RenderRuby
@@ -155,7 +157,7 @@ function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
 
 function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
   const order = run.text === entry.form ? entry.order : OTHER_FORM_ORDER + entry.order
-  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry) }
+  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry), examples: entry.examples ?? 0 }
   const readings = getOrCreate(index.runs, run.text, () => new Map())
   const current = readings.get(spanKey(run.spans))
   if (!current) {
@@ -165,6 +167,7 @@ function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): 
   keepBest(current, reading)
   current.tagged ||= reading.tagged
   current.order = Math.min(current.order, reading.order)
+  current.examples = Math.max(current.examples ?? 0, reading.examples)
 }
 
 function indexSingle(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
@@ -211,7 +214,9 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
     options,
     removed: new Set([...(dictionary.bare ?? []), ...options.words.remove]),
     covered,
-    selected: r => (r.nf >= options.nfMin && r.nf <= options.nfMax) || options.selectTags.some(t => r.tags.has(t)),
+    selected: r => (r.nf >= options.nfMin && r.nf <= options.nfMax)
+      || options.selectTags.some(t => r.tags.has(t))
+      || (options.minExamples > 0 && (r.examples ?? 0) >= options.minExamples),
     skipped: r => (r.nf > 0 && r.nf < options.nfMin) || r.jlpt >= known,
     render,
     renderable: run => covered(run.text) && run.spans.every((_, i) => covered(render(run, i))),
@@ -635,7 +640,7 @@ export function createFontPlanner(dictionary: Dictionary) {
         version: 1,
         names: {
           family: options.family,
-          description: `Furigana rules compiled from ${sources} (CC BY-SA 4.0: EDRDG, JmdictFurigana, stephenmk after Jonathan Waller).`,
+          description: `Furigana rules compiled from ${sources} (CC BY-SA 4.0: EDRDG, JmdictFurigana, stephenmk after Jonathan Waller; CC BY 2.0 FR: Tatoeba).`,
         },
         metrics: options.metrics,
         codepoints: [...named].sort((a, b) => a - b),

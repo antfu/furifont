@@ -42,6 +42,13 @@ export const PlanOptionsSchema = withNfWindow(v.object({
    * `spec1` catches words like 日本 that the newspaper ranking misses.
    */
   selectTags: v.optional(v.array(v.picklist(PRIORITY_TAGS)), () => [...DEFAULTS.plan.selectTags]),
+  /**
+   * Words of two or more kanji that Tatoeba's example sentences use at least
+   * this many times are annotated whatever their bucket: everyday words that
+   * no list tags, such as 留守中, which would otherwise be bare or read as a
+   * place name (国中 くになか, not くにじゅう). 0 turns it off.
+   */
+  minExamples: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)), DEFAULTS.plan.minExamples),
   /** Words on the JLPT lists of this level and every easier one stay bare. */
   skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate place names from the dictionary where no common word claims the run. */

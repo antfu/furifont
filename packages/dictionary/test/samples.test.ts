@@ -5,8 +5,15 @@ import { loadDictionary } from '../src'
 
 const planFont = createFontPlanner(await loadDictionary())
 const options = resolveOptions()
+/** Words that only Tatoeba's sentences select: no list tags them, and without them the font leaves a kanji bare or reads a place name. */
+const EVERYDAY = [
+  { text: '留守中', reading: 'るすちゅう' },
+  { text: '夕食後', reading: 'ゆうしょくご' },
+  { text: '老婦人', reading: 'ろうふじん' },
+  { text: '国中', reading: 'くにじゅう' },
+]
 const coverage = new Set([
-  ...SAMPLES.flatMap(s => [...s.text]),
+  ...[...SAMPLES, ...EVERYDAY].flatMap(s => [...s.text]),
   ...Array.from({ length: 0x30FF - 0x3041 + 1 }, (_, i) => String.fromCharCode(0x3041 + i)),
 ].map(c => c.codePointAt(0)!))
 
@@ -23,8 +30,8 @@ function lookupsOf(fea: string): Map<string, string[]> {
  * kanji, the first rule that matches, else the kanji's own lookup when it
  * stands alone, else nothing. A kanji without ruby stays as it is, which `matches` accepts for any reading.
  */
-function readAs(text: string): string {
-  const { plan } = planFont(options, coverage, text)
+function readAs(text: string, planOptions = options): string {
+  const { plan } = planFont(planOptions, coverage, text)
   const rubyOf = new Map(plan.glyphs.map(g => [g.name, g.ruby.map(r => r.text).join('')]))
   const lookups = lookupsOf(plan.fea)
   const substitutions = (name: string): Map<string, string> =>
@@ -69,5 +76,15 @@ describe('sample texts', () => {
   it.each(SAMPLES)('shows no wrong reading in $text', ({ text, reading }) => {
     const shown = readAs(text)
     expect(matches(shown, reading), `${shown}\n${reading}`).toBe(true)
+  })
+
+  it.each(EVERYDAY)('reads the everyday word $text whole', ({ text, reading }) => {
+    expect(readAs(text)).toBe(reading)
+  })
+
+  it('needs the example sentences for those words', () => {
+    const without = resolveOptions({ minExamples: 0 })
+    for (const { text, reading } of EVERYDAY)
+      expect(readAs(text, without)).not.toBe(reading)
   })
 })

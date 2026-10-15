@@ -45,6 +45,21 @@ describe('planner', () => {
     expect(drawn(p)).toContain('書:しょ')
   })
 
+  it('selects words the example sentences use often, after the tagged readings', () => {
+    const planner = (uses: number) => createFontPlanner({
+      ...dictionary,
+      entries: [
+        ...dictionary.entries.map(e => e.furigana === '0:こん;1:じつ' ? { ...e, examples: uses } : e),
+        { form: '本日', furigana: '0:ほん;1:じつ', nf: 0, priority: '', order: 0, examples: uses },
+      ],
+    })
+    const often = planner(3)(resolveOptions(), coverage)
+    expect(drawn(often.plan)).toContain('日:じつ')
+    expect(often.report.ivs.words['今日']).toEqual(['今日[きょう]', '今[こん]日[にち]', '今[こん]日[じつ]'])
+    expect(drawn(planner(2)(resolveOptions(), coverage).plan)).not.toContain('日:じつ')
+    expect(drawn(planner(3)(resolveOptions({ minExamples: 0 }), coverage).plan)).not.toContain('日:じつ')
+  })
+
   it('skips the words on the JLPT lists the reader knows', () => {
     const levels: Record<string, number> = { '今日|0-1:きょう': 5, '学校|0:がっ;1:こう': 4, '桜|0:さくら': 3 }
     const entries = dictionary.entries.map(e => ({ ...e, jlpt: levels[`${e.form}|${e.furigana}`] }))
