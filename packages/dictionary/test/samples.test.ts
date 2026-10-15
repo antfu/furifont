@@ -1,4 +1,5 @@
-import { createFontPlanner, glyphName, parseNotation, resolveOptions, toHiragana } from '@furifont/core'
+import { createRubyReader } from '@furifont/compiler'
+import { createFontPlanner, parseNotation, resolveOptions, toHiragana } from '@furifont/core'
 import { describe, expect, it } from 'vitest'
 import { SAMPLES } from '../../app/app/utils/samples'
 import { loadDictionary } from '../src'
@@ -18,53 +19,16 @@ const coverage = new Set([
   ...Array.from({ length: 0x30FF - 0x3041 + 1 }, (_, i) => String.fromCharCode(0x3041 + i)),
 ].map(c => c.codePointAt(0)!))
 
-interface Rule { glyphs: string[], lookups: string[] }
-
-/** Block bodies by lookup name in a plan's feature code. */
-function lookupsOf(fea: string): Map<string, string[]> {
-  return new Map([...fea.matchAll(/lookup (\w+) useExtension \{\n([\s\S]*?)\n\} \1;/g)].map(m => [m[1]!, m[2]!.split('\n').map(l => l.trim())]))
-}
-
-/**
- * The reading a font built with the default options shows for `text`, in
- * hiragana, by applying the plan's rules the way a shaper does: at each
- * kanji, the first rule that matches, else the kanji's own lookup when it
- * stands alone, else nothing. A kanji without ruby stays as it is, which `matches` accepts for any reading.
- */
+/** The reading a font built with the default options shows for `text`, in hiragana; a kanji without ruby stays as it is, which `matches` accepts for any reading. */
 function readAs(text: string): string {
-  const { plan } = planFont(options, coverage, text)
-  const rubyOf = new Map(plan.glyphs.map(g => [g.name, g.ruby.map(r => r.text).join('')]))
-  const lookups = lookupsOf(plan.fea)
-  const substitutions = (name: string): Map<string, string> =>
-    new Map((lookups.get(name) ?? []).map(l => l.match(/^sub (\S+) by (\S+);$/)).filter(m => !!m).map(m => [m[1]!, m[2]!]))
-  const rules: Rule[] = (lookups.get('furigana') ?? [])
-    .filter(l => /^(?:ignore )?sub \S+'/.test(l))
-    .filter(l => !l.includes('@han') && !l.includes('['))
-    .map(l => ({ glyphs: [...l.matchAll(/(\w+)'/g)].map(m => m[1]!), lookups: [...l.matchAll(/lookup (\w+)/g)].map(m => m[1]!) }))
-  const isolated = substitutions('isolated')
-  const chars = new Map([...text].map(c => [glyphName(c.codePointAt(0)!), c]))
-
-  const readRun = (run: string[]): string => {
-    let out = ''
-    for (let i = 0; i < run.length;) {
-      const rule = rules.find(r => r.glyphs.every((g, k) => run[i + k] === g))
-      if (rule) {
-        out += rule.glyphs.map((g, k) => {
-          const to = rule.lookups[k] && substitutions(rule.lookups[k]).get(g)
-          return (to && rubyOf.get(to)) || chars.get(g)
-        }).join('')
-        i += rule.glyphs.length
-      }
-      else {
-        const to = run.length === 1 ? isolated.get(run[0]!) : undefined
-        out += (to && rubyOf.get(to)) || chars.get(run[i]!)
-        i++
-      }
-    }
-    return out
+  const chars = [...text]
+  let shown = ''
+  let at = 0
+  for (const span of createRubyReader(planFont(options, coverage, text).plan)(text)) {
+    shown += chars.slice(at, span.start).join('') + span.ruby
+    at = span.end
   }
-
-  return toHiragana(text.replace(/\p{Script=Han}+/gu, run => readRun([...run].map(c => glyphName(c.codePointAt(0)!)))))
+  return toHiragana(shown + chars.slice(at).join(''))
 }
 
 /** Whether `shown` agrees with `reading`: each bare kanji stands for whatever reading it has. */

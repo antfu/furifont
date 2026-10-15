@@ -11,6 +11,8 @@ export interface FeaInput {
   singles: (Substitution & { lookup: string })[]
   ligatures: { lookup: string, glyph: string, components: string[] }[]
   isolated: Substitution[]
+  /** A kanji to the reading it shows after another kanji, when no word claimed it; a `final` one only at the end of a run. */
+  suffixes: (Substitution & { final: boolean })[]
   rules: Rule[]
   /** Variant glyphs no rule claimed, to the kanji's own reading. */
   variantReadings: Substitution[]
@@ -34,27 +36,36 @@ function block(keyword: 'lookup' | 'feature', name: string, body: string[]): str
   return `${keyword} ${name}${flags} {\n${body.map(l => `  ${l}`).join('\n')}\n} ${name};\n`
 }
 
+/** A lookup of single substitutions, or none when there are none. */
+function singleLookup(name: string, substitutions: Substitution[]): string[] {
+  return substitutions.length ? [block('lookup', name, substitutions.map(s => `sub ${s.input} by ${s.output};`))] : []
+}
+
 function chainRule(rule: Rule): string {
   if (rule.ignore)
     return `ignore sub ${rule.input.map(g => `${g}'`).join(' ')};`
   return `sub ${rule.input.map((g, i) => `${g}'${rule.lookups[i] ? ` lookup ${rule.lookups[i]}` : ''}`).join(' ')};`
 }
 
-/** The chain rules, longest first, then the lone-kanji class rules. */
+const glyphClass = (substitutions: Substitution[]): string => `[${substitutions.map(s => s.input).join(' ')}]`
+
+/** The chain rules, longest first, then the suffix and lone-kanji class rules. */
 function mainRules(input: FeaInput): string[] {
   const words = input.rules.flatMap((rule, i) => i && i % RULES_PER_SUBTABLE === 0 ? ['subtable;', chainRule(rule)] : [chainRule(rule)])
-  if (!input.isolated.length)
-    return words
-  const kanji = `[${input.isolated.map(i => i.input).join(' ')}]`
-  return [
-    ...words,
-    // Class-based rules get a subtable of their own, or none of the above could be
-    // glyph-keyed; a break before the first rule would only open an empty one.
-    ...words.length ? ['subtable;'] : [],
-    `ignore sub @han ${kanji}';`,
-    `ignore sub ${kanji}' @han;`,
-    `sub ${kanji}' lookup isolated;`,
-  ]
+  const classes: string[] = []
+  // Before the lone-kanji rules, whose ignore rules would stop a suffix after a kanji.
+  const final = input.suffixes.filter(s => s.final)
+  if (final.length)
+    classes.push(`ignore sub @han ${glyphClass(final)}' @han;`)
+  if (input.suffixes.length)
+    classes.push(`sub @han ${glyphClass(input.suffixes)}' lookup suffixes;`)
+  if (input.isolated.length) {
+    const kanji = glyphClass(input.isolated)
+    classes.push(`ignore sub @han ${kanji}';`, `ignore sub ${kanji}' @han;`, `sub ${kanji}' lookup isolated;`)
+  }
+  // Class-based rules get a subtable of their own, or none of the above could be
+  // glyph-keyed; a break before the first rule would only open an empty one.
+  return [...words, ...words.length && classes.length ? ['subtable;'] : [], ...classes]
 }
 
 /**
@@ -73,8 +84,7 @@ export function emitFea(input: FeaInput): string {
   const byLigatureSlot = Map.groupBy(input.ligatures, l => l.lookup)
   for (const [lookup, ligatures] of [...byLigatureSlot].sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true })))
     out.push(block('lookup', lookup, ligatures.map(l => `sub ${l.components.join(' ')} by ${l.glyph};`)))
-  if (input.isolated.length)
-    out.push(block('lookup', 'isolated', input.isolated.map(i => `sub ${i.input} by ${i.output};`)))
+  out.push(...singleLookup('isolated', input.isolated), ...singleLookup('suffixes', input.suffixes))
 
   // Before `furigana`, which sees the selector `salt` picked. Every glyph takes it, then all but the run's first go back. Keep the alternates a lookup of the feature itself: CoreText gives a nested one alternate 1 whatever the value.
   const salt = { lookup: [] as string[], feature: [] as string[] }
@@ -91,10 +101,7 @@ export function emitFea(input: FeaInput): string {
   const main = mainRules(input)
   if (main.length)
     out.push(block('lookup', 'furigana', main))
-  if (input.variantReadings.length)
-    out.push(block('lookup', 'variant_readings', input.variantReadings.map(v => `sub ${v.input} by ${v.output};`)))
-  if (input.variantsOff.length)
-    out.push(block('lookup', 'variants_off', input.variantsOff.map(v => `sub ${v.input} by ${v.output};`)))
+  out.push(...singleLookup('variant_readings', input.variantReadings), ...singleLookup('variants_off', input.variantsOff))
 
   const singles = input.rubyOff.filter(r => r.bases.length === 1)
   const ligatures = input.rubyOff.filter(r => r.bases.length > 1)
