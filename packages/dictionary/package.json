@@ -27,10 +27,14 @@
   "scripts": {
     "build": "tsdown",
     "prepack": "turbo run build --filter=@furifont/dictionary",
-    "update": "node scripts/update.ts"
+    "update": "node scripts/update.ts",
+    "audit": "node scripts/audit.ts"
   },
   "dependencies": {
     "@furifont/core": "workspace:*",
     "valibot": "catalog:prod"
+  },
+  "devDependencies": {
+    "@furifont/compiler": "workspace:*"
   }
 }

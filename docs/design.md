@@ -207,6 +207,22 @@ readings.
 The rule is class-based: no lone-kanji reading applies when a Han glyph comes
 right before or after it. That includes ruby and variant glyphs.
 
+### Suffixes
+
+A kanji that no word claims, right after another kanji, is most often a
+suffix: 的 in 平均的, 者 in 被災者支援. It reads as it does ending the
+dictionary's runs, when one reading has at least 90% of at least 10 of them:
+的 てき and 化 か pass, 人 (にん or じん) doesn't. About 700 kanji pass.
+
+A suffix that starts more of the dictionary's runs than it ends, such as 大,
+小 or 都, gets its reading only at the end of a run. Before another kanji it
+may start a word the font doesn't know. Suffixes follow `isolated`, and
+protection counts them.
+
+The audit (below) measured the effect. Without suffixes, 79.6% of the kanji in
+the dictionary's runs got ruby; with them, 83.4%. Text made of three words
+around a suffix went from 81% to 97%, with no new misreadings.
+
 Every kanji also gets an ordered list of its readings for the selectors: each
 reading with at least 2% of the evidence, then the readings it has before
 okurigana in untagged words (奉 たてまつ, for 奉る). These last ones give
@@ -216,7 +232,7 @@ gets no list.
 ### Protection
 
 Every multi-kanji run in the full dictionary is read through the longest-match
-rules. A run is **protected** when the result conflicts with any of its own
+rules, then the suffix ones. A run is **protected** when the result conflicts with any of its own
 readings, as 大人気 does through 大人.
 
 - It is annotated with its own reading when that reading is unambiguous and
@@ -240,8 +256,8 @@ lookup maps an input glyph only once.
 
 | Lookup | Feature | Role |
 | --- | --- | --- |
-| `rb_*`, `lig_*`, `isolated` | (nested) | Base or variant glyph to ruby glyph |
-| `furigana` | `rclt` | Chain rules, longest first per first glyph; then the lone-kanji class rules in their own subtable |
+| `rb_*`, `lig_*`, `isolated`, `suffixes` | (nested) | Base or variant glyph to ruby glyph |
+| `furigana` | `rclt` | Chain rules, longest first per first glyph; then the suffix and lone-kanji class rules in their own subtable |
 | `alternates` | `salt` | `salt` n picks the nth reading of a kanji, before `furigana` sees it |
 | `variant_readings` | `rclt` | A selector no word claimed picks the kanji's own reading |
 | `variants_off` | `ccmp` | Variant glyphs left over go back to plain kanji, for example when `rclt` is off |
@@ -505,20 +521,24 @@ own mount.
 ## Testing
 
 - **core** (vitest): kana and romaji conversion, runs, notation, selection,
-  skipping, defaults, pins, lone kanji, protection, preview filtering, and a
-  snapshot of the feature file.
+  skipping, defaults, pins, lone kanji, suffixes, protection, preview
+  filtering, and a snapshot of the feature file.
 - **dictionary**: the compiled data plans sensible defaults (今日 きょう,
   明日 あした, 出来 でき), reads places (新宿 しんじゅく) and pairs (来ない こ,
   下りた お, 行って null).
 - **compiler**: compiles against four committed subsets of Source Han Sans
   JP: CID-keyed CFF, name-keyed CFF and TrueType without GSUB, and the
-  variable TrueType font. It shapes with harfbuzzjs and checks words, protection, lone kanji, selectors, `ss01`,
+  variable TrueType font. It shapes with harfbuzzjs and checks words, protection, lone kanji, suffixes, selectors, `ss01`,
   metrics, the WOFF2 and a subset preview; on the variable font, ruby at every
   weight, romaji kept centered as the letters widen, and instance names.
+  It also checks that `createRubyReader` predicts what HarfBuzz shapes for
+  every run of up to four of the fixture's kanji.
 - **cli**: config loading, and a real `buildFont` at the size estimated.
 - **e2e** (Playwright, on Chromium, Firefox and WebKit, with the font as
   WOFF2):
   - ruby differs from `ss01`;
+  - a suffix gets ruby at the end of a run, and a prefix-heavy one stays bare
+    inside a run;
   - VS227 differs from the default, and VS225 matches plain text;
   - selection returns the source text;
   - ruby is not clipped at `line-height: normal`;
@@ -527,6 +547,28 @@ own mount.
 
   In Chromium, the studio previews, plans, estimates and builds a font, and
   keeps its settings across reloads.
+
+### Ruby reader and audit
+
+`createRubyReader(plan)` in `@furifont/compiler` reads text the way a font
+built from the plan shows it, without a font. It splits the text into Han runs,
+as browsers do. It then applies the `rclt` lookups of `plan.fea` in lookup
+order, and returns the ruby over the text. It leaves out variation selectors,
+`salt` and the base font's own lookups. On a full Source Han Sans JP, it gave
+the same ruby as HarfBuzz for all 411,579 texts tried: every run of the
+dictionary, and runs joined in twos and threes.
+
+The dictionary's sample test reads the site's sample texts through it.
+`pnpm dict:audit` reads every run of the dictionary through a font with every
+kanji and lists the runs it shows wrong:
+
+- **misread**: a reading none of the run's words has;
+- **partial**: ruby on only some of its kanji;
+- **bare**: no ruby on a common word.
+
+It then pairs the most common runs (`--words`, 1,000 by default) as running
+text does, and lists the pairs that show a reading of neither word. Use it to
+check a change to the planner or the curated lists before shaping anything.
 
 ## Release
 

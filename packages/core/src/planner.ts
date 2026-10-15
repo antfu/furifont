@@ -14,6 +14,9 @@ export const SELECTOR_FIRST_READING = 0xE01E1
 export const MAX_READINGS = 15
 /** A lone kanji's reading needs this share of the evidence to be offered through a selector. */
 const MIN_ALTERNATE_SHARE = 0.02
+/** A suffix reading is the one a kanji takes in this share of the runs it ends, out of at least `SUFFIX_MIN_RUNS`. */
+const SUFFIX_MIN_SHARE = 0.9
+const SUFFIX_MIN_RUNS = 10
 /** JMdict orders readings within a form; a run read inside a longer form ranks after the form's own readings. */
 const OTHER_FORM_ORDER = 1000
 
@@ -57,6 +60,7 @@ export interface PlanReport {
     places: number
     ambiguous: number
     isolated: number
+    suffixes: number
     protectedAnnotated: number
     protectedBare: number
     glyphs: number
@@ -351,6 +355,47 @@ function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: M
   return { isolated, kanjiReadings }
 }
 
+interface Suffixes {
+  readings: Map<string, string>
+  /** Suffixes that start more of the dictionary's runs than they end: before another kanji, they may start a word the font does not know, as 大 does. */
+  final: Set<string>
+}
+
+/**
+ * A kanji no word claimed after another kanji, as 的 in 平均的 or 者 in
+ * 被災者支援, reads as it reads ending the dictionary's runs, when one reading
+ * clearly dominates there: 的 てき, 化 か; not 人, にん or じん.
+ */
+function chooseSuffixes(index: DictionaryIndex, ctx: PlanContext): Suffixes {
+  const suffixes: Suffixes = { readings: new Map(), final: new Set() }
+  if (!ctx.options.isolated)
+    return suffixes
+  const evidence = new Map<string, Map<string, number>>()
+  const count = (counts: Map<string, number>, key: string): void => void counts.set(key, (counts.get(key) ?? 0) + 1)
+  const starts = new Map<string, number>()
+  const ends = new Map<string, number>()
+  for (const [text, readings] of index.runs) {
+    const chars = [...text]
+    count(starts, chars[0]!)
+    count(ends, chars.at(-1)!)
+    for (const { spans } of readings.values()) {
+      const span = spans.at(-1)!
+      if (span.end - span.start === 1)
+        count(getOrCreate(evidence, chars.at(-1)!, () => new Map()), span.ruby)
+    }
+  }
+  for (const [kanji, counts] of evidence) {
+    const total = [...counts.values()].reduce((a, b) => a + b, 0)
+    const [ruby, top] = [...counts].sort((a, b) => b[1] - a[1])[0]!
+    if (total < SUFFIX_MIN_RUNS || top / total < SUFFIX_MIN_SHARE || ctx.removed.has(kanji) || !ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] }))
+      continue
+    suffixes.readings.set(kanji, ruby)
+    if ((starts.get(kanji) ?? 0) > ends.get(kanji)!)
+      suffixes.final.add(kanji)
+  }
+  return suffixes
+}
+
 /** Per character, the span reading it; keys are relative so they compare at any offset. */
 function assignment(spans: readonly RubySpan[], size: number): (string | undefined)[] {
   const out: (string | undefined)[] = Array.from({ length: size })
@@ -361,8 +406,14 @@ function assignment(spans: readonly RubySpan[], size: number): (string | undefin
   return out
 }
 
-/** Runs the longest-match rules over `chars` and reports whether any kanji gets a reading other than `expected`. */
-function misreads(chars: string[], expected: (string | undefined)[], known: Known, longest: number): boolean {
+/** The suffix reading of the kanji at `p` of a run when no word claimed it. */
+function suffixAt(chars: string[], p: number, suffixes: Suffixes): string | undefined {
+  const kanji = chars[p]!
+  return p > 0 && (p === chars.length - 1 || !suffixes.final.has(kanji)) ? suffixes.readings.get(kanji) : undefined
+}
+
+/** Runs the longest-match rules, then the suffix ones, over `chars` and reports whether any kanji gets a reading other than `expected`. */
+function misreads(chars: string[], expected: (string | undefined)[], known: Known, longest: number, suffixes: Suffixes): boolean {
   for (let p = 0; p < chars.length;) {
     let size = Math.min(longest, chars.length - p)
     for (; size >= 2; size--) {
@@ -373,6 +424,9 @@ function misreads(chars: string[], expected: (string | undefined)[], known: Know
         break
       }
     }
+    const suffix = size < 2 ? suffixAt(chars, p, suffixes) : undefined
+    if (suffix !== undefined && expected[p] !== `0:1:${suffix}`)
+      return true
     p += Math.max(size, 1)
   }
   return false
@@ -386,7 +440,7 @@ type Known = Map<string, (string | undefined)[] | null>
  * takes readings the font already has, left bare otherwise. Skipped words are
  * always left bare.
  */
-function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadings: Map<string, string[]>, skipped: Set<string>, ctx: PlanContext): Map<string, RubySpan[] | null> {
+function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadings: Map<string, string[]>, suffixes: Suffixes, skipped: Set<string>, ctx: PlanContext): Map<string, RubySpan[] | null> {
   const known: Known = new Map([...patterns].map(([text, readings]) => [text, assignment(readings[0]!.spans, length(text))]))
   const protectedRuns = new Map<string, RubySpan[] | null>()
   for (const text of [...ctx.removed].filter(t => length(t) > 1)) {
@@ -398,7 +452,7 @@ function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadin
     // Without kana context a run may be any of its words: 大人気 is だいにんき, or おとなげ in 大人気ない.
     const candidates = [...new Set([...readings.values()].map(r => assignment(r.spans, chars.length).join('|')))]
     const expected = [...readings.values()].map(r => assignment(r.spans, chars.length))
-    if (!expected.some(e => misreads(chars, e, known, longest)))
+    if (!expected.some(e => misreads(chars, e, known, longest, suffixes)))
       return false
     const truth = [...readings.values()].sort(rank)[0]!
     const run = { text, spans: truth.spans }
@@ -558,8 +612,16 @@ type Analysis = Pick<ReturnType<typeof selectWords>, 'patterns'>
   & {
     protectedRuns: ReturnType<typeof findMisreadRuns>
     glyphs: ReturnType<typeof createGlyphRegistry>
-    lone: { base: string, glyph: ReturnType<ReturnType<typeof createGlyphRegistry>['lone']> }[]
+    lone: LoneGlyph[]
+    suffixes: LoneGlyph[]
+    /** Glyphs of the suffixes that apply only at the end of a run. */
+    finalSuffixes: Set<string>
   }
+
+interface LoneGlyph {
+  base: string
+  glyph: PlanGlyph
+}
 
 /**
  * Indexes the dictionary once into Han runs, then plans fonts from it. Every
@@ -577,11 +639,12 @@ export function createFontPlanner(dictionary: Dictionary) {
     const ctx = createContext(dictionary, options, coverage)
     const { patterns, lonePins, skipped } = selectWords(index, dictionary, ctx)
     const { isolated, kanjiReadings } = chooseLoneKanji(index, patterns, lonePins, ctx)
-    const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, skipped, ctx)
+    const suffixes = chooseSuffixes(index, ctx)
+    const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, suffixes, skipped, ctx)
     const glyphs = createGlyphRegistry(ctx.render)
     const { rules, ligatures, singles, variants, variantReadings, alternates, ivsWords } = buildRules(patterns, kanjiReadings, protectedRuns, glyphs)
-    const lone = [...isolated].map(([kanji, ruby]) => ({ base: glyphName(kanji.codePointAt(0)!), glyph: glyphs.lone(kanji, ruby) }))
-    return { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone }
+    const loneGlyphs = (readings: Map<string, string>): LoneGlyph[] => [...readings].map(([kanji, ruby]) => ({ base: glyphName(kanji.codePointAt(0)!), glyph: glyphs.lone(kanji, ruby) }))
+    return { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone: loneGlyphs(isolated), suffixes: loneGlyphs(suffixes.readings), finalSuffixes: new Set([...suffixes.final].map(k => glyphName(k.codePointAt(0)!))) }
   }
 
   // A live preview plans on every keystroke and the report on every change, with the same options: keep the last analysis.
@@ -595,12 +658,13 @@ export function createFontPlanner(dictionary: Dictionary) {
 
   /** Plans a font; with `previewText`, keeps only what that text can trigger. */
   return function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
-    const { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone } = analysisFor(options, coverage)
+    const { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone, suffixes, finalSuffixes } = analysisFor(options, coverage)
 
     const sample = previewText === undefined ? undefined : new Set(codepoints(previewText))
     const inSample = (cps: readonly number[]): boolean => !sample || cps.every(cp => sample.has(cp))
     const keptRules = rules.filter(r => inSample(r.codepoints))
     const keptLone = lone.filter(l => inSample(l.glyph.bases))
+    const keptSuffixes = suffixes.filter(l => inSample(l.glyph.bases))
     const keptVariants = variants.filter(v => inSample([v.base, v.selector]))
     const keptVariantReadings = variantReadings.filter(v => inSample([...v.glyph.bases, v.selector]))
     // A preview skips `salt`: its selectors cover it, and the rules for every reading would grow the font on each keystroke.
@@ -612,6 +676,7 @@ export function createFontPlanner(dictionary: Dictionary) {
       ...keptSingles.map(s => s.output),
       ...keptLigatures.map(l => l.glyph),
       ...keptLone.map(l => l.glyph.name),
+      ...keptSuffixes.map(l => l.glyph.name),
       ...keptVariantReadings.map(v => v.glyph.name),
     ])
     const keptGlyphs = glyphs.all().filter(g => keptNames.has(g.name))
@@ -622,6 +687,7 @@ export function createFontPlanner(dictionary: Dictionary) {
       singles: keptSingles,
       ligatures: keptLigatures,
       isolated: keptLone.map(l => ({ input: l.base, output: l.glyph.name })),
+      suffixes: keptSuffixes.map(l => ({ input: l.base, output: l.glyph.name, final: finalSuffixes.has(l.base) })),
       rules: keptRules,
       variantReadings: keptVariantReadings.map(v => ({ input: v.input, output: v.glyph.name })),
       alternates: keptAlternates,
@@ -651,6 +717,7 @@ export function createFontPlanner(dictionary: Dictionary) {
           places: [...patterns.values()].filter(r => r[0]!.place).length,
           ambiguous: Object.keys(ivsWords).length,
           isolated: isolated.size,
+          suffixes: suffixes.length,
           protectedAnnotated: [...protectedRuns.values()].filter(Boolean).length,
           protectedBare: [...protectedRuns.values()].filter(s => !s).length,
           glyphs: keptGlyphs.length,
