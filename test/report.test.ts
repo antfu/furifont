@@ -30,6 +30,7 @@ const report: ReportInput = {
   version: '0.1.2',
   locale: 'ja',
   note: '',
+  name: ' Ren ',
   nickname: '',
 }
 
@@ -42,7 +43,7 @@ function post(body: object, address = '203.0.113.7'): Request {
 }
 
 describe('receiveReport', () => {
-  it('stores every word of a report under a dated key, without blank fields', async () => {
+  it('stores every word of a report and the name to credit under a dated key, without blank fields', async () => {
     const { store, reports } = memoryStore()
     const response = await receiveReport(post(report), store, new Date('2026-10-15T12:00:00Z'))
 
@@ -59,6 +60,7 @@ describe('receiveReport', () => {
       version: '0.1.2',
       locale: 'ja',
       note: undefined,
+      name: 'Ren',
       createdAt: '2026-10-15T12:00:00.000Z',
       userAgent: 'Test/1.0',
     })

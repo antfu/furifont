@@ -167,6 +167,8 @@
     },
     "os": "System (optional)",
     "notePlaceholder": "Anything that helps, for example the browser, or why the reading is wrong.",
+    "name": "Your name (optional)",
+    "nameHint": "To credit you when the reading is fixed. Leave it empty to stay anonymous.",
     "send": "Send the report",
     "sending": "Sending",
     "sent": "Thank you. We got your report.",

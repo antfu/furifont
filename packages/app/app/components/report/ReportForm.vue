@@ -12,6 +12,8 @@ const words = ref([blankWord()])
 const environment = reactive({ type: 'playground' as typeof REPORT_ENVIRONMENTS[number], url: '', app: '', os: '' })
 const family = ref(current.value.family)
 const note = ref('')
+// Kept for the next report.
+const name = ref('')
 const nickname = ref('')
 const status = ref<'idle' | 'sending' | 'sent' | 'failed' | 'limited'>('idle')
 
@@ -26,6 +28,7 @@ async function send(): Promise<void> {
     version: VERSION,
     locale: locale.value,
     note: note.value,
+    name: name.value,
     nickname: nickname.value,
   } satisfies ReportInput
   try {
@@ -118,6 +121,9 @@ function again(): void {
     <UiSection index="03" :title="$t('report.sections.note')">
       <div class="flex flex-col gap-4 p-6">
         <textarea v-model="note" maxlength="2000" rows="4" :placeholder="$t('report.notePlaceholder')" :aria-label="$t('report.sections.note')" class="input resize-y" />
+        <UiField :label="$t('report.name')" :hint="$t('report.nameHint')" class="sm:max-w-sm">
+          <input v-model="name" maxlength="100" autocomplete="nickname" class="input">
+        </UiField>
         <input v-model="nickname" name="nickname" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only">
         <div class="flex flex-wrap items-center gap-4">
           <button type="submit" class="btn-solid focus-ring" :disabled="status === 'sending'">

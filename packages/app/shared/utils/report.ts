@@ -45,6 +45,8 @@ export const ReportSchema = v.object({
   version: required(32),
   locale: required(16),
   note: optional(2000),
+  /** How to credit the reader for the fix, if they want to be. */
+  name: optional(100),
   /** A honeypot: hidden from people, so only bots fill it in. */
   nickname: v.optional(v.pipe(v.string(), v.empty())),
 })
