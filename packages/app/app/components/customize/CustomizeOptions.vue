@@ -74,32 +74,7 @@ function toggle(source: WordSource): void {
       <UiSegmented v-model="rubyScript" :label="$t('customize.options.script')" :options="scripts" />
     </UiField>
     <div class="h-px bg-[var(--ff-line)]" />
-    <UiRange
-      v-model="skip"
-      :label="$t('customize.options.skip')"
-      :display="skip ? skip.toLocaleString('en') : $t('customize.options.none')"
-      :hint="$t('customize.options.skipHint')"
-      :min="0"
-      :max="MAX_SKIP"
-      :step="STEP"
-    />
-    <UiRange
-      v-model="words"
-      :label="$t('customize.options.words')"
-      :display="words > MAX_TAKE ? $t('customize.options.all') : words.toLocaleString('en')"
-      :hint="annotated === undefined ? undefined : $t('customize.options.wordsHint', { count: annotated.toLocaleString('en') })"
-      :min="STEP"
-      :max="MAX_TAKE + STEP"
-      :step="STEP"
-    />
-    <UiRange
-      v-model="jlpt"
-      :label="$t('customize.options.jlpt')"
-      :display="jlptLevels ?? $t('customize.options.none')"
-      :hint="$t('customize.options.jlptHint')"
-      :min="0"
-      :max="JLPT_LEVELS.length"
-    />
+    <!-- In the planner's order: the sources' words, those filtered out, then skip and take by score. -->
     <fieldset class="flex flex-col gap-2">
       <legend class="label mb-1.5">
         {{ $t('customize.options.sources') }}
@@ -119,6 +94,14 @@ function toggle(source: WordSource): void {
         </button>
       </div>
     </fieldset>
+    <UiRange
+      v-model="jlpt"
+      :label="$t('customize.options.jlpt')"
+      :display="jlptLevels ?? $t('customize.options.none')"
+      :hint="$t('customize.options.jlptHint')"
+      :min="0"
+      :max="JLPT_LEVELS.length"
+    />
     <UiToggle v-model="isolated">
       {{ $t('customize.options.isolated') }}
     </UiToggle>
@@ -131,6 +114,25 @@ function toggle(source: WordSource): void {
       :max="1"
       :step="0.05"
       :disabled="!isolated"
+    />
+    <div class="h-px bg-[var(--ff-line)]" />
+    <UiRange
+      v-model="skip"
+      :label="$t('customize.options.skip')"
+      :display="skip ? skip.toLocaleString('en') : $t('customize.options.none')"
+      :hint="$t('customize.options.skipHint')"
+      :min="0"
+      :max="MAX_SKIP"
+      :step="STEP"
+    />
+    <UiRange
+      v-model="words"
+      :label="$t('customize.options.words')"
+      :display="words > MAX_TAKE ? $t('customize.options.all') : words.toLocaleString('en')"
+      :hint="annotated === undefined ? undefined : $t('customize.options.wordsHint', { count: annotated.toLocaleString('en') })"
+      :min="STEP"
+      :max="MAX_TAKE + STEP"
+      :step="STEP"
     />
     <div class="h-px bg-[var(--ff-line)]" />
     <UiRange
