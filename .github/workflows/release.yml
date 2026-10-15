@@ -46,7 +46,9 @@ jobs:
         with:
           name: fonts
           path: fonts
-      - run: gh release upload "$GITHUB_REF_NAME" fonts/* --clobber --repo "$GITHUB_REPOSITORY"
+      # Everything in one archive, for the site's "Download all" button.
+      - run: cd fonts && zip --quiet ../Furifont.zip *
+      - run: gh release upload "$GITHUB_REF_NAME" fonts/* Furifont.zip --clobber --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ github.token }}
       # The site's build downloads these fonts: Vercel's build of the release commit ran before they were here.

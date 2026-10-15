@@ -42,6 +42,9 @@
       <p class="text-sm color-muted">
         {{ $t('downloads.buildOwn') }}
       </p>
+      <UiButton :href="releaseUrl('Furifont.zip')" icon="i-ph-download-simple" variant="solid" class="self-start">
+        {{ $t('downloads.all') }}
+      </UiButton>
       <UiButton to="/customize" icon="i-ph-sliders-horizontal" class="self-start">
         {{ $t('nav.customize') }}
       </UiButton>

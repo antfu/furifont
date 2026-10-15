@@ -88,6 +88,7 @@
     "none": "无振假名（VS225）"
   },
   "downloads": {
+    "all": "全部下载为 ZIP",
     "family": "字体家族",
     "ruby": "振假名",
     "variable": "可变",

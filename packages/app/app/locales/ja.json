@@ -88,6 +88,7 @@
     "none": "ルビなし（VS225）"
   },
   "downloads": {
+    "all": "すべて ZIP でダウンロード",
     "family": "ファミリー",
     "ruby": "ルビ",
     "variable": "可変",

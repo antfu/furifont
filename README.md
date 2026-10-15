@@ -50,6 +50,13 @@ Settings live in `furifont.config.json`; their defaults are in [`packages/core/s
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) to work on it.
 
+## Credits
+
+Furifont is inspired by:
+
+- [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-font), which puts pinyin on Chinese characters inside the font.
+- [Fira Code](https://github.com/tonsky/firacode), which uses OpenType ligatures to change how text looks.
+
 ## License
 
 - **Code:** [MIT](LICENSE.md).
