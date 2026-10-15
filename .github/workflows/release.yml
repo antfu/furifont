@@ -28,7 +28,7 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.cache/furifont
-          key: source-han-jp
+          key: source-han-jp-vf
       - run: pnpm fonts
       - uses: actions/upload-artifact@v4
         with:

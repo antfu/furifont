@@ -31,6 +31,8 @@ export interface StudioState {
 export interface PreviewResult {
   /** The preview font, base64-encoded OpenType. */
   font: string
+  /** Whether it has every weight, which the preview can then set. */
+  variable: boolean
   stats: PlanReport['stats']
   ms: number
 }
@@ -118,8 +120,8 @@ export async function setupStudio(ctx: DevframeNodeContext): Promise<void> {
       jsonSerializable: true,
       handler: async (options: FurifontConfigInput, text: string): Promise<PreviewResult> => {
         const started = performance.now()
-        const { font, report } = await previewFont(parse(options), v.parse(Text, text), ctx.cwd)
-        return { font: Buffer.from(font).toString('base64'), stats: report.stats, ms: Math.round(performance.now() - started) }
+        const { font, report, variable } = await previewFont(parse(options), v.parse(Text, text), ctx.cwd)
+        return { font: Buffer.from(font).toString('base64'), variable, stats: report.stats, ms: Math.round(performance.now() - started) }
       },
     }),
     defineRpcFunction({

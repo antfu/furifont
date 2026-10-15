@@ -18,7 +18,7 @@ describe('defaults', () => {
 
   it('name each prebuilt family once, and write its site styles among the weights', () => {
     expect(new Set(PREBUILT.fonts.map(f => f.family)).size).toBe(PREBUILT.fonts.length)
-    const styles: string[] = PREBUILT.weights.map(w => w.style)
+    const styles: string[] = [...PREBUILT.weights.map(w => w.style), PREBUILT.variable.style]
     expect(PREBUILT.site.styles.every(style => styles.includes(style))).toBe(true)
   })
 })

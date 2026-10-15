@@ -1,3 +1,4 @@
+import type { PlanReport } from '@furifont/core'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { compileFont, readFontInfo, toWoff2 } from '@furifont/compiler'
@@ -9,24 +10,32 @@ import { build } from 'vite'
 const cache = (file: string): string => fileURLToPath(new URL(`./.cache/${file}`, import.meta.url))
 const source = (pkg: string, entry = 'index'): string => fileURLToPath(new URL(`../../packages/${pkg}/src/${entry}.ts`, import.meta.url))
 
-export const FIXTURE_FONT = fileURLToPath(new URL('../../packages/compiler/test/fixtures/SourceHanSansJP-Subset.otf', import.meta.url))
+const fixture = (file: string): string => fileURLToPath(new URL(`../../packages/compiler/test/fixtures/${file}`, import.meta.url))
+export const FIXTURE_FONT = fixture('SourceHanSansJP-Subset.otf')
 /** The WOFF2, as the site serves its fonts. */
 export const TEST_FONT = cache('Furifont-Test.woff2')
+/** The same on a variable font of every weight. */
+export const TEST_VARIABLE_FONT = cache('Furifont-TestVF.woff2')
 export const TEST_OTF = cache('Furifont-Test.otf')
 /** The font's `.ivs.json`, which says what each `salt` value picks. */
 export const TEST_READINGS = cache('Furifont-Test.ivs.json')
 /** `woff2.ts` built for browsers as `woff2.js`, with its assets: it puts `toWoff2`, with the browser's Brotli, on `window`. */
 export const WOFF2_PAGE = cache('woff2')
 
-/** A small Furifont: the full dictionary over a subset of Source Han Sans JP. */
+/** Small Furifonts: the full dictionary over subsets of Source Han Sans JP, static and variable. */
 export default async function setup(): Promise<void> {
-  const base = await readFile(FIXTURE_FONT)
-  const { plan, report } = createFontPlanner(await loadDictionary())(resolveOptions(), new Set(readFontInfo(base).codepoints))
-  const { font } = await compileFont({ plan, base, subsetWasm })
+  const planFont = createFontPlanner(await loadDictionary())
+  const compile = async (path: string): Promise<{ font: Uint8Array, ivs: PlanReport['ivs'] }> => {
+    const base = await readFile(path)
+    const { plan, report } = planFont(resolveOptions(), new Set(readFontInfo(base).codepoints))
+    return { font: (await compileFont({ plan, base, subsetWasm })).font, ivs: report.ivs }
+  }
+  const [{ font, ivs }, variable] = await Promise.all([compile(FIXTURE_FONT), compile(fixture('SourceHanSansJP-VF-Subset.ttf'))])
   await mkdir(cache(''), { recursive: true })
   await writeFile(TEST_OTF, font)
   await writeFile(TEST_FONT, await toWoff2(font, brotli))
-  await writeFile(TEST_READINGS, JSON.stringify(report.ivs))
+  await writeFile(TEST_VARIABLE_FONT, await toWoff2(variable.font, brotli))
+  await writeFile(TEST_READINGS, JSON.stringify(ivs))
   await build({
     configFile: false,
     root: fileURLToPath(new URL('.', import.meta.url)),

@@ -56,7 +56,7 @@ The interface is in English, Japanese, Simplified Chinese and Traditional Chines
 
 ## Releases
 
-Maintainers release with `pnpm release`. It builds the packages, asks for the new version, and rebuilds the site's fonts into `fonts/` (the four Regular WOFF2s and their `.ivs.json`, about a minute). The bump and the fonts go into one commit and tag, which it pushes. `fonts/` changes only this way: don't commit fonts you built yourself.
+Maintainers release with `pnpm release`. It builds the packages, asks for the new version, and rebuilds the site's fonts into `fonts/` (the four variable WOFF2s and their `.ivs.json`, about a minute). The bump and the fonts go into one commit and tag, which it pushes. `fonts/` changes only this way: don't commit fonts you built yourself.
 
 The tag then makes CI:
 

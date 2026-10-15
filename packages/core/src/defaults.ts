@@ -20,15 +20,15 @@ export const DEFAULTS = {
     isolatedMinShare: 0.8,
     /** Sizes in em, relative to the base font. */
     metrics: {
-      rubyScale: 0.4,
+      rubyScale: 0.5,
       rubyGap: 0.05,
-      compressionFloor: 0.6,
+      compressionFloor: 0.8,
       maxRubyWidth: 1.6,
     },
   },
   /** What the CLI adds to a plan: where the glyphs are drawn, and what is written. */
   build: {
-    base: 'Source Han Sans JP Regular',
+    base: 'Source Han Sans JP VF',
     formats: ['otf', 'woff2'],
   },
 } as const
@@ -42,14 +42,21 @@ export const PREBUILT = {
     { family: 'Furifont Serif', base: 'Source Han Serif JP', face: 'serif', rubyScript: 'hiragana' },
     { family: 'Furifont Serif Romaji', base: 'Source Han Serif JP', face: 'serif', rubyScript: 'hepburn' },
   ],
-  /** The weights of the release, each of the base's weights by name. */
+  /** The static weights of the release, each of the base's weights by name. Bold is the variable font's. */
   weights: [
     { style: 'Regular', weight: 400 },
-    { style: 'Bold', weight: 700 },
   ],
-  /** What `fonts/` holds, which git keeps and the site serves: WOFF2 only. */
+  /**
+   * Every weight in one font, from the base's variable font (`<base> VF`). It
+   * is named apart, `<family> VF`, so it installs beside the static weights.
+   */
+  variable: {
+    style: 'VF',
+    weights: [250, 900],
+  },
+  /** What `fonts/` holds, which git keeps and the site serves: the variable WOFF2s. */
   site: {
-    styles: ['Regular'],
+    styles: ['VF'],
     formats: ['woff2'],
   },
   /** Options set on every prebuilt font over the defaults above, such as `{ nfMax: 24 }`. */
@@ -57,6 +64,7 @@ export const PREBUILT = {
 } as const satisfies {
   fonts: readonly { family: string, base: string, face: 'sans' | 'serif', rubyScript: 'hiragana' | 'hepburn' }[]
   weights: readonly { style: string, weight: number }[]
+  variable: { style: string, weights: readonly [number, number] }
   site: { styles: readonly string[], formats: readonly ('otf' | 'woff2')[] }
   options: Omit<PlanOptionsInput, 'family' | 'rubyScript'>
 }

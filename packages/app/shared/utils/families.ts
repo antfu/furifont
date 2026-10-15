@@ -2,7 +2,7 @@ import { PREBUILT } from '@furifont/core'
 
 export interface Family {
   family: string
-  /** File name stem: `<stem>-Regular.woff2`. */
+  /** File name stem: `<stem>-Regular.otf`, and the variable font's `<stem>VF.woff2`. */
   stem: string
   face: 'sans' | 'serif'
   script: 'hiragana' | 'hepburn'
@@ -11,8 +11,11 @@ export interface Family {
 /** The prebuilt fonts, as `PREBUILT` in core lists them. */
 export const FAMILIES: Family[] = PREBUILT.fonts.map(({ family, face, rubyScript }) => ({ family, stem: family.replaceAll(' ', ''), face, script: rubyScript }))
 
-/** Weights on the release; the site serves Regular only. */
+/** Static weights on the release, beside the variable font of every weight that the site serves. */
 export const WEIGHTS = PREBUILT.weights
+
+/** The lightest and heaviest weight of the variable font. */
+export const [MIN_WEIGHT, MAX_WEIGHT] = PREBUILT.variable.weights
 
 export const REPOSITORY = 'https://github.com/antfu/furifont'
 
@@ -24,12 +27,12 @@ export function releaseUrl(file: string): string {
 }
 
 export function siteFontUrl(family: Family): string {
-  return `${SITE}/fonts/${family.stem}-Regular.woff2`
+  return `${SITE}/fonts/${family.stem}VF.woff2`
 }
 
-/** The reading lists of a family's Regular, which say what `salt` n picks. */
+/** The reading lists of a family's variable font, which say what `salt` n picks. */
 export function siteReadingsUrl(family: Family): string {
-  return `${SITE}/fonts/${family.stem}-Regular.ivs.json`
+  return `${SITE}/fonts/${family.stem}VF.ivs.json`
 }
 
 /** The okurigana pairs of one kanji, for pages that pick its reading with `salt`. */

@@ -25,6 +25,8 @@ interface PreviewState {
   family?: string
   ms?: number
   glyphs?: number
+  /** Whether the preview font has every weight. */
+  variable?: boolean
   loading: boolean
   error?: string
 }
@@ -152,13 +154,13 @@ function createCustomize() {
       if (id !== previews)
         return
       const bytes = Uint8Array.from(atob(result.font), c => c.charCodeAt(0))
-      const next = new FontFace(`Furifont Preview ${id}`, bytes)
+      const next = new FontFace(`Furifont Preview ${id}`, bytes, { weight: `${MIN_WEIGHT} ${MAX_WEIGHT}` })
       await next.load()
       document.fonts.add(next)
       if (face)
         document.fonts.delete(face)
       face = next
-      Object.assign(preview, { family: next.family, ms: result.ms, glyphs: result.stats.glyphs, error: undefined })
+      Object.assign(preview, { family: next.family, ms: result.ms, glyphs: result.stats.glyphs, variable: result.variable, error: undefined })
     }
     catch (error) {
       if (id === previews)
