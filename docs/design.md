@@ -312,6 +312,15 @@ draws every weight, bold included. Of the elements Furifont sets, those with a l
 1.6 em also get `data-furifont-tight`, which sets `line-height: normal` for the
 ruby.
 
+Each carries its own version. Once Furifont is on, the bookmarklet on each
+click and the userscript once a day fetch `/version.json`, the release the site
+serves. A toast links to a newer bookmarklet or userscript, and to the
+downloads when the installed font is older. A page cannot read a font's tables,
+so each font maps 。 and VS1 (`VERSION_PROBE` in core) to an empty glyph two
+ems wide plus its revision, which the page measures on a canvas: `0.1.2` is
+2.102 ems. A font from before it draws the 。 alone, an em wide at most. When
+the site cannot say, as under a CSP, nothing shows.
+
 ## Okurigana pairs
 
 A font cannot read verbs, because their okurigana is in another run. 来 is

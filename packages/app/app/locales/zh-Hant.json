@@ -105,7 +105,10 @@
     "toast": {
       "message": "Furifont 無法在此頁面載入字型。有些網站（如 X 和 GitHub）不允許載入其他網站的字型。在這些網站上，需要在電腦上安裝 Furifont。",
       "download": "下載字型",
-      "close": "關閉"
+      "close": "關閉",
+      "outdated": "Furifont 有新版本了。",
+      "userscript": "更新使用者腳本",
+      "bookmarklet": "取得新的書籤小工具"
     },
     "menu": {
       "okuriganaOn": "送假名讀音：開",

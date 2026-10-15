@@ -9,9 +9,10 @@ const bookmarklet = computed(() => {
   const options = {
     family: family.value.family,
     url: siteFontUrl(family.value),
-    toast: { message: t('anyPage.toast.message'), download: t('anyPage.toast.download'), close: t('anyPage.toast.close') },
+    toast: { message: t('anyPage.toast.message'), download: t('anyPage.toast.download'), close: t('anyPage.toast.close'), outdated: t('anyPage.toast.outdated') },
     // The page fetches the files itself, so the bookmarklet carries only where they are.
     okurigana: okurigana.value ? { readings: siteReadingsUrl(family.value), pairs: SITE_PAIRS_URL } : undefined,
+    update: { version: VERSION, href: `${SITE}/#any-page`, text: t('anyPage.toast.bookmarklet') },
   } satisfies FurifontOptions
   // In a function, the engine's `var Furifont` stays off the page's globals.
   return `javascript:${encodeURIComponent(`void (()=>{${engine};Furifont.toggleFurifont(${JSON.stringify(options)})})()`)}`

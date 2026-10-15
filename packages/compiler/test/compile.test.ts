@@ -182,6 +182,16 @@ describe.each([
     expect(Buffer.from((await build(file)).otf).equals(Buffer.from(built.otf))).toBe(true)
   })
 
+  it('draws 。 and VS1 as an empty glyph whose width tells pages its version', () => {
+    const buffer = new hb.Buffer()
+    buffer.addText('。\uFE00')
+    buffer.guessSegmentProperties()
+    hb.shape(built.font, buffer)
+    const [glyph] = buffer.getGlyphInfos()
+    expect(buffer.getGlyphPositions().map(p => p.xAdvance)).toEqual([2102])
+    expect(built.font.glyphToPath(glyph!.codepoint)).toBe('')
+  })
+
   it('leaves the base font it was given as it was, even as a Buffer', async () => {
     const base = await fixture(file)
     const original = Buffer.from(base)

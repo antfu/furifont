@@ -105,7 +105,10 @@
     "toast": {
       "message": "Furifont could not load its font on this page. Some sites, such as X and GitHub, do not let fonts load from other sites. On those sites, you must install Furifont on your computer.",
       "download": "Download the fonts",
-      "close": "Close"
+      "close": "Close",
+      "outdated": "A newer version of Furifont is out.",
+      "userscript": "Update the userscript",
+      "bookmarklet": "Get the new bookmarklet"
     },
     "menu": {
       "okuriganaOn": "Okurigana readings: on",

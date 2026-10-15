@@ -3,11 +3,11 @@ function scrollToDownloads(): void {
   document.getElementById('downloads')?.scrollIntoView({ behavior: 'smooth' })
 }
 
-// The bookmarklet's and the userscript's toast link here; the page renders after the browser looks for the hash.
+// The bookmarklet's and the userscript's toasts link here; the page renders after the browser looks for the hash.
 const route = useRoute()
 onMounted(() => {
-  if (route.hash === '#downloads')
-    scrollToDownloads()
+  if (route.hash)
+    document.getElementById(route.hash.slice(1))?.scrollIntoView({ behavior: 'smooth' })
 })
 </script>
 
@@ -26,7 +26,7 @@ onMounted(() => {
     <UiSection id="downloads" index="04" :title="$t('sections.download')">
       <DemoDownloads />
     </UiSection>
-    <UiSection index="05" :title="$t('sections.anyPage')">
+    <UiSection id="any-page" index="05" :title="$t('sections.anyPage')">
       <DemoAnyPage />
     </UiSection>
   </div>
