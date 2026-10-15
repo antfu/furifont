@@ -1,4 +1,5 @@
 import type { NuxtConfig } from 'nuxt/schema'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { addVitePlugin } from '@nuxt/kit'
 import { version } from '../../package.json'
@@ -31,10 +32,19 @@ const TITLE = 'Furifont: furigana built into the font'
 const DESCRIPTION = 'A Japanese font that shows furigana by itself.'
 const PREVIEW = `${SITE}/og.png`
 
+/** `FURIFONT_APP=studio` builds the app `furifont dev` serves, into the CLI: the site without its docs. */
+const STUDIO = process.env.FURIFONT_APP === 'studio'
+
 export default defineNuxtConfig({
   ssr: false,
   css: ['~/assets/css/tokens.css'],
-  modules: ['@comark/nuxt', '@unocss/nuxt', studioBridge],
+  modules: [...STUDIO ? [] : ['@comark/nuxt'], '@unocss/nuxt', studioBridge],
+  hooks: {
+    'pages:extend': (pages) => {
+      if (STUDIO)
+        pages.splice(0, pages.length, ...pages.filter(page => !page.path.startsWith('/docs')))
+    },
+  },
   alias: {
     // Types only: the studio's wire contract lives with its implementation.
     'furifont': source('cli'),
@@ -42,10 +52,12 @@ export default defineNuxtConfig({
     '@furifont/core': source('core'),
   },
   nitro: {
-    // Always plain static files in .output/public: on Vercel, Nitro would otherwise write its own output format elsewhere.
+    // Always plain static files, in .output/public or the CLI's client: on Vercel, Nitro would otherwise write its own output format elsewhere.
     preset: 'static',
-    // The prebuilt fonts of this version's release, as `scripts/fetch-fonts.ts` downloads them.
-    publicAssets: [{ dir: fileURLToPath(new URL(`../../.cache/fonts/v${version}`, import.meta.url)), baseURL: 'fonts' }],
+    // The studio's own output directory, so it never clobbers the site's.
+    output: STUDIO ? { dir: '.output-studio', publicDir: fileURLToPath(new URL('../cli/dist/client', import.meta.url)) } : undefined,
+    // The prebuilt fonts of this version's release, as `scripts/fetch-fonts.ts` downloads them; the studio serves the ones you build.
+    publicAssets: STUDIO ? [] : [{ dir: fileURLToPath(new URL(`../../.cache/fonts/v${version}`, import.meta.url)), baseURL: 'fonts' }],
     // Only the okurigana pairs, which `dict:update` packs the way pages read them: the rest of the data is megabytes.
     serverAssets: [
       { baseName: 'dictionary', dir: fileURLToPath(new URL('../dictionary/data', import.meta.url)), pattern: 'okurigana.json' },
@@ -85,6 +97,8 @@ export default defineNuxtConfig({
       __VUE_I18N_FULL_INSTALL__: true,
       __VUE_I18N_LEGACY_API__: false,
       __INTLIFY_PROD_DEVTOOLS__: false,
+      // Declared in `app/flags.d.ts`.
+      __STUDIO__: STUDIO,
     },
   },
   devtools: { enabled: false },

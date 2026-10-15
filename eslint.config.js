@@ -11,7 +11,7 @@ export default antfu(
       'packages/dictionary/data/**',
       '**/test/fixtures/**',
       '**/.nuxt/**',
-      '**/.output/**',
+      '**/.output*/**',
       'packages/app/public/fonts/**',
       '**/*.css',
     ],
