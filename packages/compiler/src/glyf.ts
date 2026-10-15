@@ -1,95 +1,38 @@
 import type { Outline } from './outline'
 import { view, Writer } from './binary'
 
-const ON_CURVE = 0x01
-const X_SHORT = 0x02
-const Y_SHORT = 0x04
-const REPEAT = 0x08
-const X_SAME_OR_POSITIVE = 0x10
-const Y_SAME_OR_POSITIVE = 0x20
+const ARG_1_AND_2_ARE_WORDS = 0x0001
+const ARGS_ARE_XY_VALUES = 0x0002
+const MORE_COMPONENTS = 0x0020
+const WE_HAVE_AN_X_AND_Y_SCALE = 0x0040
+const UNSCALED_COMPONENT_OFFSET = 0x1000
 
-interface Point {
-  x: number
-  y: number
-  on: boolean
+/**
+ * A composite of the base glyphs, so a variable font's own variations draw it
+ * at every weight; its bounding box is the default instance's.
+ */
+function encodeComposite({ components, bounds }: Outline): Uint8Array {
+  if (!bounds)
+    return new Uint8Array()
+  const w = new Writer().u16(-1).u16(bounds[0]).u16(bounds[1]).u16(bounds[2]).u16(bounds[3])
+  components.forEach(({ glyph, transform: [sx, sy, dx, dy] }, i) => {
+    const scaled = sx !== 1 || sy !== 1
+    w.u16(ARG_1_AND_2_ARE_WORDS | ARGS_ARE_XY_VALUES | UNSCALED_COMPONENT_OFFSET | (scaled ? WE_HAVE_AN_X_AND_Y_SCALE : 0) | (i < components.length - 1 ? MORE_COMPONENTS : 0))
+    w.u16(glyph).u16(Math.round(dx)).u16(Math.round(dy))
+    // F2Dot14.
+    if (scaled)
+      w.u16(Math.round(sx * 0x4000)).u16(Math.round(sy * 0x4000))
+  })
+  return w.finish()
 }
 
-function contours(outline: Outline): Point[][] {
-  const result: Point[][] = []
-  for (const { type, points } of outline.segments) {
-    if (type === 'C')
-      throw new Error('cubic curves in a TrueType font')
-    if (type === 'M')
-      result.push([])
-    const contour = result.at(-1)!
-    for (let i = 0; i < points.length; i += 2)
-      contour.push({ x: points[i]!, y: points[i + 1]!, on: type !== 'Q' || i === points.length - 2 })
-  }
-  for (const contour of result) {
-    const [first, last] = [contour[0]!, contour.at(-1)!]
-    if (contour.length > 1 && last.on && last.x === first.x && last.y === first.y)
-      contour.pop()
-  }
-  return result
-}
-
-/** Writes one coordinate delta and returns its flag bits: none when 0 and `same`, one byte when short. */
-function coordinate(delta: number, short: number, sameOrPositive: number, out: Writer): number {
-  if (delta === 0)
-    return sameOrPositive
-  if (Math.abs(delta) >= 256) {
-    out.u16(delta)
-    return 0
-  }
-  out.u8(Math.abs(delta))
-  return short | (delta > 0 ? sameOrPositive : 0)
-}
-
-/** Flags, each run of equal ones written once with a repeat count. */
-function writeFlags(w: Writer, flags: number[]): void {
-  for (let i = 0; i < flags.length;) {
-    let repeat = 0
-    while (flags[i + repeat + 1] === flags[i] && repeat < 255)
-      repeat++
-    if (repeat)
-      w.u8(flags[i]! | REPEAT).u8(repeat)
-    else
-      w.u8(flags[i]!)
-    i += repeat + 1
-  }
-}
-
-/** A simple glyph without instructions, its bounding box taken from its points. */
-function encodeGlyph(outline: Outline): { bytes: Uint8Array, points: number, contours: number } {
-  const all = contours(outline)
-  if (!outline.bounds || !all.length)
-    return { bytes: new Uint8Array(), points: 0, contours: 0 }
-  const [xMin, yMin, xMax, yMax] = outline.bounds
-  const w = new Writer().u16(all.length).u16(xMin).u16(yMin).u16(xMax).u16(yMax)
-  let end = -1
-  for (const contour of all)
-    w.u16(end += contour.length)
-  w.u16(0)
-  const flags: number[] = []
-  const xs = new Writer()
-  const ys = new Writer()
-  let x = 0
-  let y = 0
-  for (const point of all.flat()) {
-    flags.push((point.on ? ON_CURVE : 0) | coordinate(point.x - x, X_SHORT, X_SAME_OR_POSITIVE, xs) | coordinate(point.y - y, Y_SHORT, Y_SAME_OR_POSITIVE, ys))
-    x = point.x
-    y = point.y
-  }
-  writeFlags(w, flags)
-  w.bytes(xs.finish()).bytes(ys.finish())
-  return { bytes: w.finish(), points: flags.length, contours: all.length }
-}
-
-/** TrueType outlines: base glyphs kept as bytes, new ones appended, written with a long loca. */
+/** TrueType outlines: base glyphs kept as bytes, new ones appended as composites, written with a long loca. */
 export class Glyf {
   private readonly glyphs: Uint8Array[]
+  /** maxp's statistics of the composites: their points and contours as drawn, and their component count. */
   maxPoints = 0
   maxContours = 0
+  maxComponents = 0
 
   constructor(glyf: Uint8Array, loca: Uint8Array, longLoca: boolean, glyphCount: number) {
     const d = view(loca)
@@ -102,10 +45,10 @@ export class Glyf {
   }
 
   addGlyph(outline: Outline): void {
-    const { bytes, points, contours } = encodeGlyph(outline)
-    this.glyphs.push(bytes)
-    this.maxPoints = Math.max(this.maxPoints, points)
-    this.maxContours = Math.max(this.maxContours, contours)
+    this.glyphs.push(encodeComposite(outline))
+    this.maxPoints = Math.max(this.maxPoints, outline.segments.reduce((sum, s) => sum + s.points.length / 2, 0))
+    this.maxContours = Math.max(this.maxContours, outline.segments.filter(s => s.type === 'M').length)
+    this.maxComponents = Math.max(this.maxComponents, outline.components.length)
   }
 
   compile(): { glyf: Uint8Array, loca: Uint8Array } {

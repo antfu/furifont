@@ -1,4 +1,4 @@
-import type { Dictionary, Plan } from '@furifont/core'
+import type { Dictionary, Plan, PlanOptionsInput } from '@furifont/core'
 import { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { brotliDecompressSync } from 'node:zlib'
@@ -37,9 +37,9 @@ interface Built {
   font: hb.Font
 }
 
-async function build(file: string, previewText?: string): Promise<Built> {
+async function build(file: string, previewText?: string, options?: PlanOptionsInput): Promise<Built> {
   const base = await fixture(file)
-  const { plan, report } = planFont(resolveOptions(), new Set(readFontInfo(base).codepoints), previewText)
+  const { plan, report } = planFont(resolveOptions(options), new Set(readFontInfo(base).codepoints), previewText)
   const { font, glyphNames } = await compileFont({ plan, base, subsetWasm })
   return { plan, readings: report.ivs.kanji, names: glyphNames, otf: font, font: new hb.Font(new hb.Face(new hb.Blob(font))) }
 }
@@ -79,10 +79,12 @@ function woff2Stream(woff2: Buffer): Buffer {
 }
 
 describe.each([
-  ['CID-keyed CFF', 'SourceHanSansJP-Subset.otf'],
-  ['name-keyed CFF without GSUB', 'FixtureJP-NameKeyed.otf'],
-  ['TrueType without GSUB', 'FixtureJP-TrueType.ttf'],
-])('compileFont on %s', (_, file) => {
+  ['CID-keyed CFF', 'SourceHanSansJP-Subset.otf', 'Regular'],
+  ['name-keyed CFF without GSUB', 'FixtureJP-NameKeyed.otf', 'Regular'],
+  ['TrueType without GSUB', 'FixtureJP-TrueType.ttf', 'Regular'],
+  // A variable font's names describe its default instance.
+  ['variable TrueType', 'SourceHanSansJP-VF-Subset.ttf', 'ExtraLight'],
+])('compileFont on %s', (_, file, style) => {
   let built: Built
 
   beforeAll(async () => {
@@ -152,7 +154,7 @@ describe.each([
 
   it('names the font after the plan', () => {
     const info = readFontInfo(built.otf)
-    expect(info).toMatchObject({ family: 'Furifont Sans', style: 'Regular', glyphCount: built.names.length })
+    expect(info).toMatchObject({ family: 'Furifont Sans', style, glyphCount: built.names.length })
     expect(info.codepoints).toContain('桜'.codePointAt(0))
   })
 
@@ -187,5 +189,48 @@ describe('a live preview', () => {
 
   it('compiles a text that has only lone kanji', async () => {
     expect(read(await preview('桜'), '桜')).toEqual(['桜:さくら'])
+  })
+})
+
+describe('a variable base font', () => {
+  const FILE = 'SourceHanSansJP-VF-Subset.ttf'
+  const EM_TOP = 880
+
+  /** The ruby's ink, the points above the em box, at a weight: `[xMin, xMax]`. */
+  function rubyInk({ otf }: Built, glyph: number, weight: number): [number, number] {
+    const font = new hb.Font(new hb.Face(new hb.Blob(otf)))
+    font.setVariations([new hb.Variation('wght', weight)])
+    const xs = font.glyphToJson(glyph).flatMap(({ values }) => values.filter((_, i) => i % 2 === 0 && values[i + 1]! > EM_TOP))
+    return [Math.min(...xs), Math.max(...xs)]
+  }
+
+  const glyphOf = ({ plan, names }: Built, ruby: string): number => names.indexOf(plan.glyphs.find(g => g.ruby[0]?.text === ruby)!.name)
+
+  it('draws the ruby at every weight', async () => {
+    const built = await build(FILE)
+    const sakura = glyphOf(built, 'さくら')
+    const [light, heavy] = [250, 900].map((weight) => {
+      const font = new hb.Font(new hb.Face(new hb.Blob(built.otf)))
+      font.setVariations([new hb.Variation('wght', weight)])
+      return font.glyphToPath(sakura)
+    })
+    expect(light).not.toBe(heavy)
+  })
+
+  it('keeps romaji centred over its kanji as the letters widen with the weight', async () => {
+    const built = await build(FILE, undefined, { rubyScript: 'hepburn' })
+    const sakura = glyphOf(built, 'sakura')
+    const centre = (weight: number): number => rubyInk(built, sakura, weight).reduce((a, b) => a + b) / 2
+    expect(Math.abs(centre(900) - centre(250))).toBeLessThan(4)
+    const width = (weight: number): number => rubyInk(built, sakura, weight).reduce((a, b) => b - a)
+    expect(width(900)).toBeGreaterThan(width(250))
+  })
+
+  it('names its instances after the new family', async () => {
+    const { otf } = await build(FILE)
+    const face = new hb.Face(new hb.Blob(otf))
+    const names = face.listNames().map(({ nameId, language }) => face.getName(nameId, language))
+    expect(names).toContain('FurifontSans-Bold')
+    expect(names.filter(n => /SourceHan/.test(n))).toEqual([])
   })
 })

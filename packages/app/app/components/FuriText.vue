@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import type { OkuriganaReader } from '@furifont/webpage'
 
-const { family = FAMILIES[0]!.family, ruby = true, size = 32, okurigana } = defineProps<{
+const { family = FAMILIES[0]!.family, ruby = true, size = 32, weight = 400, okurigana } = defineProps<{
   family?: string
   /** Off turns on `ss01`, the font's own switch back to plain glyphs. */
   ruby?: boolean
   size?: number
+  /** Between the variable font's lightest and heaviest. */
+  weight?: number
   /** Reads kanji by the okurigana after them: a span with `salt` where the font cannot see it. */
   okurigana?: OkuriganaReader
 }>()
@@ -15,6 +17,7 @@ const text = defineModel<string>('text', { required: true })
 const style = computed(() => ({
   fontFamily: `"${family}", sans-serif`,
   fontSize: `${size}px`,
+  fontWeight: weight,
   lineHeight: LINE_HEIGHT,
   fontFeatureSettings: ruby ? 'normal' : '"ss01"',
 }))

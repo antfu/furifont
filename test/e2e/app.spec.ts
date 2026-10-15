@@ -342,7 +342,7 @@ test('offers the okurigana readings in the bookmarklet, on unless turned off', a
 test('reads kanji by their okurigana in the playground as it is edited, and turns that off', async ({ page }) => {
   // The test font's reading list stands in for the prebuilt one's, so the salts are those verbSalts counts.
   const readings = await readFile(TEST_READINGS)
-  await page.route('**/fonts/FurifontSans-Regular.ivs.json', route => route.fulfill({ body: readings, contentType: 'application/json' }))
+  await page.route('**/fonts/FurifontSansVF.ivs.json', route => route.fulfill({ body: readings, contentType: 'application/json' }))
   await page.goto(new URL('/#/', url).href)
   const section = page.locator('section', { has: page.getByRole('heading', { name: 'Try it' }) })
   const text = section.getByRole('textbox')

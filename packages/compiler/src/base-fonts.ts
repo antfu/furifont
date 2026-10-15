@@ -12,7 +12,17 @@ function sourceHan(face: 'Sans' | 'Serif', weights: string[]): BaseFont[] {
   }))
 }
 
+/** Every weight in one TrueType font: the CFF2 one Adobe also has is not one Furifont can build on. */
+function sourceHanVariable(face: 'Sans' | 'Serif'): BaseFont {
+  return {
+    name: `Source Han ${face} JP VF`,
+    url: `https://raw.githubusercontent.com/adobe-fonts/source-han-${face.toLowerCase()}/release/Variable/TTF/Subset/SourceHan${face}JP-VF.ttf`,
+  }
+}
+
 export const BASE_FONTS: readonly BaseFont[] = [
   ...sourceHan('Sans', ['ExtraLight', 'Light', 'Normal', 'Regular', 'Medium', 'Bold', 'Heavy']),
+  sourceHanVariable('Sans'),
   ...sourceHan('Serif', ['ExtraLight', 'Light', 'Regular', 'Medium', 'SemiBold', 'Bold', 'Heavy']),
+  sourceHanVariable('Serif'),
 ]
