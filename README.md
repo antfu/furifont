@@ -6,25 +6,30 @@
 
 **Furigana, set by the font.** A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, no JavaScript, no plugin. It works everywhere that supports custom fonts.
 
-**[Try it on furifont.antfu.me](https://furifont.antfu.me)**
+Check out the demo and playground on **[furifont.antfu.me](https://furifont.antfu.me)**
+
+<!-- eslint-skip -->
 
 ```html
-<p style="font-family: 'Furifont Sans'; line-height: 1.7">今日は日本語の勉強をします。</p>
+<p class="furifont">今日は日本語の勉強をします。</p>
+
+<style>
+.furifont {
+  font-family: 'Furifont Sans';
+  line-height: 1.7;
+}
+</style>
 ```
 
 ## How it works
 
 Furifont is compiled from Source Han Sans JP or Source Han Serif JP. A build step reads a dictionary of thousands of words and draws the ruby into new glyphs. For each word, the font holds a ligature: 今日 becomes one glyph with きょう above it. Longer words win (日本語 before 日本), and a kanji with no clear reading stays bare. Details on the [website](https://furifont.antfu.me) and in [docs/design.md](docs/design.md).
 
-## Choosing a reading
-
-Put a variation selector, an invisible character, right after the first kanji of a word: VS226 gives reading 1, VS227 reading 2, and VS225 removes the ruby. The [reference page](https://furifont.antfu.me/#/reference) lists every reading.
-
 ## Download
 
 Each [release](https://github.com/antfu/furifont/releases/latest) has Sans and Serif, in Hiragana and Romaji, Regular as OpenType and WOFF2, and a variable font of every weight from ExtraLight to Heavy (`Furifont Sans VF`), as TrueType and WOFF2, whose ruby follows the weight of the text. Set `line-height` to 1.6 or more so the ruby is not clipped.
 
-## On websites
+## Use on websites
 
 The [website](https://furifont.antfu.me) has a bookmarklet and a [userscript](https://furifont.antfu.me/furifont.user.js) that set any page in Furifont, with optional okurigana readings.
 

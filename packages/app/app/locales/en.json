@@ -92,6 +92,7 @@
     "family": "Family",
     "ruby": "Ruby",
     "variable": "Variable",
+    "formats": "OTF and TTF are commonly used for installing on your computer. WOFF2 is optimized for websites. We recommend the variable fonts for the best experience. In some cases you may need the static weights for compatibility.",
     "buildOwn": "Or build your own font. You can choose another base font, a list with fewer or more words, other ruby letters, or other sizes."
   },
   "anyPage": {
