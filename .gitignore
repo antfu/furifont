@@ -20,3 +20,5 @@ temp
 test/e2e/.cache
 test-results
 playwright-report
+.vercel
+.env*
