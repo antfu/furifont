@@ -195,6 +195,10 @@
           "name": "Loanwords",
           "hint": "JMdict \"gai1\": common words that Japanese borrowed from other languages."
         },
+        "examples": {
+          "name": "Example sentences",
+          "hint": "Tatoeba: words that its example sentences use often, such as 留守中, even when no list above has them."
+        },
         "places": {
           "name": "Place names",
           "hint": "JMnedict: stations and places. Furifont uses them where no common word matches the text."

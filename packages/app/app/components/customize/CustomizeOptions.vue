@@ -41,8 +41,8 @@ const share = computed({
 })
 
 const scripts = computed(() => (['hiragana', 'katakanaOn', 'hepburn'] as const).map(value => ({ value, label: t(`customize.options.${value}`) })))
-// JMdict priority tags, plus the JMnedict place names: each is a source of words.
-const sources = ['spec1', 'ichi1', 'news1', 'gai1', 'places'] as const
+// JMdict priority tags, Tatoeba's sentences and the JMnedict place names: each is a source of words.
+const sources = ['spec1', 'ichi1', 'news1', 'gai1', 'examples', 'places'] as const
 type Source = typeof sources[number]
 
 // The server sends a complete config, metrics included.
@@ -60,10 +60,16 @@ const rubyScript = computed({
 })
 
 function isOn(source: Source): boolean {
+  if (source === 'examples')
+    return (config.value.minExamples ?? DEFAULTS.plan.minExamples) > 0
   return source === 'places' ? config.value.places ?? true : (config.value.selectTags ?? ['spec1']).includes(source)
 }
 
 function toggle(source: Source): void {
+  if (source === 'examples') {
+    config.value.minExamples = isOn(source) ? 0 : DEFAULTS.plan.minExamples
+    return
+  }
   if (source === 'places') {
     config.value.places = !isOn(source)
     return
