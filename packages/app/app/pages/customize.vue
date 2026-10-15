@@ -20,10 +20,10 @@ const { status, state } = provideCustomize()
         <CustomizeOptions />
       </aside>
       <div class="min-w-0">
-        <UiSection index="01" :title="$t('customize.sections.preview')" class="border-t-0">
+        <UiSection index="01" :title="$t('customize.sections.preview')" class="border-t-0 bg-base lg:sticky lg:top-14 lg:z-1 lg:border-b">
           <CustomizePreview />
         </UiSection>
-        <UiSection index="02" :title="$t('customize.sections.build')">
+        <UiSection index="02" :title="$t('customize.sections.build')" class="lg:border-t-0">
           <CustomizeBuild />
         </UiSection>
         <UiSection index="03" :title="$t('customize.sections.dictionary')">
