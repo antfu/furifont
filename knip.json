@@ -6,7 +6,10 @@
     "@antfu/skills"
   ],
   "workspaces": {
-    ".": {},
+    ".": {
+      // Vercel Functions: Vercel deploys every file in api/.
+      "entry": ["api/*.ts"]
+    },
     "packages/*": {},
     "packages/app": {
       "storybook": true,

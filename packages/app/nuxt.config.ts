@@ -64,6 +64,8 @@ export default defineNuxtConfig({
       // The engine the userscript inlines, as @furifont/helper-web builds it.
       { baseName: 'helper-web', dir: fileURLToPath(new URL('../helper-web/dist', import.meta.url)), pattern: 'index.iife.js' },
     ],
+    // The report endpoint is a Vercel Function (api/report.ts); this serves it to `nuxt dev`.
+    handlers: [{ route: '/api/report', method: 'post', handler: fileURLToPath(new URL('server/dev/report.ts', import.meta.url)), env: 'dev' }],
     prerender: { routes: ['/furifont.user.js', '/okurigana.json', '/version.json'] },
   },
   app: {

@@ -7,6 +7,7 @@
     "demo": "Intro",
     "docs": "Docs",
     "customize": "Customize",
+    "report": "Report",
     "github": "GitHub repository",
     "light": "Switch to light",
     "dark": "Switch to dark",
@@ -18,6 +19,7 @@
     "fonts": "The fonts use the {license}. They come from Source Han Sans and Source Han Serif.",
     "data": "The readings come from {jmdict}, {jmnedict}, {kanjidic} (EDRDG) and {furigana}. They use the CC BY-SA 4.0 license.",
     "code": "The tools use the MIT license.",
+    "report": "Report a wrong reading",
     "source": "Source on GitHub",
     "made": "Made by {author}",
     "supported": "Supported by {vercel} and {sponsors}",
@@ -132,6 +134,48 @@
     "kanji": "Kanji / {count}",
     "copyWith": "Copy {text} with {selector}",
     "default": "default"
+  },
+  "report": {
+    "eyebrow": "Report",
+    "title": "Report a wrong reading",
+    "body": "Did Furifont show the wrong furigana, or none where a word needs it? Tell us the words and the readings they should have. You can report several words at once. We go through the reports to fix the dictionary.",
+    "link": "Report a wrong reading.",
+    "sections": {
+      "words": "Words / {count}",
+      "environment": "Where you saw it",
+      "note": "Anything else"
+    },
+    "word": "Word",
+    "expected": "Correct reading",
+    "shown": "Reading shown (optional)",
+    "context": "Sentence (optional)",
+    "remove": "Remove {word}",
+    "add": "Add another word",
+    "environment": "Environment",
+    "environments": {
+      "playground": "The playground on this site",
+      "website": "Another website",
+      "desktop": "Desktop app",
+      "mobile": "Mobile app"
+    },
+    "family": "Font",
+    "url": "Page address (optional)",
+    "app": "App (optional)",
+    "appPlaceholder": {
+      "desktop": "Word, Pages, VS Code",
+      "mobile": "Notes, Kindle"
+    },
+    "os": "System (optional)",
+    "notePlaceholder": "Anything that helps, for example the browser, or why the reading is wrong.",
+    "name": "Your name (optional)",
+    "nameHint": "To credit you when the reading is fixed. Leave it empty to stay anonymous.",
+    "send": "Send the report",
+    "sending": "Sending",
+    "sent": "Thanks for your report.",
+    "again": "Report more words",
+    "failed": "The report could not be sent. Try again later.",
+    "limited": "You sent many reports in a short time. Try again in an hour.",
+    "privacy": "We store what you enter here, the font version and your browser name. We do not store your IP address."
   },
   "docs": {
     "install": "Install the font",

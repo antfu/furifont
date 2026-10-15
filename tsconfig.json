@@ -24,6 +24,6 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
   },
-  "include": ["packages/*/src", "packages/*/test", "packages/*/scripts", "packages/*/*.ts", "scripts", "test", "*.ts"],
+  "include": ["api", "packages/*/src", "packages/*/test", "packages/*/scripts", "packages/*/*.ts", "scripts", "test", "*.ts"],
   "exclude": ["packages/app"]
 }

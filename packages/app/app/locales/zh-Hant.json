@@ -7,6 +7,7 @@
     "demo": "簡介",
     "docs": "文件",
     "customize": "自訂",
+    "report": "回報",
     "github": "GitHub 儲存庫",
     "light": "切換為淺色",
     "dark": "切換為深色",
@@ -18,6 +19,7 @@
     "fonts": "字型採用{license}，源自 Source Han Sans 和 Source Han Serif。",
     "data": "讀音資料來自 {jmdict}、{jmnedict}、{kanjidic}（EDRDG）和 {furigana}，採用 CC BY-SA 4.0 授權。",
     "code": "工具採用 MIT 授權。",
+    "report": "回報錯誤讀音",
     "source": "GitHub 上的原始碼",
     "made": "作者：{author}",
     "supported": "由 {vercel} 和{sponsors}支持",
@@ -132,6 +134,48 @@
     "kanji": "漢字 / {count}",
     "copyWith": "複製帶有 {selector} 的「{text}」",
     "default": "預設"
+  },
+  "report": {
+    "eyebrow": "回報",
+    "title": "回報錯誤讀音",
+    "body": "如果 Furifont 顯示了錯誤的假名注音，或該有注音的詞沒有注音，請告訴我們這些詞和正確的讀音。可以一次回報多個詞。我們會根據回報修正詞典。",
+    "link": "回報錯誤讀音。",
+    "sections": {
+      "words": "詞語 / {count}",
+      "environment": "出現的位置",
+      "note": "其他"
+    },
+    "word": "詞語",
+    "expected": "正確讀音",
+    "shown": "顯示的讀音（選填）",
+    "context": "句子（選填）",
+    "remove": "刪除 {word}",
+    "add": "新增詞語",
+    "environment": "環境",
+    "environments": {
+      "playground": "本站的試用區",
+      "website": "其他網站",
+      "desktop": "桌面應用程式",
+      "mobile": "行動應用程式"
+    },
+    "family": "字型",
+    "url": "頁面網址（選填）",
+    "app": "應用程式（選填）",
+    "appPlaceholder": {
+      "desktop": "Word、Pages、VS Code",
+      "mobile": "備忘錄、Kindle"
+    },
+    "os": "系統（選填）",
+    "notePlaceholder": "任何有幫助的資訊，例如瀏覽器，或讀音錯誤的原因。",
+    "name": "你的名字（選填）",
+    "nameHint": "修正讀音時用於致謝。留空即可匿名。",
+    "send": "送出回報",
+    "sending": "傳送中",
+    "sent": "感謝你的回報。",
+    "again": "繼續回報",
+    "failed": "回報送出失敗，請稍後再試。",
+    "limited": "你在短時間內送出了太多回報，請一小時後再試。",
+    "privacy": "我們會儲存你填寫的內容、字型版本和瀏覽器名稱，不會儲存你的 IP 位址。"
   },
   "docs": {
     "install": "安裝字型",

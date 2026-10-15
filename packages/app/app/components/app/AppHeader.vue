@@ -1,10 +1,12 @@
 <script setup lang="ts">
 const { dark, toggle } = useDarkMode()
 
-const links: { to: string, label: `nav.${'demo' | 'docs' | 'customize'}` }[] = [{ to: '/', label: 'nav.demo' }]
+const links: { to: string, label: `nav.${'demo' | 'docs' | 'customize' | 'report'}`, class?: string }[] = [{ to: '/', label: 'nav.demo' }]
 if (__TARGET_WEBSITE__)
   links.push({ to: '/docs', label: 'nav.docs' })
 links.push({ to: '/customize', label: 'nav.customize' })
+// Phones have no room for it: the footer and the notice link there too.
+links.push({ to: '/report', label: 'nav.report', class: 'hidden sm:block' })
 // The devframe keeps running in its own tab.
 const siteTarget = __TARGET_DEVFRAME__ ? '_blank' : undefined
 </script>
@@ -23,6 +25,7 @@ const siteTarget = __TARGET_DEVFRAME__ ? '_blank' : undefined
           v-for="link in links"
           :key="link.to"
           :to="link.to"
+          :class="link.class"
           class="focus-ring whitespace-nowrap px-1 py-1 font-mono text-xs uppercase tracking-[0.04em] color-muted transition-colors hover:color-base sm:px-2 sm:tracking-[0.12em]"
           active-class="!color-base"
         >

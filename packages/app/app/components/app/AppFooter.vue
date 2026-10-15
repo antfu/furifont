@@ -30,10 +30,16 @@ const sources = {
             </template>
           </i18n-t>
         </p>
-        <a class="inline-flex items-center gap-1.5 hover:color-base" :href="REPOSITORY" target="_blank" rel="noopener">
-          <span class="i-ph-github-logo" />
-          {{ $t('footer.source') }}
-        </a>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <NuxtLink to="/report" class="inline-flex items-center gap-1.5 hover:color-base">
+            <span class="i-ph-flag" />
+            {{ $t('footer.report') }}
+          </NuxtLink>
+          <a class="inline-flex items-center gap-1.5 hover:color-base" :href="REPOSITORY" target="_blank" rel="noopener">
+            <span class="i-ph-github-logo" />
+            {{ $t('footer.source') }}
+          </a>
+        </div>
       </div>
       <div class="flex flex-col gap-3 border-t border-base px-6 py-5">
         <i18n-t keypath="footer.fonts" tag="p">

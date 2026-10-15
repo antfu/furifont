@@ -7,6 +7,7 @@
     "demo": "はじめに",
     "docs": "ドキュメント",
     "customize": "カスタマイズ",
+    "report": "報告",
     "github": "GitHub リポジトリ",
     "light": "ライトモードに切り替え",
     "dark": "ダークモードに切り替え",
@@ -18,6 +19,7 @@
     "fonts": "フォントは{license}です。Source Han Sans と Source Han Serif から作りました。",
     "data": "読みのデータは {jmdict}、{jmnedict}、{kanjidic}（EDRDG）、{furigana} から取っています。ライセンスは CC BY-SA 4.0 です。",
     "code": "ツールは MIT ライセンスです。",
+    "report": "読みの誤りを報告",
     "source": "GitHub のソースコード",
     "made": "制作：{author}",
     "supported": "{vercel} と{sponsors}の支援を受けています",
@@ -132,6 +134,48 @@
     "kanji": "漢字 / {count}",
     "copyWith": "{text} を {selector} 付きでコピー",
     "default": "既定"
+  },
+  "report": {
+    "eyebrow": "報告",
+    "title": "読みの誤りを報告",
+    "body": "ふりがなが間違っている、または必要な言葉にふりがなが付いていない場合は、その言葉と正しい読みを教えてください。複数の言葉をまとめて報告できます。報告をもとに辞書を修正します。",
+    "link": "読みの誤りを報告する。",
+    "sections": {
+      "words": "言葉 / {count}",
+      "environment": "表示された場所",
+      "note": "その他"
+    },
+    "word": "言葉",
+    "expected": "正しい読み",
+    "shown": "表示された読み（任意）",
+    "context": "文（任意）",
+    "remove": "{word} を削除",
+    "add": "言葉を追加",
+    "environment": "環境",
+    "environments": {
+      "playground": "このサイトのプレイグラウンド",
+      "website": "他のウェブサイト",
+      "desktop": "デスクトップアプリ",
+      "mobile": "モバイルアプリ"
+    },
+    "family": "フォント",
+    "url": "ページのアドレス（任意）",
+    "app": "アプリ（任意）",
+    "appPlaceholder": {
+      "desktop": "Word、Pages、VS Code",
+      "mobile": "メモ、Kindle"
+    },
+    "os": "OS（任意）",
+    "notePlaceholder": "ブラウザ名や、読みが間違っている理由など、参考になること。",
+    "name": "お名前（任意）",
+    "nameHint": "読みを修正したときにクレジットとして記載します。匿名の場合は空欄のままにしてください。",
+    "send": "報告を送信",
+    "sending": "送信中",
+    "sent": "ご報告ありがとうございます。",
+    "again": "さらに報告する",
+    "failed": "報告を送信できませんでした。しばらくしてからもう一度お試しください。",
+    "limited": "短時間に多くの報告が送られました。1時間後にもう一度お試しください。",
+    "privacy": "入力内容、フォントのバージョン、ブラウザ名を保存します。IPアドレスは保存しません。"
   },
   "docs": {
     "install": "フォントのインストール",

@@ -18,9 +18,10 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="min-h-screen overflow-x-clip bg-base color-base">
+  <div class="min-h-screen flex flex-col overflow-x-clip bg-base color-base">
     <AppHeader />
-    <main class="mx-auto max-w-6xl border-x border-base">
+    <!-- Grows, so a short page still keeps the footer at the bottom. -->
+    <main class="mx-auto w-full max-w-6xl flex-1 border-x border-base">
       <NuxtPage />
     </main>
     <AppFooter />

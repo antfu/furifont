@@ -48,6 +48,29 @@ The app uses Nuxt and UnoCSS. Colors come only from the `--ff-*` tokens in `pack
 
 The interface is in English, Japanese, Simplified Chinese and Traditional Chinese. The fonts themselves target Japanese only. Messages live in `packages/app/app/locales/`. `en.ts` is the source, and the other locales are typed against it, so a missing or extra key fails `pnpm typecheck`. Japanese sample text keeps `lang="ja"` in every interface language.
 
+## Reports
+
+Readers report wrong readings on the `/report` page. The site's static, so the page posts to a Vercel Function, `api/report.ts`. The function stores each report in Upstash Redis, as JSON, under `report:<ISO time>:<id>`.
+
+Under `pnpm dev`, the page posts to the dev server instead. With no database set up, the dev server prints each report in the terminal and stores nothing. To test with a database of your own:
+
+1. Create a free Redis database on [Upstash](https://console.upstash.com). Do not use the site's database.
+2. Put its REST URL and token in `packages/app/.env`. Git ignores this file.
+
+   ```sh
+   UPSTASH_REDIS_REST_URL=https://<your-database>.upstash.io
+   UPSTASH_REDIS_REST_TOKEN=<your-token>
+   ```
+
+   Vercel's Upstash integration calls them `KV_REST_API_URL` and `KV_REST_API_TOKEN`. Either pair works.
+3. Restart `pnpm dev`. The reports now go through the same code as on the site, with the same limit of 10 reports an hour from one address.
+
+To list the stored reports:
+
+```sh
+curl -H "Authorization: Bearer $UPSTASH_REDIS_REST_TOKEN" "$UPSTASH_REDIS_REST_URL/scan/0/match/report:*/count/1000"
+```
+
 ## Pull requests
 
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org).
