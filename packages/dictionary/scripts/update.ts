@@ -138,34 +138,66 @@ type ExampleEntry = [form: string, furigana: string, uses: number]
 const INDEXED_WORD = /^([^({[~]+)((?:\([^)]*\))*)(?:\[\d+\])?(?:\{([^}]*)\})?~?$/
 const hanOf = (text: string): string => text.replace(/\P{Script=Han}/gu, '')
 
+const DIGITS = /[0-9\uFF10-\uFF19]/
+const add = (map: Map<string, number>, key: string, n: number): void => void map.set(key, (map.get(key) ?? 0) + n)
+
 /**
  * How often the sentences' `B:` lines use each word as JMdict spells it in
  * kanji, by `form|reading`; `form|` where the line gives no reading, which
- * it does when the form reads one way or as its first reading.
+ * it does when the form reads one way or as its first reading. Words written
+ * with digits, as ３人 for 三人, are kept apart by the kanji written.
  */
-function countUses(examples: string): Map<string, number> {
+function countUses(examples: string): { uses: Map<string, number>, withDigits: Map<string, number> } {
   const uses = new Map<string, number>()
+  const withDigits = new Map<string, number>()
   for (const line of examples.split('\n')) {
     if (!line.startsWith('B: '))
       continue
     for (const word of line.slice(3).split(' ')) {
       const [, form, notes, written = form] = INDEXED_WORD.exec(word) ?? []
-      // Only the spelling a font sees counts: 兎 written ウサギ is no use of 兎.
-      if (!form || !hanOf(form) || hanOf(form) !== hanOf(written!))
-        continue
       const key = `${form}|${/\(([^)#][^)]*)\)/.exec(notes!)?.[1] ?? ''}`
-      uses.set(key, (uses.get(key) ?? 0) + 1)
+      // Only the spelling a font sees counts: 兎 written ウサギ is no use of 兎.
+      if (form && hanOf(form) && hanOf(form) === hanOf(written!))
+        add(uses, key, 1)
+      else if (form && DIGITS.test(written!) && hanOf(written!) && hanOf(form).endsWith(hanOf(written!)))
+        add(withDigits, `${key}|${hanOf(written!)}`, 1)
     }
   }
-  return uses
+  return { uses, withDigits }
 }
 
-/** Uses of each (form, reading) pair; a use with no reading counts only when the form's entries agree on their first one. */
+/** The reading of `form`'s last kanji `tail`, as 人 にん in 三人 さんにん; none when a span crosses into it, as in 二人 ふたり. */
+function tailReading(form: string, furigana: string, tail: string): string | undefined {
+  const chars = [...form]
+  const start = chars.join('').lastIndexOf(tail)
+  const at = [...chars.join('').slice(0, start)].length
+  if (start < 0 || chars.slice(at + [...tail].length).some(c => HAN.test(c)))
+    return
+  const spans = parseFurigana(furigana).filter(s => s.end > at && s.start < at + [...tail].length)
+  if (spans.some(s => s.start < at) || spans.reduce((n, s) => n + s.end - s.start, 0) !== [...tail].length)
+    return
+  return spans.map(s => s.ruby).join('')
+}
+
+/**
+ * Uses of each (form, reading) pair; a use with no reading counts only when
+ * the form's entries agree on their first one. A number written in digits
+ * counts for the kanji after it, as ３人 does for 人 にん: a font sees them alone.
+ */
 function compileExamples(examples: string, words: Word[]): ExampleEntry[] {
-  const uses = countUses(examples)
+  const { uses, withDigits } = countUses(examples)
   const firsts = new Map<string, Set<string>>()
   for (const word of words.filter(w => w.order === 0))
     getOrCreate(firsts, word.form).add(word.reading)
+  const aligned = new Map(words.map(w => [`${w.form}|${w.reading}`, w.furigana]))
+  for (const [key, n] of withDigits) {
+    const [form, given, tail] = key.split('|') as [string, string, string]
+    const reading = given || (firsts.get(form)?.size === 1 ? [...firsts.get(form)!][0] : undefined)
+    const furigana = reading && aligned.get(`${form}|${reading}`)
+    const read = furigana && tailReading(form, furigana, tail)
+    if (read)
+      add(uses, `${tail}|${read}`, n)
+  }
   const counted = new Map<string, ExampleEntry>()
   for (const { form, reading, furigana, order } of words) {
     const implied = order === 0 && firsts.get(form)!.size === 1 ? uses.get(`${form}|`) ?? 0 : 0

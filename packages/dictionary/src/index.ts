@@ -37,6 +37,8 @@ export async function loadDictionary(): Promise<Dictionary> {
     entries: data.entries.map(([form, furigana, nf, priority, order, conjugates]) => {
       const level = levels.get(`${form}|${furigana}`)
       const n = uses.get(`${form}|${furigana}`)
+      // On the pair's first entry only: homographs such as 正す ただす in three entries would count its uses thrice.
+      uses.delete(`${form}|${furigana}`)
       return {
         form,
         furigana,
