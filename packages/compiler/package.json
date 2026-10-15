@@ -24,7 +24,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "prepack": "turbo run build --filter=@furifont/compiler"
   },
   "peerDependencies": {
     "brotli-wasm": "catalog:prod"

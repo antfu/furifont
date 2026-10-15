@@ -6,9 +6,6 @@
 
 **Furigana, set by the font.** A Japanese font that shows furigana by itself. The text stays plain: no `<ruby>` markup, no JavaScript, no plugin. It works everywhere that supports custom fonts.
 
-> [!WARNING]
-> Furigana might be incorrect, due to the limits of fonts: a font sees one run of kanji at a time, not the sentence around it. Keep that in mind when you read.
-
 Check out the demo and playground on **[furifont.antfu.me](https://furifont.antfu.me)**
 
 <!-- eslint-skip -->
@@ -27,6 +24,9 @@ Check out the demo and playground on **[furifont.antfu.me](https://furifont.antf
 ## How it works
 
 Furifont is compiled from Source Han Sans JP or Source Han Serif JP. A build step reads a dictionary of thousands of words and draws the ruby into new glyphs. For each word, the font holds a ligature: 今日 becomes one glyph with きょう above it. Longer words win (日本語 before 日本), and a kanji with no clear reading stays bare. Details on the [website](https://furifont.antfu.me) and in [docs/design.md](docs/design.md).
+
+> [!WARNING]
+> Furigana might be incorrect, due to the limits of fonts: a font sees one run of kanji at a time, not the sentence around it. Keep that in mind when you read.
 
 ## Download
 

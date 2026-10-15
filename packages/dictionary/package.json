@@ -26,6 +26,7 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "prepack": "turbo run build --filter=@furifont/dictionary",
     "update": "node scripts/update.ts"
   },
   "dependencies": {

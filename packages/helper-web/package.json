@@ -23,7 +23,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "prepack": "turbo run build --filter=@furifont/helper-web"
   },
   "dependencies": {
     "@furifont/core": "workspace:*"

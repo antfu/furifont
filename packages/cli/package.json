@@ -36,7 +36,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown && pnpm -F @furifont/app run generate && node scripts/bundle-client.ts"
+    "build": "tsdown && pnpm -F @furifont/app run generate && node scripts/bundle-client.ts",
+    "prepack": "turbo run build --filter=furifont"
   },
   "dependencies": {
     "@furifont/compiler": "workspace:*",

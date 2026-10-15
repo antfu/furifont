@@ -22,7 +22,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "prepack": "turbo run build --filter=@furifont/core"
   },
   "dependencies": {
     "valibot": "catalog:prod"
