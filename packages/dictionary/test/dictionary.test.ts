@@ -1,4 +1,4 @@
-import { createFontPlanner, resolveOptions } from '@furifont/core'
+import { createFontPlanner, MANUAL_SOURCES, resolveOptions } from '@furifont/core'
 import { describe, expect, it } from 'vitest'
 import { loadDictionary } from '../src'
 import { OKURIGANA } from '../src/okurigana'
@@ -32,6 +32,39 @@ describe('compiled dictionary', () => {
     expect(place('上野')).toBe('0:うえ;1:の')
     expect(place('神戸')).toBeUndefined()
     expect(report.stats.places).toBeGreaterThan(100_000)
+  })
+
+  it('aligns readings that JMdict writes with a long vowel mark', () => {
+    expect(dictionary.entries.find(e => e.form === '麻雀')?.furigana).toBe('0:まー;1:じゃん')
+  })
+
+  it('adds the words no list ranks, unless the plan turns them off', () => {
+    expect(dictionary.entries.find(e => e.form === '四字熟語')?.priority).toBe('')
+    const without = planFont(resolveOptions({ untagged: false }), coverage).report
+    expect(report.stats.patterns - without.stats.patterns).toBeGreaterThan(10_000)
+  })
+
+  it('names every manual source for plans', () => {
+    expect(Object.keys(dictionary.manual ?? {}).sort()).toEqual([...MANUAL_SOURCES].sort())
+  })
+
+  it('adds the mahjong yaku, unless the plan leaves the source out', () => {
+    expect(dictionary.manual?.['mahjong-yaku']).toContain('立[りー]直[ち]')
+    const without = planFont(resolveOptions({ manual: [] }), coverage).report
+    expect(report.stats.patterns - without.stats.patterns).toBeGreaterThan(30)
+    expect(report.stats.places - without.stats.places).toBe(report.stats.patterns - without.stats.patterns)
+  })
+
+  it('adds the JR stations the places leave unread', () => {
+    expect(dictionary.manual?.['jr-stations']).toContain('阿蘇[あそ]')
+    const without = planFont(resolveOptions({ manual: ['mahjong-yaku'] }), coverage).report
+    expect(report.stats.patterns - without.stats.patterns).toBeGreaterThan(0)
+  })
+
+  it('adds four-character idioms, unless the plan leaves the source out', () => {
+    expect(dictionary.manual?.yojijukugo).toContain('阿鼻叫喚[あびきょうかん]')
+    const without = planFont(resolveOptions({ manual: ['mahjong-yaku', 'jr-stations'] }), coverage).report
+    expect(report.stats.patterns - without.stats.patterns).toBeGreaterThan(0)
   })
 
   it('keeps about nineteen thousand words and leaves ambiguous lone kanji out', () => {

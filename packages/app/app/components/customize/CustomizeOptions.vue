@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DEFAULTS, JLPT_LEVELS } from '@furifont/core'
+import { DEFAULTS, JLPT_LEVELS, MANUAL_SOURCES } from '@furifont/core'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -41,8 +41,8 @@ const share = computed({
 })
 
 const scripts = computed(() => (['hiragana', 'katakanaOn', 'hepburn'] as const).map(value => ({ value, label: t(`customize.options.${value}`) })))
-// JMdict priority tags, Tatoeba's sentences and the JMnedict place names: each is a source of words.
-const sources = ['spec1', 'ichi1', 'news1', 'gai1', 'tatoeba', 'places'] as const
+// JMdict priority tags, Tatoeba's sentences, the JMnedict place names and the manual lists: each is a source of words.
+const sources = ['spec1', 'ichi1', 'news1', 'gai1', 'tatoeba', 'places', 'untagged', ...MANUAL_SOURCES] as const
 type Source = typeof sources[number]
 
 // The server sends a complete config, metrics included.
@@ -59,15 +59,32 @@ const rubyScript = computed({
   set: value => config.value.rubyScript = value,
 })
 
+function isManual(source: Source): source is typeof MANUAL_SOURCES[number] {
+  return (MANUAL_SOURCES as readonly string[]).includes(source)
+}
+
 function isOn(source: Source): boolean {
   if (source === 'tatoeba')
     return (config.value.minTatoeba ?? DEFAULTS.plan.minTatoeba) > 0
+  if (isManual(source))
+    return (config.value.manual ?? MANUAL_SOURCES).includes(source)
+  if (source === 'untagged')
+    return config.value.untagged ?? DEFAULTS.plan.untagged
   return source === 'places' ? config.value.places ?? true : (config.value.selectTags ?? ['spec1']).includes(source)
 }
 
 function toggle(source: Source): void {
   if (source === 'tatoeba') {
     config.value.minTatoeba = isOn(source) ? 0 : DEFAULTS.plan.minTatoeba
+    return
+  }
+  if (source === 'untagged') {
+    config.value.untagged = !isOn(source)
+    return
+  }
+  if (isManual(source)) {
+    const current = config.value.manual ?? [...MANUAL_SOURCES]
+    config.value.manual = current.includes(source) ? current.filter(name => name !== source) : [...current, source]
     return
   }
   if (source === 'places') {

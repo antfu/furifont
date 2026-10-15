@@ -43,6 +43,7 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 - **Core, the compiler, the dictionary and helper-web run in browsers too.** They take and return bytes and use no Node APIs, and ESLint rejects `node:` imports in them. Files and the base-font cache belong to the CLI. Node's Brotli and hb-subset loader live in `@furifont/compiler/node`, which the CLI passes in.
 - **Browsers shape one script at a time.** A rule can only see a run of kanji, never the kana around it. HarfBuzz on a whole string matches rules that no browser does. So check any change to rendering with `pnpm test:e2e`, not with HarfBuzz alone.
 - **Never edit `packages/dictionary/data/dictionary.json`, `places.json`, `okurigana.json`, `jlpt.json` or `tatoeba.json` by hand.** Regenerate them with `pnpm dict:update`. To fix a wrong default reading, add the word to `packages/dictionary/src/overrides.ts`, with a comment that says why.
+- **Manual word lists** (such as the mahjong yaku) live in `packages/dictionary/src/manual/`, one file per source, registered in `index.ts`. A list too long to write by hand (`jr-stations`, `yojijukugo`) is compiled from its source into `data/manual/` by `pnpm -F @furifont/dictionary run update:manual`; do not edit it by hand. A build includes every source unless its `manual` option names a subset.
 
 The app uses Nuxt and UnoCSS. Colors come only from the `--ff-*` tokens in `packages/app/uno.config.ts`. Corners are square, and SFCs have no `<style>` blocks.
 

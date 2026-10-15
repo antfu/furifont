@@ -18,6 +18,7 @@ export const DEFAULTS = {
     /** Uses in Tatoeba's example sentences that select a word whatever its bucket: about 1,000 more words, and 50 glyphs. */
     minTatoeba: 3,
     places: true,
+    untagged: true,
     isolated: true,
     isolatedMinShare: 0.8,
     /** Sizes in em, relative to the base font. */

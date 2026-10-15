@@ -38,7 +38,7 @@ interface RunReading {
   tatoeba?: number
   /** Made the default by the dictionary's curated list (1) or by the user (2). */
   pinned?: number
-  /** A place name: its readings are no evidence for the kanji's own. */
+  /** A place name or a word of a manual source: its readings are no evidence for the kanji's own. */
   place?: boolean
 }
 
@@ -270,6 +270,30 @@ function addPlaces(patterns: Patterns, places: Dictionary['places'], skipped: Se
   }
 }
 
+/** Words of the manual sources fill the runs no common word claims, nor a skipped one; they come before place names. */
+function addManual(patterns: Patterns, manual: NonNullable<Dictionary['manual']>, skipped: Set<string>, ctx: PlanContext): void {
+  const names = ctx.options.manual ?? Object.keys(manual)
+  for (const notation of names.flatMap(name => manual[name] ?? [])) {
+    const { form, spans } = parseNotation(notation)
+    for (const run of hanRuns(form, spans).filter(ctx.renderable)) {
+      if (length(run.text) === 1 || patterns.has(run.text) || skipped.has(run.text) || ctx.removed.has(run.text))
+        continue
+      patterns.set(run.text, [{ spans: run.spans, weight: 0, tagged: false, order: 0, nf: 0, jlpt: 0, tags: new Set(), place: true }])
+    }
+  }
+}
+
+/** Words no list ranks fill the runs nothing else claims, each with its first reading: they are no evidence for the kanji's own. */
+function addUntagged(patterns: Patterns, index: DictionaryIndex, skipped: Set<string>, ctx: PlanContext): void {
+  for (const [text, readings] of index.runs) {
+    if (patterns.has(text) || skipped.has(text) || ctx.removed.has(text))
+      continue
+    const first = [...readings.values()].filter(r => ctx.renderable({ text, spans: r.spans })).sort((a, b) => a.order - b.order)[0]
+    if (first)
+      patterns.set(text, [{ ...first, place: true }])
+  }
+}
+
 /**
  * Runs of common words, then place names and custom words; pinned readings of
  * lone kanji are returned apart. A word is skipped whole: were only its known
@@ -289,8 +313,12 @@ function selectWords(index: DictionaryIndex, dictionary: Dictionary, ctx: PlanCo
     if (common.length)
       patterns.set(text, common.map(r => ({ ...r })))
   }
+  if (dictionary.manual)
+    addManual(patterns, dictionary.manual, skipped, ctx)
   if (ctx.options.places)
     addPlaces(patterns, dictionary.places, skipped, ctx)
+  if (ctx.options.untagged)
+    addUntagged(patterns, index, skipped, ctx)
   const lonePins = new Map<string, string>()
   for (const notation of ctx.options.words.add)
     addCustomWord(patterns, lonePins, notation, 0, ctx)

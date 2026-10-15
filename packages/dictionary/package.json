@@ -28,6 +28,7 @@
     "build": "tsdown",
     "prepack": "turbo run build --filter=@furifont/dictionary",
     "update": "node scripts/update.ts",
+    "update:manual": "node scripts/jr-stations.ts && node scripts/yojijukugo.ts",
     "audit": "node scripts/audit.ts"
   },
   "dependencies": {

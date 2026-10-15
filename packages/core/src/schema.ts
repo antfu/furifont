@@ -4,6 +4,8 @@ import { DEFAULTS } from './defaults'
 export const RUBY_SCRIPTS = ['hiragana', 'katakanaOn', 'hepburn'] as const
 export const PRIORITY_TAGS = ['ichi1', 'ichi2', 'news1', 'news2', 'spec1', 'spec2', 'gai1', 'gai2'] as const
 /** Easiest first. */
+/** The dictionary's manually maintained sources, which a plan may include by name. */
+export const MANUAL_SOURCES = ['mahjong-yaku', 'jr-stations', 'yojijukugo'] as const
 export const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const
 export type RubyScript = typeof RUBY_SCRIPTS[number]
 
@@ -54,6 +56,10 @@ export const PlanOptionsSchema = withNfWindow(v.object({
   skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate place names from the dictionary where no common word claims the run. */
   places: v.optional(v.boolean(), DEFAULTS.plan.places),
+  /** Annotate the words of JMdict that no list ranks or tags (such as 四字熟語), where no common word, manual list or place name claims the run; each gets its first reading. */
+  untagged: v.optional(v.boolean(), DEFAULTS.plan.untagged),
+  /** The dictionary's manually maintained sources (such as `mahjong-yaku`) to annotate; all of them when left out. */
+  manual: v.optional(v.array(v.picklist(MANUAL_SOURCES))),
   /** Annotate a kanji alone in its run, or one no word claims after another kanji (a suffix); when off, only selectors give them ruby. */
   isolated: v.optional(v.boolean(), DEFAULTS.plan.isolated),
   /** A kanji alone in its run is annotated only when one reading has this share of the evidence. */

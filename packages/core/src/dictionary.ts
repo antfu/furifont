@@ -29,6 +29,8 @@ export interface Dictionary {
   defaults?: string[]
   /** Place names, each with the one reading to show; common words take precedence over them. */
   places?: { form: string, furigana: string }[]
+  /** Word lists kept by hand, by source name, in inline notation; like place names, they fill runs no common word claims. */
+  manual?: Record<string, string[]>
 }
 
 /** A ruby annotation over characters `[start, end)` of a run. */

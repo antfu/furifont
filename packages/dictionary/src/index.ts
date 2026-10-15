@@ -1,5 +1,6 @@
 import type { Dictionary } from '@furifont/core'
 import * as v from 'valibot'
+import { loadManualSources } from './manual'
 import { BARE_FORMS, OVERRIDE_READINGS } from './overrides'
 
 const DataSchema = v.object({
@@ -25,7 +26,7 @@ async function readData<T extends v.GenericSchema>(name: 'dictionary' | 'places'
 
 /** Loads the compiled dictionary: JMdict and JMnedict place names, aligned by JmdictFurigana, with KANJIDIC2's on'yomi, JLPT levels and uses in Tatoeba's sentences. */
 export async function loadDictionary(): Promise<Dictionary> {
-  const [data, places, jlpt, tatoeba] = await Promise.all([readData('dictionary', DataSchema), readData('places', PlacesSchema), readData('jlpt', JlptSchema), readData('tatoeba', TatoebaSchema)])
+  const [data, places, jlpt, tatoeba, manual] = await Promise.all([readData('dictionary', DataSchema), readData('places', PlacesSchema), readData('jlpt', JlptSchema), readData('tatoeba', TatoebaSchema), loadManualSources()])
   const levels = new Map(jlpt.map(([form, furigana, level]) => [`${form}|${furigana}`, level]))
   const uses = new Map(tatoeba.map(([form, furigana, n]) => [`${form}|${furigana}`, n]))
   return {
@@ -33,6 +34,7 @@ export async function loadDictionary(): Promise<Dictionary> {
     onyomi: data.onyomi,
     defaults: OVERRIDE_READINGS,
     bare: BARE_FORMS,
+    manual,
     places: places.map(([form, furigana]) => ({ form, furigana })),
     entries: data.entries.map(([form, furigana, nf, priority, order, conjugates]) => {
       const level = levels.get(`${form}|${furigana}`)

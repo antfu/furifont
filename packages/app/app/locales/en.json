@@ -246,6 +246,22 @@
         "places": {
           "name": "Place names",
           "hint": "JMnedict: stations and places. Furifont uses them where no common word matches the text."
+        },
+        "untagged": {
+          "name": "Unranked words",
+          "hint": "JMdict: words that no list ranks, such as 四字熟語. Furifont uses them where nothing else matches the text. This adds about 700 KB to the font."
+        },
+        "mahjong-yaku": {
+          "name": "Mahjong yaku",
+          "hint": "Names of the scoring hands and tiles of mahjong, such as 立直. Furifont uses them where no common word matches the text."
+        },
+        "jr-stations": {
+          "name": "JR stations",
+          "hint": "Names of JR stations, such as 阿蘇, from the Desktop Tetsu list. Furifont uses them where no common word matches the text."
+        },
+        "yojijukugo": {
+          "name": "Four-character idioms",
+          "hint": "JMdict: yojijukugo, such as 阿鼻叫喚. Furifont uses them where no common word matches the text."
         }
       },
       "isolated": "Ruby on single kanji",

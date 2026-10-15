@@ -55,6 +55,34 @@ function parseAlignments(source: string): Map<string, string> {
   return map
 }
 
+const VOWELS: Record<string, string> = {}
+for (const [vowel, kana] of Object.entries({ あ: 'ぁあかがさざただなはばぱまゃやらゎわ', い: 'ぃいきぎしじちぢにひびぴみり', う: 'ぅうくぐすずっつづぬふぶぷむゅゆるゔ', え: 'ぇえけげせぜてでねへべぺめれ', お: 'ぉおこごそぞとどのほぼぽもょよろを' })) {
+  for (const k of kana)
+    VOWELS[k] = vowel
+}
+
+/**
+ * The reading as JmdictFurigana spells it: hiragana, with the long vowel mark
+ * written as the vowel it lengthens. JMdict has 麻雀 マージャン and まーじゃん
+ * where the alignments have まあじゃん.
+ */
+function alignmentReading(reading: string): string {
+  let out = ''
+  for (const char of toHiragana(reading))
+    out += char === 'ー' ? VOWELS[out.at(-1)!] ?? char : char
+  return out
+}
+
+/** Writes the long vowel marks of `reading` back into an alignment that spells them as vowels (まあ → まー). */
+function restoreLongMarks(aligned: string, reading: string): string {
+  const kana = [...toHiragana(reading)]
+  let at = 0
+  return aligned.split(';').map((part) => {
+    const [range, ruby = ''] = part.split(':')
+    return `${range}:${[...ruby].map(char => kana[at++] === 'ー' ? 'ー' : char).join('')}`
+  }).join(';')
+}
+
 type Entry = [form: string, furigana: string, nf: number, priority: string, order: number, conjugatesReading?: 1]
 
 /** A (form, reading) pair with what the okurigana table needs: its JMdict entry and how it conjugates. */
@@ -97,6 +125,10 @@ function parseJmdict(xml: string, furigana: Map<string, string>, jlptLevels: Map
   const entries: Entry[] = []
   const words: Word[] = []
   const jlpt: JlptEntry[] = []
+  const normalized = new Map([...furigana].map(([key, aligned]) => {
+    const [word, reading] = key.split('|')
+    return [`${word}|${alignmentReading(reading!)}`, aligned]
+  }))
   for (const [entry, [, body]] of [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].entries()) {
     const seq = all(body!, 'ent_seq')[0]
     const conjugatesReading = body!.includes('<pos>&vk;</pos>')
@@ -114,7 +146,9 @@ function parseJmdict(xml: string, furigana: Map<string, string>, jlptLevels: Map
       })
       valid.forEach((r, order) => {
         const reading = all(r, 'reb')[0]!
-        const aligned = furigana.get(`${form}|${reading}`)
+        const exact = furigana.get(`${form}|${reading}`)
+        const near = exact ? undefined : normalized.get(`${form}|${alignmentReading(reading)}`)
+        const aligned = exact ?? (near && restoreLongMarks(near, reading))
         if (!aligned)
           return
         const tags = formPriority.length ? [...new Set([...all(r, 're_pri'), ...(valid.length === 1 ? formPriority : [])])] : []

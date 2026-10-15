@@ -51,7 +51,7 @@ interface Built {
 
 async function build(file: string, previewText?: string, options?: PlanOptionsInput): Promise<Built> {
   const base = await fixture(file)
-  const { plan, report } = planFont(resolveOptions(options), new Set(readFontInfo(base).codepoints), previewText)
+  const { plan, report } = planFont(resolveOptions({ untagged: false, ...options }), new Set(readFontInfo(base).codepoints), previewText)
   const { font, glyphNames } = await compileFont({ plan, base, subsetWasm, version: VERSION, date: DATE })
   return { plan, readings: report.ivs.kanji, names: glyphNames, otf: font, font: new hb.Font(new hb.Face(new hb.Blob(font))) }
 }
