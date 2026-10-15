@@ -17,7 +17,7 @@ const removed = computed(() => new Set(config.value.words?.remove ?? []))
 /** With no search, the words whose default reading is a judgment call. */
 const shown = computed<WordMatch[]>(() => query.value.trim()
   ? results.value
-  : Object.entries(report.value?.ivs.words ?? {}).map(([form, readings]) => ({ form, readings: readings.map(notation => ({ notation, nf: 0, priority: '' })) })))
+  : Object.entries(report.value?.ivs.words ?? {}).map(([form, readings]) => ({ form, readings: readings.map(notation => ({ notation, score: 0, sources: [] })) })))
 </script>
 
 <template>
@@ -39,7 +39,7 @@ const shown = computed<WordMatch[]>(() => query.value.trim()
           class="focus-ring border px-2 py-0.5 text-sm transition-colors"
           :class="pinned.has(r.notation) ? 'border-inverse bg-inverse color-inverse' : 'border-base hover:border-strong'"
           :aria-pressed="pinned.has(r.notation)"
-          :title="r.priority || $t('customize.dictionary.noTag')"
+          :title="r.sources.length ? `${r.score} · ${r.sources.join(' ')}` : $t('customize.dictionary.noTag')"
           @click="toggleWord('pin', r.notation)"
         >
           {{ r.notation }}

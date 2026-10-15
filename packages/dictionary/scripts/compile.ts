@@ -1,15 +1,15 @@
 /**
  * Fuses the sources under raw/ and the curated overrides into
  * data/dictionary.json, readings by the Han run a font sees, and keeps the
- * okurigana pairs of raw/okurigana.json that a page can use with the fonts
+ * okurigana pairs of raw/okurigana.json that a page can use with the font
  * the default options build into data/okurigana.json. Offline: `pnpm dict:update`
  * refreshes raw/.
  *
  *   node scripts/compile.ts
  */
-import type { Dictionary, DictionaryEntry, PlanOptionsInput } from '@furifont/core'
+import type { Dictionary, DictionaryEntry } from '@furifont/core'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { createFontPlanner, formatDictionary, fuseDictionary, MANUAL_SOURCES, PRIORITY_TAGS, resolveOptions } from '@furifont/core'
+import { createFontPlanner, formatDictionary, fuseDictionary, MANUAL_SOURCES, resolveOptions } from '@furifont/core'
 import { createOkuriganaReader } from '@furifont/helper-web'
 import * as v from 'valibot'
 import { formatPacked, packOkurigana, prunePairs, unpackOkurigana } from '../src/okurigana.ts'
@@ -73,16 +73,11 @@ function fullCoverage(dictionary: Dictionary): Set<number> {
   return new Set([...texts.flatMap(t => [...t].map(c => c.codePointAt(0)!)), ...kana])
 }
 
-/** The plans whose reading lists a page may read pairs with: the default font, and one that selects every tagged word. */
-const PLANS: PlanOptionsInput[] = [{}, { selectTags: [...PRIORITY_TAGS], minTatoeba: 1 }]
-const planFont = createFontPlanner(dictionary)
-const coverage = fullCoverage(dictionary)
-const readers = PLANS.map((options) => {
-  const { ivs } = planFont(resolveOptions(options), coverage).report
-  return createOkuriganaReader({ pairs: {}, readings: ivs.kanji, words: ivs.words, lone: ivs.lone })
-})
+// The reading lists of the font the default options build, which the site serves.
+const { ivs } = createFontPlanner(dictionary)(resolveOptions(), fullCoverage(dictionary)).report
+const reader = createOkuriganaReader({ pairs: {}, readings: ivs.kanji, words: ivs.words, lone: ivs.lone })
 const pairs = unpackOkurigana(packed)
-const okurigana = prunePairs(pairs, (run, reading) => readers.some(r => r.saltOf(run, reading) > 0))
+const okurigana = prunePairs(pairs, (run, reading) => reader.saltOf(run, reading) > 0)
 
 await mkdir(DATA, { recursive: true })
 await writeFile(new URL('dictionary.json', DATA), formatDictionary(dictionary))

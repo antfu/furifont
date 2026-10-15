@@ -1,4 +1,4 @@
-import type { PlanReport, ReadingSources, RubySpan } from '@furifont/core'
+import type { PlanReport, Reading, RubySpan, Source } from '@furifont/core'
 import type { DevframeNodeContext } from 'devframe'
 import type { SizeEstimate } from './build'
 import type { FurifontConfig, FurifontConfigInput } from './config'
@@ -6,7 +6,7 @@ import { Buffer } from 'node:buffer'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { BASE_FONTS } from '@furifont/compiler'
-import { formatNotation, parseFurigana, PRIORITY_TAGS } from '@furifont/core'
+import { formatNotation, parseFurigana, sourceBit, sourcesIn } from '@furifont/core'
 import { defineRpcFunction } from 'devframe'
 import * as v from 'valibot'
 import { buildFont, estimateFont, getDictionary, planWithBase, previewFont } from './build'
@@ -44,7 +44,8 @@ export type BuildEvent
 
 export interface WordMatch {
   form: string
-  readings: { notation: string, nf: number, priority: string }[]
+  /** Each reading with its score and its sources, as `SOURCES` names them. */
+  readings: { notation: string, score: number, sources: Source[] }[]
 }
 
 /** The wire contract of the functions below, as the studio page calls them. */
@@ -64,8 +65,8 @@ declare module 'devframe' {
 
 const SEARCH_LIMIT = 40
 
-function wordReading(form: string, spans: RubySpan[], sources: ReadingSources): WordMatch['readings'][number] {
-  return { notation: formatNotation(form, spans), nf: sources.nf ?? 0, priority: PRIORITY_TAGS.filter(t => sources[t]).join(' ') }
+function wordReading(form: string, spans: RubySpan[], [score, sources]: Reading): WordMatch['readings'][number] {
+  return { notation: formatNotation(form, spans), score, sources: sourcesIn(sources) }
 }
 
 async function searchWords(query: string): Promise<WordMatch[]> {
@@ -77,7 +78,7 @@ async function searchWords(query: string): Promise<WordMatch[]> {
     if (matches.length >= SEARCH_LIMIT)
       break
     // JMdict's words, not the place names: a search for 日 means a word.
-    const readings = Object.entries(runs[form]!).filter(([, sources]) => sources.jmdict !== undefined)
+    const readings = Object.entries(runs[form]!).filter(([, [, sources]]) => sources & sourceBit('jmdict'))
     if (readings.length)
       matches.push({ form, readings: readings.map(([furigana, sources]) => wordReading(form, parseFurigana(furigana), sources)) })
   }

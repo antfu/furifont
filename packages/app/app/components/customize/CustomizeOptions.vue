@@ -1,27 +1,22 @@
 <script setup lang="ts">
-import { DEFAULTS, JLPT_LEVELS, MANUAL_SOURCES } from '@furifont/core'
+import type { WordSource } from '@furifont/core'
+import { DEFAULTS, JLPT_LEVELS, WORD_SOURCES } from '@furifont/core'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const { config, state, report, reset } = useCustomize()
 
-// Newspaper frequency buckets of 500 words each, nf01 to nf48.
-const BUCKET = 500
-const BUCKETS = 48
-const nfMin = computed(() => config.value.nfMin ?? DEFAULTS.plan.nfMin)
-const nfMax = computed(() => config.value.nfMax ?? DEFAULTS.plan.nfMax)
-/** Moving the skip slides the window of words; past the last bucket, the window shrinks. */
+// Words by score, 500 a step; past the last step of `take`, every word.
+const STEP = 500
+const MAX_SKIP = 24_000
+const MAX_TAKE = 30_000
 const skip = computed({
-  get: () => (nfMin.value - 1) * BUCKET,
-  set: (value) => {
-    const width = nfMax.value - nfMin.value
-    config.value.nfMin = value / BUCKET + 1
-    config.value.nfMax = Math.min(BUCKETS, config.value.nfMin + width)
-  },
+  get: () => config.value.skip ?? DEFAULTS.plan.skip,
+  set: value => config.value.skip = value,
 })
 const words = computed({
-  get: () => (nfMax.value - nfMin.value + 1) * BUCKET,
-  set: value => config.value.nfMax = nfMin.value + value / BUCKET - 1,
+  get: () => config.value.take ?? MAX_TAKE + STEP,
+  set: value => config.value.take = value > MAX_TAKE ? undefined : value,
 })
 const annotated = computed(() => report.value && report.value.stats.patterns - report.value.stats.places)
 const jlpt = computed({
@@ -41,9 +36,6 @@ const share = computed({
 })
 
 const scripts = computed(() => (['hiragana', 'katakanaOn', 'hepburn'] as const).map(value => ({ value, label: t(`customize.options.${value}`) })))
-// JMdict priority tags, Tatoeba's sentences, the JMnedict place names and the manual lists: each is a source of words.
-const sources = ['spec1', 'ichi1', 'news1', 'gai1', 'tatoeba', 'places', 'untagged', ...MANUAL_SOURCES] as const
-type Source = typeof sources[number]
 
 // The server sends a complete config, metrics included.
 const metrics = computed(() => config.value.metrics ?? {})
@@ -59,40 +51,11 @@ const rubyScript = computed({
   set: value => config.value.rubyScript = value,
 })
 
-function isManual(source: Source): source is typeof MANUAL_SOURCES[number] {
-  return (MANUAL_SOURCES as readonly string[]).includes(source)
-}
+const isOn = (source: WordSource): boolean => (config.value.sources ?? WORD_SOURCES).includes(source)
 
-function isOn(source: Source): boolean {
-  if (source === 'tatoeba')
-    return (config.value.minTatoeba ?? DEFAULTS.plan.minTatoeba) > 0
-  if (isManual(source))
-    return (config.value.manual ?? MANUAL_SOURCES).includes(source)
-  if (source === 'untagged')
-    return config.value.untagged ?? DEFAULTS.plan.untagged
-  return source === 'places' ? config.value.places ?? true : (config.value.selectTags ?? ['spec1']).includes(source)
-}
-
-function toggle(source: Source): void {
-  if (source === 'tatoeba') {
-    config.value.minTatoeba = isOn(source) ? 0 : DEFAULTS.plan.minTatoeba
-    return
-  }
-  if (source === 'untagged') {
-    config.value.untagged = !isOn(source)
-    return
-  }
-  if (isManual(source)) {
-    const current = config.value.manual ?? [...MANUAL_SOURCES]
-    config.value.manual = current.includes(source) ? current.filter(name => name !== source) : [...current, source]
-    return
-  }
-  if (source === 'places') {
-    config.value.places = !isOn(source)
-    return
-  }
-  const current = config.value.selectTags ?? ['spec1']
-  config.value.selectTags = current.includes(source) ? current.filter(t => t !== source) : [...current, source]
+function toggle(source: WordSource): void {
+  const current = config.value.sources ?? [...WORD_SOURCES]
+  config.value.sources = current.includes(source) ? current.filter(name => name !== source) : [...current, source]
 }
 </script>
 
@@ -117,17 +80,17 @@ function toggle(source: Source): void {
       :display="skip ? skip.toLocaleString('en') : $t('customize.options.none')"
       :hint="$t('customize.options.skipHint')"
       :min="0"
-      :max="(BUCKETS - 1) * BUCKET"
-      :step="BUCKET"
+      :max="MAX_SKIP"
+      :step="STEP"
     />
     <UiRange
       v-model="words"
       :label="$t('customize.options.words')"
-      :display="words.toLocaleString('en')"
+      :display="words > MAX_TAKE ? $t('customize.options.all') : words.toLocaleString('en')"
       :hint="annotated === undefined ? undefined : $t('customize.options.wordsHint', { count: annotated.toLocaleString('en') })"
-      :min="BUCKET"
-      :max="(BUCKETS - nfMin + 1) * BUCKET"
-      :step="BUCKET"
+      :min="STEP"
+      :max="MAX_TAKE + STEP"
+      :step="STEP"
     />
     <UiRange
       v-model="jlpt"
@@ -143,7 +106,7 @@ function toggle(source: Source): void {
       </legend>
       <div class="flex flex-wrap gap-2">
         <button
-          v-for="source in sources"
+          v-for="source in WORD_SOURCES"
           :key="source"
           type="button"
           class="focus-ring border px-2 py-1 text-xs transition-colors"

@@ -1,5 +1,5 @@
 import { createRubyReader } from '@furifont/compiler'
-import { createFontPlanner, parseNotation, resolveOptions, toHiragana } from '@furifont/core'
+import { createFontPlanner, parseNotation, resolveOptions, toHiragana, WORD_SOURCES } from '@furifont/core'
 import { describe, expect, it } from 'vitest'
 import { SAMPLES } from '../../app/app/utils/samples'
 import { loadDictionary } from '../src'
@@ -62,8 +62,9 @@ describe('sample texts', () => {
   })
 
   it('needs the example sentences for those words', () => {
-    const without = resolveOptions({ minTatoeba: 0, untagged: false })
-    for (const { text, reading } of EVERYDAY)
+    // A lone kanji's score has the sentences in it whatever the plan; a word's sources are the plan's to choose.
+    const without = resolveOptions({ sources: WORD_SOURCES.filter(s => s !== 'tatoeba' && s !== 'jmdict') })
+    for (const { text, reading } of EVERYDAY.filter(w => [...w.text].length > 1))
       expect(readAs(text, without)).not.toBe(reading)
   })
 

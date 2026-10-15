@@ -18,16 +18,16 @@ cli
   .option('--base <font>', 'A font to download, such as "Source Han Serif JP Bold", or a font file')
   .option('--family <name>', 'Font family name')
   .option('--script <script>', `Ruby script: ${RUBY_SCRIPTS.join(', ')}`)
-  .option('--nf <bucket>', 'Annotate words up to this newspaper frequency bucket (1-48)')
+  .option('--take <words>', 'Annotate this many words, the most common first')
   .option('--formats <list>', `Fonts to write, comma-separated: ${FONT_FORMATS.join(', ')}`)
   .option('--out <dir>', 'Output directory', { default: 'fonts' })
-  .action(async (flags: { config: string, base?: string, family?: string, script?: string, nf?: number, formats?: string, out: string }) => {
+  .action(async (flags: { config: string, base?: string, family?: string, script?: string, take?: number, formats?: string, out: string }) => {
     const cwd = process.cwd()
     const overrides: FurifontConfigInput = {
       ...(flags.base && { base: flags.base }),
       ...(flags.family && { family: flags.family }),
       ...(flags.script && { rubyScript: v.parse(v.picklist(RUBY_SCRIPTS), flags.script) }),
-      ...(flags.nf && { nfMax: Number(flags.nf) }),
+      ...(flags.take && { take: Number(flags.take) }),
       ...(flags.formats && { formats: v.parse(v.array(v.picklist(FONT_FORMATS)), flags.formats.split(',')) }),
     }
     const config = v.parse(FurifontConfigSchema, { ...await loadConfig(cwd, flags.config), ...overrides })

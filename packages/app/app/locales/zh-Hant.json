@@ -215,41 +215,46 @@
       "katakanaOn": "片假名",
       "hepburn": "羅馬字",
       "skip": "略過最常見的詞",
-      "skipHint": "讀者已經認識這些詞，所以不加振假名。報紙詞表依出現頻率排序，每 500 個詞一級。",
+      "skipHint": "讀者已經認識這些詞，所以不加振假名。詞語依常用程度排序，每 500 個詞一級。",
       "words": "接著加振假名的詞數",
       "wordsHint": "詞表中接下來的詞。加上下方的詞表，共 {count} 個詞加振假名。",
       "jlpt": "略過 JLPT 詞彙",
       "jlptHint": "JLPT（日本語能力試驗）詞表中到這個級別為止的詞不加振假名。N5 是最簡單的級別。",
       "none": "無",
-      "sources": "一併收錄來自以下來源的詞",
+      "all": "全部",
+      "sources": "從以下來源選詞",
       "source": {
-        "spec1": {
-          "name": "日常詞",
-          "hint": "JMdict「spec1」：其他詞表沒有收錄的常用詞，如 日本。"
+        "jmdict": {
+          "name": "JMdict 全部詞語",
+          "hint": "JMdict：所有詞語，包括任何列表都沒有排名的詞語，例如 四字熟語。無排名的詞語在沒有其他內容符合的文字上使用，會使字型增大約 700 KB。"
         },
-        "ichi1": {
+        "ichi": {
           "name": "基礎詞",
-          "hint": "JMdict「ichi1」：「一萬語」詞表（基礎詞彙表）中最常用的詞。"
+          "hint": "JMdict「ichi1」和「ichi2」：「一萬語」詞表（基礎詞彙表）中的詞。"
         },
-        "news1": {
+        "news": {
           "name": "報紙用詞",
-          "hint": "JMdict「news1」：報紙中出現最多的 12,000 個詞。"
+          "hint": "JMdict「news1」和「news2」：報紙中出現最多的 24,000 個詞。"
         },
-        "gai1": {
+        "spec": {
+          "name": "日常詞",
+          "hint": "JMdict「spec1」和「spec2」：其他詞表沒有收錄的常用詞，如 日本。"
+        },
+        "gai": {
           "name": "外來語",
-          "hint": "JMdict「gai1」：日語從其他語言借來的常用詞。"
+          "hint": "JMdict「gai1」和「gai2」：日語從其他語言借來的常用詞。"
+        },
+        "nf": {
+          "name": "報紙排名",
+          "hint": "JMdict「nf01」至「nf48」：報紙詞表中有排名的詞，每 500 個詞一級。"
         },
         "tatoeba": {
           "name": "Tatoeba 例句",
-          "hint": "Tatoeba：在例句中經常出現的詞語，例如 留守中，即使上面的列表都沒有收錄；也決定單個漢字（如 箱）的讀音。"
+          "hint": "Tatoeba：在例句中出現三次或以上的詞語，例如 留守中，即使上面的列表都沒有收錄。"
         },
-        "places": {
+        "place": {
           "name": "地名",
           "hint": "JMnedict：站名和地名。在沒有常用詞符合的文字上使用。"
-        },
-        "untagged": {
-          "name": "無排名詞語",
-          "hint": "JMdict：任何列表都沒有排名的詞語，例如 四字熟語。在沒有其他內容符合的文字上使用。會使字型增大約 700 KB。"
         },
         "mahjong-yaku": {
           "name": "麻將役種",

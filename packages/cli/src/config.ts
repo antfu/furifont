@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { FONT_VERSION } from '@furifont/compiler'
-import { DEFAULTS, PlanOptionsSchema, withNfWindow } from '@furifont/core'
+import { DEFAULTS, PlanOptionsSchema } from '@furifont/core'
 import * as v from 'valibot'
 
 export const CONFIG_FILE = 'furifont.config.json'
@@ -9,7 +9,7 @@ export const CONFIG_FILE = 'furifont.config.json'
 /** The fonts a build can write. */
 export const FONT_FORMATS = ['otf', 'woff2'] as const
 
-export const FurifontConfigSchema = withNfWindow(v.object({
+export const FurifontConfigSchema = v.object({
   ...PlanOptionsSchema.entries,
   /** A Source Han Sans JP weight (downloaded once), or the path of another OpenType font. */
   base: v.optional(v.pipe(v.string(), v.nonEmpty()), DEFAULTS.build.base),
@@ -20,7 +20,7 @@ export const FurifontConfigSchema = withNfWindow(v.object({
    * Left out, it is Furifont's own at build time, so a saved config does not pin it.
    */
   version: v.optional(v.pipe(v.string(), v.regex(FONT_VERSION, 'version must be major.minor.patch, with a minor below 10 and a patch below 100'))),
-}))
+})
 export type FurifontConfig = v.InferOutput<typeof FurifontConfigSchema>
 export type FurifontConfigInput = v.InferInput<typeof FurifontConfigSchema>
 

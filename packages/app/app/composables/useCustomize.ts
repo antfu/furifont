@@ -1,7 +1,7 @@
 import type { DevframeRpcClient, DevframeScopedClientRpc } from 'devframe/client'
 import type { BuildEvent, FurifontConfigInput, PlanReport, SizeEstimate, STUDIO_ID as StudioId, StudioState, WordMatch } from 'furifont'
 import type { InjectionKey } from 'vue'
-import { PlanOptionsSchema, withNfWindow } from '@furifont/core'
+import { PlanOptionsSchema } from '@furifont/core'
 import * as v from 'valibot'
 
 const STUDIO_ID: typeof StudioId = 'furifont'
@@ -88,11 +88,11 @@ type FontFormat = NonNullable<FurifontConfigInput['formats']>[number]
 export const FONT_FORMATS = ['otf', 'woff2'] as const satisfies readonly FontFormat[]
 
 // The server's config schema again: the app cannot bundle the CLI's, which reads files.
-const SavedSchema = withNfWindow(v.object({
+const SavedSchema = v.object({
   ...PlanOptionsSchema.entries,
   base: v.pipe(v.string(), v.nonEmpty()),
   formats: v.pipe(v.array(v.picklist(FONT_FORMATS)), v.minLength(1)),
-}))
+})
 
 /** The loaded config with the changes saved for it; all of them dropped when any no longer applies. */
 function restore(key: string, base: FurifontConfigInput): FurifontConfigInput {

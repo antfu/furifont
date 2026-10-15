@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULTS, PREBUILT, resolveOptions } from '../src'
+import { DEFAULTS, PREBUILT, resolveOptions, WORD_SOURCES } from '../src'
 
 describe('defaults', () => {
   it('are what a plan resolves to when a config says nothing', () => {
-    expect(resolveOptions()).toMatchObject({ ...DEFAULTS.plan, selectTags: [...DEFAULTS.plan.selectTags] })
+    expect(resolveOptions()).toMatchObject({ ...DEFAULTS.plan, sources: [...WORD_SOURCES] })
   })
 
   it('do not share one array between plans', () => {
-    expect(resolveOptions().selectTags).not.toBe(resolveOptions().selectTags)
+    expect(resolveOptions().sources).not.toBe(resolveOptions().sources)
   })
 
   it('make the first prebuilt font, in its variable form, the default one', () => {

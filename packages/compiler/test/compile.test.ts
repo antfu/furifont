@@ -2,7 +2,7 @@ import type { DictionaryEntry, DictionarySources, Plan, PlanOptionsInput } from 
 import { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { brotliDecompressSync } from 'node:zlib'
-import { createFontPlanner, formatNotation, fuseDictionary, resolveOptions } from '@furifont/core'
+import { createFontPlanner, formatNotation, fuseDictionary, resolveOptions, WORD_SOURCES } from '@furifont/core'
 import * as hb from 'harfbuzzjs'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { compileFont, createRubyReader, readFontInfo, toWoff2 } from '../src'
@@ -55,7 +55,7 @@ interface Built {
 
 async function build(file: string, previewText?: string, options?: PlanOptionsInput): Promise<Built> {
   const base = await fixture(file)
-  const { plan, report } = planFont(resolveOptions({ untagged: false, ...options }), new Set(readFontInfo(base).codepoints), previewText)
+  const { plan, report } = planFont(resolveOptions({ sources: WORD_SOURCES.filter(s => s !== 'jmdict'), ...options }), new Set(readFontInfo(base).codepoints), previewText)
   const { font, glyphNames } = await compileFont({ plan, base, subsetWasm, version: VERSION, date: DATE })
   return { plan, readings: report.ivs.kanji, names: glyphNames, otf: font, font: new hb.Font(new hb.Face(new hb.Blob(font))) }
 }

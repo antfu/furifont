@@ -28,7 +28,7 @@ describe('pREBUILT', () => {
 describe('loadConfig', () => {
   it('fills defaults when there is no config file', async () => {
     const config = await loadConfig(cwd)
-    expect(config).toMatchObject({ family: DEFAULTS.plan.family, base: DEFAULTS.build.base, rubyScript: DEFAULTS.plan.rubyScript, nfMax: DEFAULTS.plan.nfMax, formats: [...DEFAULTS.build.formats] })
+    expect(config).toMatchObject({ family: DEFAULTS.plan.family, base: DEFAULTS.build.base, rubyScript: DEFAULTS.plan.rubyScript, skip: DEFAULTS.plan.skip, formats: [...DEFAULTS.build.formats] })
   })
 
   it('names the file and the problem when the config is invalid', async () => {

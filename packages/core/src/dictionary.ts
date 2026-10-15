@@ -129,3 +129,10 @@ export function formatNotation(text: string, spans: readonly RubySpan[]): string
   }
   return out + chars.slice(at).join('')
 }
+
+export function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
+  let value = map.get(key)
+  if (value === undefined)
+    map.set(key, value = create())
+  return value
+}

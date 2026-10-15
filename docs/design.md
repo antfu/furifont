@@ -137,58 +137,75 @@ fourth.
 ### The compiled dictionary
 
 `fuseDictionary` in core splits every JMdict entry into Han runs with their
-aligned readings, and merges each reading with what every source says of it:
+aligned readings, and merges each reading with what every source says of it.
 `data/dictionary.json` holds the runs of two or more kanji and the lone kanji,
-then their readings, each with its sources in one string, as JMdict writes its
-priority tags:
+then their readings, each as `[score, sources]`: a score from 0 to 100, and
+its sources as a mask of the bits the file's `sources` names.
 
 ```json
 {
-  "日本": {
-    "0-1:にほん": "jmdict:0 rank:25 nf:25 news2 spec1 jlpt:3 tatoeba:1131 jr-stations",
-    "0-1:にっぽん": "jmdict:1 rank:25 nf:25 spec1 jlpt:3"
+  "sources": { "jmdict": 1, "ichi": 2, "news": 4, "spec": 8, "gai": 16, "nf": 32, "tatoeba": 64, "place": 128 },
+  "runs": {
+    "日本": { "0-1:にほん": [61, 8813], "0-1:にっぽん": [61, 8233] },
+    "倉本": { "0:くら;1:もと": [15, 641] }
   }
 }
 ```
 
-`jmdict` is the reading's place in JMdict's order, `rank` the corpus weight in
-newspaper buckets, and the place names, the manual lists and the curated
-defaults are sources like the rest. What no plan can use is left out: a run
-whose kanji are not all annotated, or whose annotation crosses a kana; a lone
-kanji of a list, or of a word no list tags but before okurigana; the on'yomi of
-kanji no reading uses. The planner indexes the file as it is.
+The score is the most telling of the reading's sources:
+
+- a word JMdict's lists tag scores by its corpus weight, 1 over its newspaper
+  bucket (24 for a `*1` tag with no bucket, 48 for others), as
+  `100 + 12 ln(weight)`: 100 for `nf01`, 61 for `nf25`, 54 for `nf48`;
+- one Tatoeba's sentences use, spelled and read that way, at least 3 times
+  scores 20 and its uses, up to 50;
+- one of the manual lists scores 15, a place name 10, any other JMdict word 5.
+
+A run's readings come ranked, the default first: the tagged ones, then those
+the sentences use, each in JMdict's order (a run read inside a longer form
+ranks after the word's own readings); then the lists', the place names' and
+the other JMdict words', by score. Readings of the same kana are one, under the
+alignment that splits them most, with every source of either: 倉本 くら・もと,
+from JMdict, JMnedict and the JR stations, not くらもと as well.
+
+What no plan can use is left out: a run whose kanji are not all annotated, or
+whose annotation crosses a kana; a lone kanji of a list, or of a word no list
+tags but before okurigana; the on'yomi of kanji no reading uses.
 
 ### Words
 
-Runs of two or more kanji become **patterns** when a JMdict reading of theirs
-is selected:
+A plan picks its words in four steps:
 
-- its form has a newspaper bucket from `nfMin` (default 1) to `nfMax`
-  (default 48),
-- it has a priority tag in `selectTags` (default `ichi1`, `news1`, `spec1`
-  and `gai1`), or
-- Tatoeba's example sentences use it, spelled and read that way, at least
-  `minTatoeba` times (default 3).
+1. **Sources.** Every run with a reading from the plan's `sources` (default:
+   all of `jmdict`, `ichi`, `news`, `spec`, `gai`, `nf`, `tatoeba`, `place`
+   and the manual lists). Its readings are those the lists or the sentences
+   back, the default first; a run with none takes its first reading, which is
+   no evidence for its kanji's own.
+2. **Removals.** A run is **skipped** whole when any of its readings is on the
+   JLPT lists up to `skipJlpt` (`N4` covers N5 and N4); so is a form the
+   dictionary keeps bare (月, 日, 年) or the user removes.
+3. **Skip and take.** Runs and lone kanji are sorted by score, and the `skip`
+   most common are skipped (default 0); then `take` runs get ruby (default:
+   all of them).
+4. **The user's words** (`words.add`), the curated defaults and the user's
+   pins.
 
-`spec1` is needed because 日本 ranks `nf25`. The sentences catch everyday
+Dropping only a known reading would leave another one as the default: 今日
+would show こんにち. The curated defaults don't bring a skipped word back; the
+user's own words do. A skipped run stays bare: no place name claims it, it
+gets no selectors, and protection gives it no reading.
+
+`spec` is needed because 日本 ranks `nf25`. The sentences catch everyday
 words that no list tags, such as 留守中 and 夕食後, which would otherwise be
 partly bare, or read as a place name (国中 くになか). The sentences are
 textbook-like and too few to rank readings, so they only select words; a
 tagged reading still ranks first.
 
-A reader who knows the most common words can skip them. A run is **skipped**
-whole when any of its readings ranks below `nfMin`, or is on the JLPT lists up
-to `skipJlpt` (`N4` covers N5 and N4). Dropping only the known reading would
-leave another one as the default: 今日 would show こんにち. Tags don't bring a
-skipped word back, and neither do the curated defaults; the user's own words
-do. A skipped run stays bare: no place name claims it, it gets no selectors,
-and protection gives it no reading.
-
 The JLPT levels come from Jonathan Waller's lists, which stephenmk's
 yomitan-jlpt-vocab ties to JMdict entries. A level applies to the form and
 reading the list writes, so 会う (N5) says nothing of 遭う.
 
-The default preset gives about 19,900 word patterns, about 1,000 of them from
+The default preset gives about 20,000 word patterns, about 1,000 of them from
 the sentences alone.
 
 ### Place names
@@ -198,9 +215,9 @@ JMnedict gives about 139,000 names read as stations or places:
 - a station's name, from its 駅 entry with 駅 dropped (新宿駅 gives 新宿 しんじゅく);
 - otherwise a place spelled all in kanji, with exactly one reading.
 
-With `places` (on by default), each name becomes a pattern only for a run that
-no common word claims. A place name never counts as evidence for a kanji's own
-reading. Places make up about 138,600 of the 143,400 patterns.
+A name becomes a pattern only for a run that no common word claims. A place
+name never counts as evidence for a kanji's own reading. Names and the other
+words no list ranks make up about 252,000 of the 272,000 patterns.
 
 ### Custom words
 
@@ -214,10 +231,7 @@ The readings of a pattern are ranked:
 
 1. pinned by the user;
 2. curated in the dictionary;
-3. carrying a priority tag;
-4. JMdict order within the word itself (a run read inside a longer form ranks
-   after the word's own readings);
-5. corpus weight.
+3. as the dictionary ranks them (see [The compiled dictionary](#the-compiled-dictionary)).
 
 The curated list is short and commented. It covers words where the data
 cannot tell readings apart (出来 でき, not しゅったい) and forms that drop
@@ -229,7 +243,9 @@ A kanji alone in its run has no context at all, so it is annotated only when
 one reading has at least `isolatedMinShare` (default 0.8) of the evidence.
 
 The evidence is how Tatoeba's sentences use the kanji alone, when they do so
-at least 20 times: every word counts, tagged or not, so ゴミ箱 ごみばこ weighs
+at least 20 times: the dictionary then scores each reading by its share of
+those uses, keeping a tagged reading's at 60 at most. Every word counts,
+tagged or not, so ゴミ箱 ごみばこ weighs
 against 箱 はこ only as often as it is written. A number written in digits
 counts for the kanji after it: ３人 is a use of 人 にん, which keeps 人 bare,
 since running text writes counters after digits more than the sentences do.
@@ -243,7 +259,7 @@ right from 59% to 81%, and read wrong from 3.5% to 1.8%. 方 and 入 lose their
 ruby: the lists favoured かた and い, which the sentences show is half the uses.
 
 A lone kanji is skipped like a word when its dominant reading is: 私 わたし
-ranks `nf01` and is on the N5 list. `nfMax` doesn't limit lone kanji. With
+scores high and is on the N5 list. `take` doesn't limit lone kanji. With
 `isolated` off, no lone kanji gets ruby, and a pinned one only orders its
 readings.
 
@@ -433,7 +449,7 @@ compound.
    and so is a run of several kanji with one reading everywhere, which the font
    already shows. About 37,000 pairs remain in `raw/okurigana.json`.
 5. **Use.** The dictionary's build keeps only the pairs a page can act on with
-   the default font, or one that selects every tagged word: a reading that is
+   the default font: a reading that is
    no selector of the run, or that the run shows anyway, reads as null, and a
    key that reads as the shorter key it extends is dropped. About 16,500 pairs
    remain (200 KB, 40 KB gzipped).

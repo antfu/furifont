@@ -10,15 +10,8 @@ export const DEFAULTS = {
   plan: {
     family: 'Furifont Sans',
     rubyScript: 'hiragana',
-    /** Newspaper frequency buckets, nf01 to nf48: the window of words that get ruby. All of them: it adds about 400 glyphs. */
-    nfMin: 1,
-    nfMax: 48,
-    /** JMdict priority tags that select a word whatever its bucket: the first tier of each list, which JMdict marks as common. */
-    selectTags: ['ichi1', 'news1', 'spec1', 'gai1'],
-    /** Uses in Tatoeba's example sentences that select a word whatever its bucket: about 1,000 more words, and 50 glyphs. */
-    minTatoeba: 3,
-    places: true,
-    untagged: true,
+    /** No word is left bare for being common; every word of every source gets ruby. */
+    skip: 0,
     isolated: true,
     isolatedMinShare: 0.8,
     /** Sizes in em, relative to the base font. */
@@ -57,7 +50,7 @@ export const PREBUILT = {
     style: 'VF',
     weights: [250, 900],
   },
-  /** Options set on every prebuilt font over the defaults above, such as `{ nfMax: 24 }`. */
+  /** Options set on every prebuilt font over the defaults above, such as `{ take: 20000 }`. */
   options: {},
 } as const satisfies {
   fonts: readonly { family: string, base: string, face: 'sans' | 'serif', rubyScript: 'hiragana' | 'hepburn' }[]
