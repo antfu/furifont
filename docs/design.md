@@ -48,10 +48,10 @@ The repository is a pnpm monorepo. Each package has one job:
 | `packages/app` | Nuxt | The demo site and the studio, as one static SPA. The CLI ships it as its Devframe client. |
 
 ```
-JMdict + JMnedict + JmdictFurigana + KANJIDIC2 + JLPT lists
+JMdict + JMnedict + JmdictFurigana + KANJIDIC2 + JLPT lists + Tatoeba sentences
         | dict:update (maintainers, network)
         v
-packages/dictionary/data/{dictionary,places,okurigana,jlpt}.json (committed, one entry per line)
+packages/dictionary/data/{dictionary,places,okurigana,jlpt,tatoeba}.json (committed, one entry per line)
         |
         v
 createFontPlanner(dictionary)(options, coverage[, previewText]) -> { plan, report }
@@ -139,10 +139,17 @@ annotation crosses a kana. Runs of two or more kanji become **patterns** when
 their entry is selected:
 
 - its form has a newspaper bucket from `nfMin` (default 1) to `nfMax`
-  (default 30), or
-- it has a priority tag in `selectTags` (default `spec1`).
+  (default 48),
+- it has a priority tag in `selectTags` (default `ichi1`, `news1`, `spec1`
+  and `gai1`), or
+- Tatoeba's example sentences use it, spelled and read that way, at least
+  `minTatoeba` times (default 3).
 
-`spec1` is needed because 日本 ranks `nf25`.
+`spec1` is needed because 日本 ranks `nf25`. The sentences catch everyday
+words that no list tags, such as 留守中 and 夕食後, which would otherwise be
+partly bare, or read as a place name (国中 くになか). The sentences are
+textbook-like and too few to rank readings, so they only select words; a
+tagged reading still ranks first.
 
 A reader who knows the most common words can skip them. A run is **skipped**
 whole when any of its readings ranks below `nfMin`, or is on the JLPT lists up
@@ -156,7 +163,8 @@ The JLPT levels come from Jonathan Waller's lists, which stephenmk's
 yomitan-jlpt-vocab ties to JMdict entries. A level applies to the form and
 reading the list writes, so 会う (N5) says nothing of 遭う.
 
-The default preset gives about 4,800 patterns from about 6,400 forms.
+The default preset gives about 19,900 word patterns, about 1,000 of them from
+the sentences alone.
 
 ### Place names
 
@@ -193,11 +201,21 @@ okurigana that running text adds back (支払 しはら, for 支払い).
 ### Lone kanji
 
 A kanji alone in its run has no context at all, so it is annotated only when
-one reading has at least `isolatedMinShare` (default 0.8) of the evidence. The
-evidence is the best weight of any priority-tagged word in which the kanji
-stands alone. 来る counts as く, き and こ equally, because its reading changes
-as it conjugates. About 1,500 kanji pass, such as 桜, 駅, 私 and 見. Common verb
-kanji such as 書, 行, 生 and 出 stay bare.
+one reading has at least `isolatedMinShare` (default 0.8) of the evidence.
+
+The evidence is how Tatoeba's sentences use the kanji alone, when they do so
+at least 20 times: every word counts, tagged or not, so ゴミ箱 ごみばこ weighs
+against 箱 はこ only as often as it is written. A number written in digits
+counts for the kanji after it: ３人 is a use of 人 にん, which keeps 人 bare,
+since running text writes counters after digits more than the sentences do.
+Otherwise the evidence is the best weight of any priority-tagged word in which
+the kanji stands alone. 来る counts as く, き and こ equally, because its
+reading changes as it conjugates, and its uses in the sentences don't count.
+About 1,700 kanji pass, such as 桜, 駅, 箱 and 書. 人, 生 and 出 stay bare.
+
+On half of the sentences, reading the other half, this takes lone kanji read
+right from 59% to 81%, and read wrong from 3.5% to 1.8%. 方 and 入 lose their
+ruby: the lists favoured かた and い, which the sentences show is half the uses.
 
 A lone kanji is skipped like a word when its dominant reading is: 私 わたし
 ranks `nf01` and is on the N5 list. `nfMax` doesn't limit lone kanji. With
@@ -606,7 +624,8 @@ the file on every load.
 
 - **Code:** MIT.
 - **Dictionary data and the rules compiled from it:** CC BY-SA 4.0 (EDRDG,
-  JmdictFurigana, yomitan-jlpt-vocab after Jonathan Waller's CC BY lists).
+  JmdictFurigana, yomitan-jlpt-vocab after Jonathan Waller's CC BY lists, and
+  Tatoeba's CC BY 2.0 FR sentences).
   Each font's name table records the source versions.
 - **Fonts:** SIL OFL 1.1, as derivatives of Source Han Sans and Source Han
   Serif. They carry Adobe's copyright, and none of their names contains the

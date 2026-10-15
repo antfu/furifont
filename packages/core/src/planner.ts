@@ -17,6 +17,8 @@ const MIN_ALTERNATE_SHARE = 0.02
 /** A suffix reading is the one a kanji takes in this share of the runs it ends, out of at least `SUFFIX_MIN_RUNS`. */
 const SUFFIX_MIN_SHARE = 0.9
 const SUFFIX_MIN_RUNS = 10
+/** With this many uses alone in the example sentences, they decide a lone kanji rather than the word lists. */
+const LONE_MIN_USES = 20
 /** JMdict orders readings within a form; a run read inside a longer form ranks after the form's own readings. */
 const OTHER_FORM_ORDER = 1000
 
@@ -32,6 +34,8 @@ interface RunReading {
   jlpt: number
   /** Priority tags of the entries with this reading. */
   tags: Set<string>
+  /** Most uses in Tatoeba's sentences among the entries with this reading. */
+  tatoeba?: number
   /** Made the default by the dictionary's curated list (1) or by the user (2). */
   pinned?: number
   /** A place name: its readings are no evidence for the kanji's own. */
@@ -52,6 +56,8 @@ interface DictionaryIndex {
   singles: Map<string, Map<string, SingleReading>>
   /** Readings of kanji followed by okurigana in words with no priority tag, such as 奉る: selectable, never defaults. */
   inflecting: Map<string, Set<string>>
+  /** Uses of each reading of a kanji alone in its run in Tatoeba's sentences, tagged words or not: 箱 はこ and ゴミ箱 ばこ alike. */
+  loneUses: Map<string, Map<string, number>>
 }
 
 export interface PlanReport {
@@ -107,7 +113,7 @@ interface PlanContext {
   options: PlanOptions
   removed: Set<string>
   covered: (text: string) => boolean
-  selected: (reading: { nf: number, tags: Set<string> }) => boolean
+  selected: (reading: { nf: number, tags: Set<string>, tatoeba?: number }) => boolean
   /** Among the most common words, or on the JLPT lists the reader knows: left bare. */
   skipped: (reading: { nf: number, jlpt: number }) => boolean
   render: RenderRuby
@@ -159,7 +165,7 @@ function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
 
 function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
   const order = run.text === entry.form ? entry.order : OTHER_FORM_ORDER + entry.order
-  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry) }
+  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry), tatoeba: entry.tatoeba ?? 0 }
   const readings = getOrCreate(index.runs, run.text, () => new Map())
   const current = readings.get(spanKey(run.spans))
   if (!current) {
@@ -169,6 +175,7 @@ function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): 
   keepBest(current, reading)
   current.tagged ||= reading.tagged
   current.order = Math.min(current.order, reading.order)
+  current.tatoeba = Math.max(current.tatoeba ?? 0, reading.tatoeba)
 }
 
 function indexSingle(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
@@ -189,9 +196,16 @@ const OKURIGANA = /[\u3041-\u3096]/
 
 function indexEntry(index: DictionaryIndex, entry: DictionaryEntry): void {
   for (const run of hanRuns(entry.form, parseFurigana(entry.furigana))) {
-    if (length(run.text) > 1)
+    if (length(run.text) > 1) {
       indexRun(index, run, entry)
-    else if (entry.priority)
+      continue
+    }
+    // 来る's dictionary form says nothing of 来た.
+    if (entry.tatoeba && !entry.conjugatesReading) {
+      const uses = getOrCreate(index.loneUses, run.text, () => new Map<string, number>())
+      uses.set(run.spans[0]!.ruby, (uses.get(run.spans[0]!.ruby) ?? 0) + entry.tatoeba)
+    }
+    if (entry.priority)
       indexSingle(index, run, entry)
     else if (OKURIGANA.test(entry.form[entry.form.indexOf(run.text) + run.text.length] ?? ''))
       getOrCreate(index.inflecting, run.text, () => new Set<string>()).add(run.spans[0]!.ruby)
@@ -215,7 +229,9 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
     options,
     removed: new Set([...(dictionary.bare ?? []), ...options.words.remove]),
     covered,
-    selected: r => (r.nf >= options.nfMin && r.nf <= options.nfMax) || options.selectTags.some(t => r.tags.has(t)),
+    selected: r => (r.nf >= options.nfMin && r.nf <= options.nfMax)
+      || options.selectTags.some(t => r.tags.has(t))
+      || (options.minTatoeba > 0 && (r.tatoeba ?? 0) >= options.minTatoeba),
     skipped: r => (r.nf > 0 && r.nf < options.nfMin) || r.jlpt >= known,
     render,
     renderable: run => covered(run.text) && run.spans.every((_, i) => covered(render(run, i))),
@@ -294,6 +310,16 @@ function loneReadings(kanji: string, readings: Map<string, SingleReading>, ctx: 
   return drawable.map(([ruby, r]) => ({ ruby, weight: r.weight, share: r.weight / total })).sort((a, b) => b.weight - a.weight)
 }
 
+/** The reading running text gives a lone kanji most, with its share of the uses, when the sentences use the kanji alone often enough to tell. */
+function usedReading(kanji: string, uses: Map<string, number> | undefined, ctx: PlanContext): { ruby: string, share: number } | undefined {
+  const drawable = [...uses ?? []].filter(([ruby]) => ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] }))
+  const total = drawable.reduce((sum, [, n]) => sum + n, 0)
+  if (ctx.options.minTatoeba === 0 || total < LONE_MIN_USES)
+    return
+  const [ruby, n] = drawable.sort((a, b) => b[1] - a[1])[0]!
+  return { ruby, share: n / total }
+}
+
 type AddEvidence = (kanji: string, ruby: string, weight: number) => void
 
 function addWordEvidence(patterns: Patterns, add: AddEvidence): void {
@@ -336,10 +362,12 @@ function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: M
       continue
     const ranked = loneReadings(kanji, readings, ctx).filter(r => r.share >= MIN_ALTERNATE_SHARE)
     const top = ranked[0]
+    // How text uses the kanji alone beats how the word lists rank its words: ゴミ箱 is common, yet 箱 reads はこ.
+    const chosen = usedReading(kanji, index.loneUses.get(kanji), ctx) ?? top
     if (top && !lonePins.has(kanji) && ctx.skipped(readings.get(top.ruby)!))
       skipped.add(kanji)
-    else if (top && top.share >= ctx.options.isolatedMinShare && ctx.options.isolated && !isolated.has(kanji))
-      isolated.set(kanji, top.ruby)
+    else if (chosen && chosen.share >= ctx.options.isolatedMinShare && ctx.options.isolated && !isolated.has(kanji))
+      isolated.set(kanji, chosen.ruby)
     for (const r of ranked)
       add(kanji, r.ruby, r.weight)
   }
@@ -629,7 +657,7 @@ interface LoneGlyph {
  * is the default, which longer words must be protected from a shorter match.
  */
 export function createFontPlanner(dictionary: Dictionary) {
-  const index: DictionaryIndex = { runs: new Map(), singles: new Map(), inflecting: new Map() }
+  const index: DictionaryIndex = { runs: new Map(), singles: new Map(), inflecting: new Map(), loneUses: new Map() }
   for (const entry of dictionary.entries)
     indexEntry(index, entry)
   const sources = Object.entries(dictionary.sources).map(([name, version]) => `${name} ${version}`).join(', ')
@@ -701,7 +729,7 @@ export function createFontPlanner(dictionary: Dictionary) {
         version: 1,
         names: {
           family: options.family,
-          description: `Furigana rules compiled from ${sources} (CC BY-SA 4.0: EDRDG, JmdictFurigana, stephenmk after Jonathan Waller).`,
+          description: `Furigana rules compiled from ${sources} (CC BY-SA 4.0: EDRDG, JmdictFurigana, stephenmk after Jonathan Waller; CC BY 2.0 FR: Tatoeba).`,
         },
         metrics: options.metrics,
         codepoints: [...named].sort((a, b) => a - b),

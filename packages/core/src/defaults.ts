@@ -15,6 +15,8 @@ export const DEFAULTS = {
     nfMax: 48,
     /** JMdict priority tags that select a word whatever its bucket: the first tier of each list, which JMdict marks as common. */
     selectTags: ['ichi1', 'news1', 'spec1', 'gai1'],
+    /** Uses in Tatoeba's example sentences that select a word whatever its bucket: about 1,000 more words, and 50 glyphs. */
+    minTatoeba: 3,
     places: true,
     isolated: true,
     isolatedMinShare: 0.8,

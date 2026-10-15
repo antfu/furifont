@@ -13,18 +13,32 @@ const INTERFACE_WORDS: { text: string, reading: string }[] = [
 
 const planFont = createFontPlanner(await loadDictionary())
 const options = resolveOptions()
+/**
+ * Words that only Tatoeba's sentences read whole: no list tags them, and
+ * without them the font leaves a kanji bare or reads a place name. A lone 箱
+ * is bare too, as ゴミ箱 ごみばこ is as common in the word lists.
+ */
+const EVERYDAY = [
+  { text: '箱', reading: 'はこ' },
+  { text: '傘', reading: 'かさ' },
+  { text: '魚', reading: 'さかな' },
+  { text: '留守中', reading: 'るすちゅう' },
+  { text: '夕食後', reading: 'ゆうしょくご' },
+  { text: '老婦人', reading: 'ろうふじん' },
+  { text: '国中', reading: 'くにじゅう' },
+]
 const coverage = new Set([
-  ...SAMPLES.flatMap(s => [...s.text]),
+  ...[...SAMPLES, ...EVERYDAY].flatMap(s => [...s.text]),
   ...OVERRIDE_READINGS.flatMap(n => [...parseNotation(n).form]),
   ...Array.from({ length: 0x30FF - 0x3041 + 1 }, (_, i) => String.fromCharCode(0x3041 + i)),
 ].map(c => c.codePointAt(0)!))
 
 /** The reading a font built with the default options shows for `text`, in hiragana; a kanji without ruby stays as it is, which `matches` accepts for any reading. */
-function readAs(text: string): string {
+function readAs(text: string, planOptions = options): string {
   const chars = [...text]
   let shown = ''
   let at = 0
-  for (const span of createRubyReader(planFont(options, coverage, text).plan)(text)) {
+  for (const span of createRubyReader(planFont(planOptions, coverage, text).plan)(text)) {
     shown += chars.slice(at, span.start).join('') + span.ruby
     at = span.end
   }
@@ -41,6 +55,21 @@ describe('sample texts', () => {
   it.each(SAMPLES)('shows no wrong reading in $text', ({ text, reading }) => {
     const shown = readAs(text)
     expect(matches(shown, reading), `${shown}\n${reading}`).toBe(true)
+  })
+
+  it.each(EVERYDAY)('reads the everyday word $text whole', ({ text, reading }) => {
+    expect(readAs(text)).toBe(reading)
+  })
+
+  it('needs the example sentences for those words', () => {
+    const without = resolveOptions({ minTatoeba: 0 })
+    for (const { text, reading } of EVERYDAY)
+      expect(readAs(text, without)).not.toBe(reading)
+  })
+
+  it('leaves 人 bare, which reads ひと alone but にん after a number in digits', () => {
+    expect(readAs('人')).toBe('人')
+    expect(readAs('３人')).toBe('３人')
   })
 })
 
