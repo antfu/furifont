@@ -2,16 +2,22 @@ import type { Dictionary, Plan, PlanOptionsInput } from '@furifont/core'
 import { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { brotliDecompressSync } from 'node:zlib'
-import { createFontPlanner, resolveOptions } from '@furifont/core'
+import { createFontPlanner, formatNotation, resolveOptions } from '@furifont/core'
 import * as hb from 'harfbuzzjs'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { compileFont, readFontInfo, toWoff2 } from '../src'
+import { compileFont, createRubyReader, readFontInfo, toWoff2 } from '../src'
 import { brotli, subsetWasm } from '../src/node'
 
 const fixture = (name: string): Promise<Buffer> => readFile(new URL(`./fixtures/${name}`, import.meta.url))
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
 const VERSION = '0.1.2'
 const DATE = new Date('2026-10-15T00:00:00Z')
+
+/** An untagged run read `first` on every kanji but the last, which reads `last`. */
+function run(form: string, last: string, first = 'あ'): Dictionary['entries'][number] {
+  const size = [...form].length
+  return { form, furigana: Array.from({ length: size }, (_, i) => `${i}:${i === size - 1 ? last : first}`).join(';'), nf: 0, priority: '', order: 0 }
+}
 
 const dictionary: Dictionary = {
   sources: { fixture: '1' },
@@ -26,6 +32,10 @@ const dictionary: Dictionary = {
     { form: '大人', furigana: '0-1:おとな', nf: 3, priority: 'news1 nf03', order: 0 },
     { form: '大人気', furigana: '0:だい;1:にん;2:き', nf: 0, priority: '', order: 0 },
     { form: '桜', furigana: '0:さくら', nf: 5, priority: 'news1 nf05', order: 0 },
+    // Untagged runs that make 語 a suffix, and 気 one that starts more runs than it ends.
+    ...['人', '今', '大', '学', '日', '本', '桜', '気', '人人', '大大'].map(p => run(`${p}語`, 'ご')),
+    ...['今', '大', '学', '日', '本', '桜', '語', '人人', '大大'].map(p => run(`${p}気`, 'き')),
+    ...['人', '今', '大', '学', '日', '本', '桜', '人人', '大大', '日本', '本日'].map(p => run(`気${p}`, 'あ', 'き')),
   ],
 }
 const planFont = createFontPlanner(dictionary)
@@ -65,6 +75,22 @@ function read({ plan, names, font }: Built, text: string, features: hb.Feature[]
     const cp = /^u(?:ni)?([0-9A-F]+)$/.exec(name)?.[1]
     return cp ? String.fromCodePoint(Number.parseInt(cp, 16)) : name
   })
+}
+
+/** `text` in inline notation with the ruby HarfBuzz shapes over it. */
+function shapedNotation({ plan, names, font }: Built, text: string): string {
+  const buffer = new hb.Buffer()
+  buffer.addText(text)
+  buffer.guessSegmentProperties()
+  hb.shape(font, buffer)
+  let at = 0
+  const spans = buffer.getGlyphInfos().flatMap(({ codepoint }) => {
+    const glyph = plan.glyphs.find(g => g.name === names[codepoint])
+    const start = at
+    at += glyph?.bases.length ?? 1
+    return glyph?.ruby.map(r => ({ start: start + r.start, end: start + r.end, ruby: r.text })) ?? []
+  })
+  return formatNotation(text, spans)
 }
 
 /** The decompressed table data of a WOFF2, past its table directory. */
@@ -109,6 +135,14 @@ describe.each([
     expect(read(built, '桜桜')).toEqual(['桜', '桜'])
   })
 
+  it('reads a kanji no word claims after another kanji as a suffix, at the end of a run or before another kanji', () => {
+    expect(read(built, '大学語')).toEqual(['大:だい', '学:がく', '語:ご'])
+    expect(read(built, '大学語桜')).toEqual(['大:だい', '学:がく', '語:ご', '桜'])
+    expect(read(built, '語')).toEqual(['語'])
+    expect(read(built, '大学気')).toEqual(['大:だい', '学:がく', '気:き'])
+    expect(read(built, '大学気桜')).toEqual(['大:だい', '学:がく', '気', '桜'])
+  })
+
   it('lets variation selectors pick a reading or suppress ruby', () => {
     expect(read(built, `今${VS(2)}日`)).toEqual(['今:こん', '日:にち'])
     expect(read(built, `今${VS(1)}日`)).toEqual(['今日:きょう'])
@@ -134,6 +168,16 @@ describe.each([
     }
     expect(read(built, '今日', [new hb.Feature('salt', 2)])).toEqual(['今:こん', '日:にち'])
     expect(read(built, '日日', [new hb.Feature('salt', 2)])).toEqual(['日:にち', '日'])
+  })
+
+  it('shapes every run of up to four of its kanji as the ruby reader predicts', () => {
+    const kanji = [...new Set(dictionary.entries.flatMap(e => [...e.form]))]
+    let texts = ['']
+    const all: string[] = []
+    for (let n = 1; n <= 4; n++)
+      all.push(...texts = texts.flatMap(t => kanji.map(k => t + k)))
+    const reader = createRubyReader(built.plan)
+    expect(all.map(t => formatNotation(t, reader(t)))).toEqual(all.map(t => shapedNotation(built, t)))
   })
 
   it('turns ruby off with ss01', () => {

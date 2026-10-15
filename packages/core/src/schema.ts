@@ -53,7 +53,7 @@ export const PlanOptionsSchema = withNfWindow(v.object({
   skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate place names from the dictionary where no common word claims the run. */
   places: v.optional(v.boolean(), DEFAULTS.plan.places),
-  /** Annotate a kanji alone in its run; when off, only selectors give it ruby. */
+  /** Annotate a kanji alone in its run, or one no word claims after another kanji (a suffix); when off, only selectors give them ruby. */
   isolated: v.optional(v.boolean(), DEFAULTS.plan.isolated),
   /** A kanji alone in its run is annotated only when one reading has this share of the evidence. */
   isolatedMinShare: v.optional(v.pipe(v.number(), v.minValue(0.5), v.maxValue(1)), DEFAULTS.plan.isolatedMinShare),

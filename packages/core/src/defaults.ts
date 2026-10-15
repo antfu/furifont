@@ -25,7 +25,7 @@ export const DEFAULTS = {
       rubyScale: 0.5,
       rubyGap: 0.05,
       compressionFloor: 0.8,
-      maxRubyWidth: 1.6,
+      maxRubyWidth: 1.5,
     },
   },
   /** What the CLI adds to a plan: where the glyphs are drawn, and what is written. */
