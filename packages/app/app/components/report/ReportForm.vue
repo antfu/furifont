@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
-/** The site's endpoint, also from `furifont dev` and `nuxt dev`, which serve none. */
-const REPORT_URL = `${SITE}/api/report`
+/** `nuxt dev` serves its own endpoint; built, the app posts to the site's, also from `furifont dev`, which serves none. */
+const REPORT_URL = import.meta.dev ? '/api/report' : `${SITE}/api/report`
 
 const { t, locale } = useI18n()
 const { family: current } = useFontSettings()
