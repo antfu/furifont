@@ -60,6 +60,19 @@ describe('planner', () => {
     expect(drawn(planner(3)(resolveOptions({ minExamples: 0 }), coverage).plan)).not.toContain('日:じつ')
   })
 
+  it('reads a lone kanji as the example sentences use it alone, given enough uses', () => {
+    const planner = (kaku: number, sho: number) => createFontPlanner({
+      ...dictionary,
+      entries: dictionary.entries.map(e => e.form === '書く' ? { ...e, examples: kaku } : e.form === '書' ? { ...e, examples: sho } : e),
+    })
+    const often = planner(30, 2)(resolveOptions(), coverage).report.ivs
+    expect(often.lone['書']).toBe('か')
+    expect(often.kanji['書']).toEqual(['か', 'しょ'])
+    expect(planner(16, 2)(resolveOptions(), coverage).report.ivs.lone['書']).toBeUndefined()
+    expect(planner(30, 20)(resolveOptions(), coverage).report.ivs.lone['書']).toBeUndefined()
+    expect(planner(30, 2)(resolveOptions({ minExamples: 0 }), coverage).report.ivs.lone['書']).toBeUndefined()
+  })
+
   it('skips the words on the JLPT lists the reader knows', () => {
     const levels: Record<string, number> = { '今日|0-1:きょう': 5, '学校|0:がっ;1:こう': 4, '桜|0:さくら': 3 }
     const entries = dictionary.entries.map(e => ({ ...e, jlpt: levels[`${e.form}|${e.furigana}`] }))

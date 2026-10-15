@@ -197,7 +197,7 @@
         },
         "examples": {
           "name": "Example sentences",
-          "hint": "Tatoeba: words that its example sentences use often, such as 留守中, even when no list above has them."
+          "hint": "Tatoeba: words that its example sentences use often, such as 留守中, even when no list above has them, and how a kanji alone reads, such as 箱."
         },
         "places": {
           "name": "Place names",

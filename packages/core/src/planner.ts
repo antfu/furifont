@@ -17,6 +17,8 @@ const MIN_ALTERNATE_SHARE = 0.02
 /** A suffix reading is the one a kanji takes in this share of the runs it ends, out of at least `SUFFIX_MIN_RUNS`. */
 const SUFFIX_MIN_SHARE = 0.9
 const SUFFIX_MIN_RUNS = 10
+/** With this many uses alone in the example sentences, they decide a lone kanji rather than the word lists. */
+const LONE_MIN_USES = 20
 /** JMdict orders readings within a form; a run read inside a longer form ranks after the form's own readings. */
 const OTHER_FORM_ORDER = 1000
 
@@ -54,6 +56,8 @@ interface DictionaryIndex {
   singles: Map<string, Map<string, SingleReading>>
   /** Readings of kanji followed by okurigana in words with no priority tag, such as 奉る: selectable, never defaults. */
   inflecting: Map<string, Set<string>>
+  /** Uses of each reading of a kanji alone in its run in Tatoeba's sentences, tagged words or not: 箱 はこ and ゴミ箱 ばこ alike. */
+  loneUses: Map<string, Map<string, number>>
 }
 
 export interface PlanReport {
@@ -192,9 +196,16 @@ const OKURIGANA = /[\u3041-\u3096]/
 
 function indexEntry(index: DictionaryIndex, entry: DictionaryEntry): void {
   for (const run of hanRuns(entry.form, parseFurigana(entry.furigana))) {
-    if (length(run.text) > 1)
+    if (length(run.text) > 1) {
       indexRun(index, run, entry)
-    else if (entry.priority)
+      continue
+    }
+    // 来る's dictionary form says nothing of 来た.
+    if (entry.examples && !entry.conjugatesReading) {
+      const uses = getOrCreate(index.loneUses, run.text, () => new Map<string, number>())
+      uses.set(run.spans[0]!.ruby, (uses.get(run.spans[0]!.ruby) ?? 0) + entry.examples)
+    }
+    if (entry.priority)
       indexSingle(index, run, entry)
     else if (OKURIGANA.test(entry.form[entry.form.indexOf(run.text) + run.text.length] ?? ''))
       getOrCreate(index.inflecting, run.text, () => new Set<string>()).add(run.spans[0]!.ruby)
@@ -299,6 +310,16 @@ function loneReadings(kanji: string, readings: Map<string, SingleReading>, ctx: 
   return drawable.map(([ruby, r]) => ({ ruby, weight: r.weight, share: r.weight / total })).sort((a, b) => b.weight - a.weight)
 }
 
+/** The reading running text gives a lone kanji most, with its share of the uses, when the sentences use the kanji alone often enough to tell. */
+function usedReading(kanji: string, uses: Map<string, number> | undefined, ctx: PlanContext): { ruby: string, share: number } | undefined {
+  const drawable = [...uses ?? []].filter(([ruby]) => ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] }))
+  const total = drawable.reduce((sum, [, n]) => sum + n, 0)
+  if (ctx.options.minExamples === 0 || total < LONE_MIN_USES)
+    return
+  const [ruby, n] = drawable.sort((a, b) => b[1] - a[1])[0]!
+  return { ruby, share: n / total }
+}
+
 type AddEvidence = (kanji: string, ruby: string, weight: number) => void
 
 function addWordEvidence(patterns: Patterns, add: AddEvidence): void {
@@ -341,10 +362,12 @@ function chooseLoneKanji(index: DictionaryIndex, patterns: Patterns, lonePins: M
       continue
     const ranked = loneReadings(kanji, readings, ctx).filter(r => r.share >= MIN_ALTERNATE_SHARE)
     const top = ranked[0]
+    // How text uses the kanji alone beats how the word lists rank its words: ゴミ箱 is common, yet 箱 reads はこ.
+    const chosen = usedReading(kanji, index.loneUses.get(kanji), ctx) ?? top
     if (top && !lonePins.has(kanji) && ctx.skipped(readings.get(top.ruby)!))
       skipped.add(kanji)
-    else if (top && top.share >= ctx.options.isolatedMinShare && ctx.options.isolated && !isolated.has(kanji))
-      isolated.set(kanji, top.ruby)
+    else if (chosen && chosen.share >= ctx.options.isolatedMinShare && ctx.options.isolated && !isolated.has(kanji))
+      isolated.set(kanji, chosen.ruby)
     for (const r of ranked)
       add(kanji, r.ruby, r.weight)
   }
@@ -634,7 +657,7 @@ interface LoneGlyph {
  * is the default, which longer words must be protected from a shorter match.
  */
 export function createFontPlanner(dictionary: Dictionary) {
-  const index: DictionaryIndex = { runs: new Map(), singles: new Map(), inflecting: new Map() }
+  const index: DictionaryIndex = { runs: new Map(), singles: new Map(), inflecting: new Map(), loneUses: new Map() }
   for (const entry of dictionary.entries)
     indexEntry(index, entry)
   const sources = Object.entries(dictionary.sources).map(([name, version]) => `${name} ${version}`).join(', ')

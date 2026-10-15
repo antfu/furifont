@@ -201,11 +201,21 @@ okurigana that running text adds back (支払 しはら, for 支払い).
 ### Lone kanji
 
 A kanji alone in its run has no context at all, so it is annotated only when
-one reading has at least `isolatedMinShare` (default 0.8) of the evidence. The
-evidence is the best weight of any priority-tagged word in which the kanji
-stands alone. 来る counts as く, き and こ equally, because its reading changes
-as it conjugates. About 1,500 kanji pass, such as 桜, 駅, 私 and 見. Common verb
-kanji such as 書, 行, 生 and 出 stay bare.
+one reading has at least `isolatedMinShare` (default 0.8) of the evidence.
+
+The evidence is how Tatoeba's sentences use the kanji alone, when they do so
+at least 20 times: every word counts, tagged or not, so ゴミ箱 ごみばこ weighs
+against 箱 はこ only as often as it is written. A number written in digits
+counts for the kanji after it: ３人 is a use of 人 にん, which keeps 人 bare,
+since running text writes counters after digits more than the sentences do.
+Otherwise the evidence is the best weight of any priority-tagged word in which
+the kanji stands alone. 来る counts as く, き and こ equally, because its
+reading changes as it conjugates, and its uses in the sentences don't count.
+About 1,700 kanji pass, such as 桜, 駅, 箱 and 書. 人, 生 and 出 stay bare.
+
+On half of the sentences, reading the other half, this takes lone kanji read
+right from 59% to 81%, and read wrong from 3.5% to 1.8%. 方 and 入 lose their
+ruby: the lists favoured かた and い, which the sentences show is half the uses.
 
 A lone kanji is skipped like a word when its dominant reading is: 私 わたし
 ranks `nf01` and is on the N5 list. `nfMax` doesn't limit lone kanji. With

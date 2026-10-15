@@ -46,7 +46,8 @@ export const PlanOptionsSchema = withNfWindow(v.object({
    * Words of two or more kanji that Tatoeba's example sentences use at least
    * this many times are annotated whatever their bucket: everyday words that
    * no list tags, such as 留守中, which would otherwise be bare or read as a
-   * place name (国中 くになか, not くにじゅう). 0 turns it off.
+   * place name (国中 くになか, not くにじゅう). The sentences also decide how a
+   * lone kanji reads, where they use it alone often enough. 0 turns them off.
    */
   minExamples: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)), DEFAULTS.plan.minExamples),
   /** Words on the JLPT lists of this level and every easier one stay bare. */
