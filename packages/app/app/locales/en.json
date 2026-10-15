@@ -5,6 +5,7 @@
   },
   "nav": {
     "demo": "Intro",
+    "docs": "Docs",
     "customize": "Customize",
     "github": "GitHub repository",
     "light": "Switch to light",
@@ -130,6 +131,11 @@
     "kanji": "Kanji / {count}",
     "copyWith": "Copy {text} with {selector}",
     "default": "default"
+  },
+  "docs": {
+    "install": "Install the font",
+    "website": "Use on your website",
+    "readings": "Choose a reading"
   },
   "customize": {
     "connecting": "Connecting to furifont dev",

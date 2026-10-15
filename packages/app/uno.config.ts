@@ -36,6 +36,20 @@ export default defineConfig({
     'btn-outline': 'btn border-strong color-base hover:border-inverse hover:bg-inverse hover:color-inverse',
     'btn-ghost': 'btn border-transparent color-muted hover:color-base hover:bg-hover',
     'focus-ring': 'focus-visible:outline-2 focus-visible:outline-[var(--ff-fg)] focus-visible:outline-offset-2',
+    // Rendered Markdown: the docs pages.
+    'prose': [
+      'text-[15px] leading-relaxed',
+      '[&_h1]:(mb-8 text-4xl font-semibold tracking-[-0.03em])',
+      '[&_h2]:(mb-4 mt-12 text-xl font-semibold)',
+      '[&_h3]:(mb-3 mt-8 font-semibold)',
+      '[&_p]:(my-4 max-w-[70ch])',
+      '[&_ul]:(my-4 list-disc pl-6) [&_ol]:(my-4 list-decimal pl-6) [&_li]:(my-1 max-w-[66ch])',
+      '[&_a]:(underline underline-offset-3) [&_a:hover]:color-muted',
+      '[&_code]:(bg-hover px-1 font-mono text-[0.9em])',
+      '[&_pre]:(my-4 overflow-x-auto border border-base p-4 text-[13px] leading-6) [&_pre_code]:(bg-transparent p-0)',
+      '[&_table]:(my-4 border-collapse text-sm) [&_th]:(border border-base px-3 py-2 text-left font-medium) [&_td]:(border border-base px-3 py-2)',
+      '[&_blockquote]:(my-4 border-l-2 border-strong pl-4 color-muted)',
+    ],
     // A bordered track that fills up to a square knob, like UiToggle. Firefox fills it
     // itself; WebKit has no progress part, so its track fills to `--slider-fraction`.
     // Each browser needs its own rules: one selector it does not know drops the whole rule.

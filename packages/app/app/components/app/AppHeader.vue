@@ -3,6 +3,7 @@ const { dark, toggle } = useDarkMode()
 
 const links = [
   { to: '/', label: 'nav.demo' },
+  { to: '/docs', label: 'nav.docs' },
   { to: '/customize', label: 'nav.customize' },
 ] as const
 </script>
