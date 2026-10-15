@@ -36,7 +36,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown && pnpm -F @furifont/app run build:studio",
+    "build": "tsdown && pnpm -F @furifont/app run build:devframe",
     "prepack": "turbo run build --filter=furifont"
   },
   "dependencies": {

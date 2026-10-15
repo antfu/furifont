@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nuxi dev",
     "build": "nuxi generate",
-    "build:studio": "FURIFONT_APP=studio nuxi generate",
+    "build:devframe": "FURIFONT_TARGET=devframe nuxi generate",
     "typecheck": "nuxi typecheck",
     "storybook": "storybook dev -p 6006 --no-open"
   },

@@ -2,11 +2,11 @@
 const { dark, toggle } = useDarkMode()
 
 const links: { to: string, label: `nav.${'demo' | 'docs' | 'customize'}` }[] = [{ to: '/', label: 'nav.demo' }]
-if (!__STUDIO__)
+if (__TARGET_WEBSITE__)
   links.push({ to: '/docs', label: 'nav.docs' })
 links.push({ to: '/customize', label: 'nav.customize' })
-// The studio keeps running in its own tab.
-const siteTarget = __STUDIO__ ? '_blank' : undefined
+// The devframe keeps running in its own tab.
+const siteTarget = __TARGET_DEVFRAME__ ? '_blank' : undefined
 </script>
 
 <template>
