@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { FurifontOptions } from '@furifont/webpage'
-import engine from '@furifont/webpage/iife?raw'
+import type { FurifontOptions } from '@furifont/helper-web'
+import engine from '@furifont/helper-web/iife?raw'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()

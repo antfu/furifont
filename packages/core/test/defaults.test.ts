@@ -10,10 +10,10 @@ describe('defaults', () => {
     expect(resolveOptions().selectTags).not.toBe(resolveOptions().selectTags)
   })
 
-  it('make the first prebuilt font the default one', () => {
+  it('make the first prebuilt font, in its variable form, the default one', () => {
     const [first] = PREBUILT.fonts
     expect(first).toMatchObject({ family: DEFAULTS.plan.family, rubyScript: DEFAULTS.plan.rubyScript })
-    expect(DEFAULTS.build.base).toBe(`${first.base} ${PREBUILT.weights[0].style}`)
+    expect(DEFAULTS.build.base).toBe(`${first.base} ${PREBUILT.variable.style}`)
   })
 
   it('name each prebuilt family once, and write its site styles among the weights', () => {

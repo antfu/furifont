@@ -1,6 +1,6 @@
-import type { OkuriganaReader } from '@furifont/webpage'
+import type { OkuriganaReader } from '@furifont/helper-web'
 import type { MaybeRefOrGetter } from 'vue'
-import { loadOkuriganaReader } from '@furifont/webpage'
+import { loadOkuriganaReader } from '@furifont/helper-web'
 
 /**
  * Reads kanji by their okurigana (来 in 来ない) for a family's font. The reader

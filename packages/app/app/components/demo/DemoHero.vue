@@ -33,7 +33,7 @@ const { reader } = useOkurigana(family)
         <FuriText v-model:text="text" :family="family.family" :ruby :size :okurigana="okurigana ? reader : undefined" />
       </div>
       <span v-if="author" class="label no-ruby absolute right-3 bottom-3 border border-base bg-base px-2 py-1">⁄ {{ author }}</span>
-      <span class="label absolute bottom-3 left-3 border border-base bg-base px-2 py-1">{{ family.family }} Regular / {{ size }}px</span>
+      <span class="label absolute bottom-4 left-4 border border-base bg-base px-2 py-1">{{ family.family }} Regular / {{ size }}px</span>
     </div>
   </div>
 </template>

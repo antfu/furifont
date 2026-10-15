@@ -11,7 +11,7 @@
 
 - `@furifont/core` MUST NOT read font files and `@furifont/compiler` MUST NOT
   decide readings: the plan (`PlanSchema`) is the contract between them.
-- Core, compiler, dictionary and webpage MUST stay browser-safe: bytes in and out, no
+- Core, compiler, dictionary and helper-web MUST stay browser-safe: bytes in and out, no
   Node APIs (globals such as `Buffer` and `setImmediate` included). The Node
   side lives in the CLI, and in `@furifont/compiler/node`, which the CLI
   passes in.

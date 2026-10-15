@@ -10,7 +10,7 @@
       "@furifont/compiler/browser": ["./packages/compiler/src/browser.ts"],
       "@furifont/compiler/node": ["./packages/compiler/src/node.ts"],
       "@furifont/dictionary": ["./packages/dictionary/src/index.ts"],
-      "@furifont/webpage": ["./packages/webpage/src/index.ts"],
+      "@furifont/helper-web": ["./packages/helper-web/src/index.ts"],
       "furifont": ["./packages/cli/src/index.ts"]
     },
     "resolveJsonModule": true,

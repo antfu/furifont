@@ -17,6 +17,8 @@ declare global {
       restyle: () => void
       /** Reads kanji before okurigana as the pairs say, or stops doing so with no `config`. */
       okurigana: (config?: Okurigana) => void
+      /** Stops watching the page and takes Furifont off it, as it was before. */
+      dispose: () => void
     }
   }
 }
@@ -107,6 +109,7 @@ function install(family: string): State {
   }
 
   const state: State = {
+    dispose: () => {},
     sheet,
     family,
     restyle: (): void => {
@@ -156,14 +159,33 @@ function install(family: string): State {
       state.restyle()
   }
 
-  window.furifont = state
-  document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
-  mark([document.body])
-  new MutationObserver((records) => {
+  const observer = new MutationObserver((records) => {
     const roots = records.flatMap(r => r.type === 'characterData' ? [r.target] : [...r.addedNodes])
     mark(roots)
     annotate(roots)
-  }).observe(document.body, { childList: true, characterData: true, subtree: true })
+  })
+
+  state.dispose = (): void => {
+    observer.disconnect()
+    // Settings that are still loading must not apply.
+    latest++
+    reader = undefined
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter(s => s !== sheet)
+    for (const element of document.querySelectorAll('[data-furifont],[data-furifont-tight]')) {
+      element.removeAttribute('data-furifont')
+      element.removeAttribute('data-furifont-tight')
+    }
+    // Each span holds the text it wrapped.
+    for (const span of document.querySelectorAll('[data-furifont-reading]'))
+      span.replaceWith(...span.childNodes)
+    if (window.furifont === state)
+      delete window.furifont
+  }
+
+  window.furifont = state
+  document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
+  mark([document.body])
+  observer.observe(document.body, { childList: true, characterData: true, subtree: true })
   return state
 }
 

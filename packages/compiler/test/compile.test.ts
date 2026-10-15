@@ -145,9 +145,10 @@ describe.each([
     const { plan, names, font } = built
     const ruby = names.indexOf(plan.glyphs.find(g => g.ruby[0]?.text === 'さくら')!.name)
     const sakura = font.glyphExtents(ruby)!
-    const kanji = font.glyphExtents(font.nominalGlyph('桜'.codePointAt(0)!)!)!
     expect(sakura.yBearing).toBeGreaterThan(880)
-    expect(sakura.xBearing).toBeGreaterThanOrEqual(kanji.xBearing)
+    // Centered over its kanji: a long reading may overhang it, up to maxRubyWidth.
+    expect(sakura.xBearing + sakura.width / 2).toBeCloseTo(font.glyphHAdvance(ruby) / 2, -1)
+    expect(sakura.width).toBeLessThanOrEqual(plan.metrics.maxRubyWidth * font.glyphHAdvance(ruby) + 1)
     expect(font.glyphHAdvance(ruby)).toBe(font.glyphHAdvance(font.nominalGlyph('桜'.codePointAt(0)!)!))
     expect(font.hExtents().ascender).toBeGreaterThanOrEqual(sakura.yBearing)
   })

@@ -359,9 +359,9 @@ importers:
 
   packages/app:
     dependencies:
-      '@furifont/webpage':
+      '@furifont/helper-web':
         specifier: workspace:*
-        version: link:../webpage
+        version: link:../helper-web
       devframe:
         specifier: catalog:prod
         version: 1.2.4(cac@7.1.0)(srvx@1.0.5)
@@ -461,7 +461,7 @@ importers:
         specifier: catalog:prod
         version: 1.5.0(typescript@6.0.3)
 
-  packages/webpage:
+  packages/helper-web:
     dependencies:
       '@furifont/core':
         specifier: workspace:*

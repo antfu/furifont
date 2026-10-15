@@ -1,4 +1,4 @@
-import { isMonospace, parseFontStack } from '@furifont/webpage'
+import { isMonospace, parseFontStack } from '@furifont/helper-web'
 import { describe, expect, it } from 'vitest'
 
 describe('parseFontStack', () => {

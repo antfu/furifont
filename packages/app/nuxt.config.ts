@@ -48,8 +48,8 @@ export default defineNuxtConfig({
     // Only the okurigana pairs, which `dict:update` packs the way pages read them: the rest of the data is megabytes.
     serverAssets: [
       { baseName: 'dictionary', dir: fileURLToPath(new URL('../dictionary/data', import.meta.url)), pattern: 'okurigana.json' },
-      // The engine the userscript inlines, as @furifont/webpage builds it.
-      { baseName: 'webpage', dir: fileURLToPath(new URL('../webpage/dist', import.meta.url)), pattern: 'index.iife.js' },
+      // The engine the userscript inlines, as @furifont/helper-web builds it.
+      { baseName: 'helper-web', dir: fileURLToPath(new URL('../helper-web/dist', import.meta.url)), pattern: 'index.iife.js' },
     ],
     prerender: { routes: ['/furifont.user.js', '/okurigana.json'] },
   },

@@ -43,7 +43,7 @@ The repository is a pnpm monorepo. Each package has one job:
 | `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT word lists into committed JSON. It also holds a short list of curated default readings. |
 | `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
 | `@furifont/compiler` | TS | Draws the plan into the base font, compiles the rules and checks the output with HarfBuzz (harfbuzzjs, WebAssembly). Bytes in, bytes out. |
-| `@furifont/webpage` | TS | Sets any web page's Japanese text in Furifont, for the bookmarklet and the userscript: font loading, the [font stacks](#web-pages) and the okurigana spans. It also builds as one minified IIFE that both inline. |
+| `@furifont/helper-web` | TS | Sets any web page's Japanese text in Furifont, for the bookmarklet and the userscript: font loading, the [font stacks](#web-pages) and the okurigana spans. It also builds as one minified IIFE that both inline. |
 | `furifont` | TS | The CLI (`furifont build`, `furifont dev`) and the studio's Devframe definition and RPC functions. It is the Node host: it reads and writes the files and caches the base fonts. |
 | `packages/app` | Nuxt | The demo site and the studio, as one static SPA. The CLI ships it as its Devframe client. |
 
@@ -80,7 +80,7 @@ compiler to subset the base font first.
 
 ### Browser-safe packages
 
-`core`, `compiler`, `dictionary` and `webpage` MUST run in a browser as well as in Node,
+`core`, `compiler`, `dictionary` and `helper-web` MUST run in a browser as well as in Node,
 so that a web studio can plan and compile without a server. They use no Node
 APIs, and ESLint rejects `node:` imports in their sources.
 
@@ -325,7 +325,7 @@ their characters. A run is read only whole, from its first kanji to the
 hiragana after it: a pair of 一人 does not apply inside 毎日一人も.
 
 The reading logic is one function, `createOkuriganaReader` in
-`@furifont/webpage`, which the bookmarklet and the userscript inline with the
+`@furifont/helper-web`, which the bookmarklet and the userscript inline with the
 rest of that package and the demo's playground imports. The playground draws the same spans in its editable text, after a
 pause in typing and not during IME composition, and keeps the caret and the
 undo history when nothing changes. It needs JavaScript, and that is a browser
