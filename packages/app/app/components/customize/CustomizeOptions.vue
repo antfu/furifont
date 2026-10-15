@@ -43,6 +43,13 @@ type Source = typeof sources[number]
 
 // The server sends a complete config, metrics included.
 const metrics = computed(() => config.value.metrics ?? {})
+// Bounds match `RubyMetricsSchema` in @furifont/core.
+const metricRanges = [
+  { key: 'rubyScale', label: 'rubyScale', min: 0.2, max: 0.8, step: 0.05, digits: 2 },
+  { key: 'rubyGap', label: 'rubyGap', min: 0, max: 0.5, step: 0.01, digits: 2 },
+  { key: 'compressionFloor', label: 'squeeze', min: 0.3, max: 1, step: 0.05, digits: 2 },
+  { key: 'maxRubyWidth', label: 'maxWidth', min: 1, max: 3, step: 0.1, digits: 1 },
+] as const
 const rubyScript = computed({
   get: () => config.value.rubyScript ?? 'hiragana',
   set: value => config.value.rubyScript = value,
@@ -129,20 +136,17 @@ function toggle(source: Source): void {
       <input v-model.number="config.isolatedMinShare" type="number" min="0.5" max="1" step="0.05" class="input font-mono disabled:opacity-40" :placeholder="String(DEFAULTS.plan.isolatedMinShare)" :disabled="!isolated">
     </UiField>
     <div class="h-px bg-[var(--ff-line)]" />
-    <div class="grid grid-cols-2 gap-4">
-      <UiField :label="$t('customize.options.rubyScale')">
-        <input v-model.number="metrics.rubyScale" type="number" min="0.2" max="0.8" step="0.05" class="input font-mono" :placeholder="String(DEFAULTS.plan.metrics.rubyScale)">
-      </UiField>
-      <UiField :label="$t('customize.options.rubyGap')">
-        <input v-model.number="metrics.rubyGap" type="number" min="0" max="0.5" step="0.01" class="input font-mono" :placeholder="String(DEFAULTS.plan.metrics.rubyGap)">
-      </UiField>
-      <UiField :label="$t('customize.options.squeeze')">
-        <input v-model.number="metrics.compressionFloor" type="number" min="0.3" max="1" step="0.05" class="input font-mono" :placeholder="String(DEFAULTS.plan.metrics.compressionFloor)">
-      </UiField>
-      <UiField :label="$t('customize.options.maxWidth')">
-        <input v-model.number="metrics.maxRubyWidth" type="number" min="1" max="3" step="0.1" class="input font-mono" :placeholder="String(DEFAULTS.plan.metrics.maxRubyWidth)">
-      </UiField>
-    </div>
+    <UiRange
+      v-for="range in metricRanges"
+      :key="range.key"
+      :model-value="metrics[range.key] ?? DEFAULTS.plan.metrics[range.key]"
+      :label="$t(`customize.options.${range.label}`)"
+      :display="(metrics[range.key] ?? DEFAULTS.plan.metrics[range.key]).toFixed(range.digits)"
+      :min="range.min"
+      :max="range.max"
+      :step="range.step"
+      @update:model-value="metrics[range.key] = $event"
+    />
     <UiButton variant="ghost" icon="i-ph-arrow-counter-clockwise" class="self-start" :title="$t('customize.options.resetHint')" @click="reset">
       {{ $t('customize.options.reset') }}
     </UiButton>
