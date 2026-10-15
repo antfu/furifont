@@ -42,11 +42,19 @@ export const PlanOptionsSchema = withNfWindow(v.object({
    * `spec1` catches words like 日本 that the newspaper ranking misses.
    */
   selectTags: v.optional(v.array(v.picklist(PRIORITY_TAGS)), () => [...DEFAULTS.plan.selectTags]),
+  /**
+   * Words of two or more kanji that Tatoeba's example sentences use at least
+   * this many times are annotated whatever their bucket: everyday words that
+   * no list tags, such as 留守中, which would otherwise be bare or read as a
+   * place name (国中 くになか, not くにじゅう). The sentences also decide how a
+   * lone kanji reads, where they use it alone often enough. 0 turns them off.
+   */
+  minTatoeba: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)), DEFAULTS.plan.minTatoeba),
   /** Words on the JLPT lists of this level and every easier one stay bare. */
   skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate place names from the dictionary where no common word claims the run. */
   places: v.optional(v.boolean(), DEFAULTS.plan.places),
-  /** Annotate a kanji alone in its run; when off, only selectors give it ruby. */
+  /** Annotate a kanji alone in its run, or one no word claims after another kanji (a suffix); when off, only selectors give them ruby. */
   isolated: v.optional(v.boolean(), DEFAULTS.plan.isolated),
   /** A kanji alone in its run is annotated only when one reading has this share of the evidence. */
   isolatedMinShare: v.optional(v.pipe(v.number(), v.minValue(0.5), v.maxValue(1)), DEFAULTS.plan.isolatedMinShare),

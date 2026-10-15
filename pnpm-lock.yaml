@@ -473,6 +473,10 @@ importers:
       valibot:
         specifier: catalog:prod
         version: 1.5.0(typescript@6.0.3)
+    devDependencies:
+      '@furifont/compiler':
+        specifier: workspace:*
+        version: link:../compiler
 
   packages/helper-web:
     dependencies:

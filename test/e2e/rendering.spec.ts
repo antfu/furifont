@@ -36,6 +36,17 @@ test('draws ruby that ss01 turns off', async ({ page }) => {
   expect(await shot(page, '#on')).not.toEqual(await shot(page, '#off'))
 })
 
+test('reads a kanji no word claims after another kanji as a suffix, before a kanji only if it seldom starts words', async ({ page }) => {
+  // 京学 is no word: 学 reads がく, as it does ending most runs. 都 starts more runs than it ends: と ending 読都, nothing inside 読都読.
+  await show(page, `
+    <p id="suffix">京学</p><p id="suffix-off" class="off">京学</p>
+    <p id="end">読都</p><p id="end-off" class="off">読都</p>
+    <p id="inside">読都読</p><p id="inside-off" class="off">読都読</p>`)
+  expect(await shot(page, '#suffix')).not.toEqual(await shot(page, '#suffix-off'))
+  expect(await shot(page, '#end')).not.toEqual(await shot(page, '#end-off'))
+  expect(await shot(page, '#inside')).toEqual(await shot(page, '#inside-off'))
+})
+
 test('picks a reading with a variation selector, or none', async ({ page }) => {
   await show(page, `
     <p id="default">市場</p><p id="second">市${VS(2)}場</p>

@@ -45,6 +45,34 @@ describe('planner', () => {
     expect(drawn(p)).toContain('書:しょ')
   })
 
+  it('selects words the example sentences use often, after the tagged readings', () => {
+    const planner = (uses: number) => createFontPlanner({
+      ...dictionary,
+      entries: [
+        ...dictionary.entries.map(e => e.furigana === '0:こん;1:じつ' ? { ...e, tatoeba: uses } : e),
+        { form: '本日', furigana: '0:ほん;1:じつ', nf: 0, priority: '', order: 0, tatoeba: uses },
+      ],
+    })
+    const often = planner(3)(resolveOptions(), coverage)
+    expect(drawn(often.plan)).toContain('日:じつ')
+    expect(often.report.ivs.words['今日']).toEqual(['今日[きょう]', '今[こん]日[にち]', '今[こん]日[じつ]'])
+    expect(drawn(planner(2)(resolveOptions(), coverage).plan)).not.toContain('日:じつ')
+    expect(drawn(planner(3)(resolveOptions({ minTatoeba: 0 }), coverage).plan)).not.toContain('日:じつ')
+  })
+
+  it('reads a lone kanji as the example sentences use it alone, given enough uses', () => {
+    const planner = (kaku: number, sho: number) => createFontPlanner({
+      ...dictionary,
+      entries: dictionary.entries.map(e => e.form === '書く' ? { ...e, tatoeba: kaku } : e.form === '書' ? { ...e, tatoeba: sho } : e),
+    })
+    const often = planner(30, 2)(resolveOptions(), coverage).report.ivs
+    expect(often.lone['書']).toBe('か')
+    expect(often.kanji['書']).toEqual(['か', 'しょ'])
+    expect(planner(16, 2)(resolveOptions(), coverage).report.ivs.lone['書']).toBeUndefined()
+    expect(planner(30, 20)(resolveOptions(), coverage).report.ivs.lone['書']).toBeUndefined()
+    expect(planner(30, 2)(resolveOptions({ minTatoeba: 0 }), coverage).report.ivs.lone['書']).toBeUndefined()
+  })
+
   it('skips the words on the JLPT lists the reader knows', () => {
     const levels: Record<string, number> = { '今日|0-1:きょう': 5, '学校|0:がっ;1:こう': 4, '桜|0:さくら': 3 }
     const entries = dictionary.entries.map(e => ({ ...e, jlpt: levels[`${e.form}|${e.furigana}`] }))
@@ -115,6 +143,39 @@ describe('planner', () => {
     expect(report.ivs.kanji['来']).toHaveLength(3)
     expect(report.ivs.lone).toEqual({ 桜: 'さくら' })
     expect(report.stats.isolated).toBe(1)
+  })
+
+  describe('suffixes', () => {
+    /** Untagged runs of each of `prefixes` then `kanji` read `ruby`: with 学校, what makes 校 a suffix. */
+    const ending = (kanji: string, ruby: string, prefixes: string) => [...prefixes].map(p => ({ form: p + kanji, furigana: `0:あ;1:${ruby}`, nf: 0, priority: '', order: 0 }))
+    const withEntries = (entries: typeof dictionary.entries, options: PlanOptionsInput = {}) => createFontPlanner({ ...dictionary, entries: [...dictionary.entries, ...entries] })(resolveOptions(options), coverage)
+    const NINE = '日本今大人気桜書来'
+
+    it('reads a kanji no word claims after another kanji as it reads ending most runs', () => {
+      const { plan: p, report } = withEntries(ending('校', 'こう', NINE))
+      expect(report.stats.suffixes).toBe(1)
+      expect(p.fea).toMatch(/lookup suffixes useExtension \{\n {2}sub uni6821 by uni6821\.rb\.\d+;\n\}/)
+      expect(p.fea).toContain('sub @han [uni6821]\' lookup suffixes;')
+      expect(p.fea).not.toContain('ignore sub @han [uni6821]\' @han;')
+      // Before the lone-kanji rules, whose ignore rules would stop it.
+      expect(ruleIndex(p, /lookup suffixes;/)).toBeLessThan(ruleIndex(p, /^\s*ignore sub @han \[/))
+    })
+
+    it('needs ten runs, nine in ten of them reading the same, and lone kanji on', () => {
+      expect(withEntries(ending('校', 'こう', NINE.slice(1))).report.stats.suffixes).toBe(0)
+      expect(withEntries([...ending('校', 'こう', NINE), ...ending('校', 'ご', '東京')]).report.stats.suffixes).toBe(0)
+      expect(withEntries(ending('校', 'こう', NINE), { isolated: false }).report.stats.suffixes).toBe(0)
+    })
+
+    it('reads a kanji that starts more runs than it ends as a suffix only at the end of a run', () => {
+      const starting = [...`${NINE}東京`].map(p => ({ form: `校${p}`, furigana: '0:こう;1:あ', nf: 0, priority: '', order: 0 }))
+      expect(withEntries([...ending('校', 'こう', NINE), ...starting]).plan.fea).toContain('ignore sub @han [uni6821]\' @han;')
+    })
+
+    it('protects a run the suffix would misread', () => {
+      const { plan: p } = withEntries([...ending('校', 'こう', `${NINE}東`), ...ending('校', 'げ', '京')])
+      expect(p.fea).toContain('ignore sub uni4EAC\' uni6821\';')
+    })
   })
 
   it('lets the dictionary\'s curated defaults yield to the user\'s pins', () => {

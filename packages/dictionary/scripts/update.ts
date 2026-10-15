@@ -1,8 +1,9 @@
 /**
- * Downloads JMdict, JMnedict, their JmdictFurigana alignments, KANJIDIC2 and
- * the JLPT word lists, and compiles them into data/dictionary.json,
- * data/places.json, data/okurigana.json (packed by run of kanji, as pages
- * read it) and data/jlpt.json, one entry per line so updates diff well.
+ * Downloads JMdict, JMnedict, their JmdictFurigana alignments, KANJIDIC2, the
+ * JLPT word lists and Tatoeba's example sentences, and compiles them into
+ * data/dictionary.json, data/places.json, data/okurigana.json (packed by run
+ * of kanji, as pages read it), data/jlpt.json and data/tatoeba.json, one
+ * entry per line so updates diff well.
  *
  *   node scripts/update.ts
  */
@@ -14,6 +15,9 @@ import { formatPacked, packOkurigana } from '../src/pack.ts'
 const JMDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz'
 const JMNEDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMnedict.xml.gz'
 const KANJIDIC2 = 'http://www.edrdg.org/kanjidic/kanjidic2.xml.gz'
+/** Tatoeba's Japanese sentences with their words indexed to JMdict, as EDRDG distributes them. */
+const TATOEBA = 'http://ftp.edrdg.org/pub/Nihongo/examples.utf.gz'
+const TATOEBA_DATE = 'http://www.edrdg.org/examples/examples_date'
 const FURIGANA_RELEASE = 'https://api.github.com/repos/Doublevil/JmdictFurigana/releases/latest'
 /** Jonathan Waller's JLPT lists, tied to JMdict entries; pinned, as the lists no longer change. */
 const JLPT_VOCAB = '2025.08.01.0'
@@ -22,6 +26,7 @@ const OUTPUT = new URL('../data/dictionary.json', import.meta.url)
 const PLACES = new URL('../data/places.json', import.meta.url)
 const OKURIGANA = new URL('../data/okurigana.json', import.meta.url)
 const JLPT = new URL('../data/jlpt.json', import.meta.url)
+const TATOEBA_OUTPUT = new URL('../data/tatoeba.json', import.meta.url)
 
 const HAN = /\p{Script=Han}/u
 const ALL_HAN = /^\p{Script=Han}{2,}$/u
@@ -56,6 +61,7 @@ type Entry = [form: string, furigana: string, nf: number, priority: string, orde
 interface Word {
   entry: number
   form: string
+  reading: string
   furigana: string
   order: number
   common: boolean
@@ -116,7 +122,7 @@ function parseJmdict(xml: string, furigana: Map<string, string>, jlptLevels: Map
         if (conjugatesReading)
           row.push(1)
         entries.push(row)
-        words.push({ entry, form, furigana: aligned, order, common: tags.length > 0, classes })
+        words.push({ entry, form, reading, furigana: aligned, order, common: tags.length > 0, classes })
         const level = jlptLevels.get(`${seq}|${form}|${reading}`)
         if (level)
           jlpt.push([form, aligned, level])
@@ -124,6 +130,82 @@ function parseJmdict(xml: string, furigana: Map<string, string>, jlptLevels: Map
     }
   }
   return { entries, words, jlpt }
+}
+
+type TatoebaEntry = [form: string, furigana: string, uses: number]
+
+/** `headword(reading)[sense]{as written}~`, where `(#seq)` names a JMdict entry rather than a reading. */
+const INDEXED_WORD = /^([^({[~]+)((?:\([^)]*\))*)(?:\[\d+\])?(?:\{([^}]*)\})?~?$/
+const hanOf = (text: string): string => text.replace(/\P{Script=Han}/gu, '')
+
+const DIGITS = /[0-9\uFF10-\uFF19]/
+const add = (map: Map<string, number>, key: string, n: number): void => void map.set(key, (map.get(key) ?? 0) + n)
+
+/**
+ * How often the sentences' `B:` lines use each word as JMdict spells it in
+ * kanji, by `form|reading`; `form|` where the line gives no reading, which
+ * it does when the form reads one way or as its first reading. Words written
+ * with digits, as ３人 for 三人, are kept apart by the kanji written.
+ */
+function countUses(sentences: string): { uses: Map<string, number>, withDigits: Map<string, number> } {
+  const uses = new Map<string, number>()
+  const withDigits = new Map<string, number>()
+  for (const line of sentences.split('\n')) {
+    if (!line.startsWith('B: '))
+      continue
+    for (const word of line.slice(3).split(' ')) {
+      const [, form, notes, written = form] = INDEXED_WORD.exec(word) ?? []
+      const key = `${form}|${/\(([^)#][^)]*)\)/.exec(notes!)?.[1] ?? ''}`
+      // Only the spelling a font sees counts: 兎 written ウサギ is no use of 兎.
+      if (form && hanOf(form) && hanOf(form) === hanOf(written!))
+        add(uses, key, 1)
+      else if (form && DIGITS.test(written!) && hanOf(written!) && hanOf(form).endsWith(hanOf(written!)))
+        add(withDigits, `${key}|${hanOf(written!)}`, 1)
+    }
+  }
+  return { uses, withDigits }
+}
+
+/** The reading of `form`'s last kanji `tail`, as 人 にん in 三人 さんにん; none when a span crosses into it, as in 二人 ふたり. */
+function tailReading(form: string, furigana: string, tail: string): string | undefined {
+  const chars = [...form]
+  const start = chars.join('').lastIndexOf(tail)
+  const at = [...chars.join('').slice(0, start)].length
+  if (start < 0 || chars.slice(at + [...tail].length).some(c => HAN.test(c)))
+    return
+  const spans = parseFurigana(furigana).filter(s => s.end > at && s.start < at + [...tail].length)
+  if (spans.some(s => s.start < at) || spans.reduce((n, s) => n + s.end - s.start, 0) !== [...tail].length)
+    return
+  return spans.map(s => s.ruby).join('')
+}
+
+/**
+ * Uses of each (form, reading) pair; a use with no reading counts only when
+ * the form's entries agree on their first one. A number written in digits
+ * counts for the kanji after it, as ３人 does for 人 にん: a font sees them alone.
+ */
+function compileTatoeba(sentences: string, words: Word[]): TatoebaEntry[] {
+  const { uses, withDigits } = countUses(sentences)
+  const firsts = new Map<string, Set<string>>()
+  for (const word of words.filter(w => w.order === 0))
+    getOrCreate(firsts, word.form).add(word.reading)
+  const aligned = new Map(words.map(w => [`${w.form}|${w.reading}`, w.furigana]))
+  for (const [key, n] of withDigits) {
+    const [form, given, tail] = key.split('|') as [string, string, string]
+    const reading = given || (firsts.get(form)?.size === 1 ? [...firsts.get(form)!][0] : undefined)
+    const furigana = reading && aligned.get(`${form}|${reading}`)
+    const read = furigana && tailReading(form, furigana, tail)
+    if (read)
+      add(uses, `${tail}|${read}`, n)
+  }
+  const counted = new Map<string, TatoebaEntry>()
+  for (const { form, reading, furigana, order } of words) {
+    const implied = order === 0 && firsts.get(form)!.size === 1 ? uses.get(`${form}|`) ?? 0 : 0
+    const n = (uses.get(`${form}|${reading}`) ?? 0) + implied
+    if (n)
+      counted.set(`${form}|${furigana}`, [form, furigana, n])
+  }
+  return [...counted.values()]
 }
 
 const GODAN_ROWS: Record<string, string> = { う: 'わいうえお', く: 'かきくけこ', ぐ: 'がぎぐげご', す: 'さしすせそ', つ: 'たちつてと', ぬ: 'なにぬねの', ぶ: 'ばびぶべぼ', む: 'まみむめも', る: 'らりるれろ' }
@@ -335,18 +417,21 @@ function assetUrl(name: string): string {
   return asset.browser_download_url
 }
 
-console.log('Downloading JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT lists...')
-const [jmdict, jmnedict, furigana, namesFurigana, kanjidic, ...jlptLists] = await Promise.all([
+console.log('Downloading JMdict, JMnedict, JmdictFurigana, KANJIDIC2, the JLPT lists and the Tatoeba sentences...')
+const [jmdict, jmnedict, furigana, namesFurigana, kanjidic, tatoebaText, tatoebaDate, ...jlptLists] = await Promise.all([
   download(JMDICT, true),
   download(JMNEDICT, true),
   download(assetUrl('JmdictFurigana.txt')),
   download(assetUrl('JmnedictFurigana.txt')),
   download(KANJIDIC2, true),
+  download(TATOEBA, true),
+  download(TATOEBA_DATE),
   ...JLPT_LEVELS.map(n => download(`https://raw.githubusercontent.com/stephenmk/yomitan-jlpt-vocab/${JLPT_VOCAB}/original_data/n${n}.csv`)),
 ])
 
 const { entries, words, jlpt } = parseJmdict(jmdict, parseAlignments(furigana), parseJlpt(jlptLists))
 const okurigana = compileOkurigana(words)
+const tatoeba = compileTatoeba(tatoebaText, words)
 const places = parseJmnedict(jmnedict, parseAlignments(namesFurigana))
 const onyomi = parseKanjidic(kanjidic)
 const used = new Set(entries.flatMap(([form]) => [...form]))
@@ -356,6 +441,7 @@ const sources = {
   JmdictFurigana: release.tag_name,
   KANJIDIC2: /<date_of_creation>([\d-]+)</.exec(kanjidic)?.[1] ?? 'unknown',
   JLPT: `yomitan-jlpt-vocab ${JLPT_VOCAB}`,
+  Tatoeba: new Date(tatoebaDate.trim()).toISOString().slice(0, 10),
 }
 
 const lines = [
@@ -371,4 +457,5 @@ await writeFile(OUTPUT, `${lines.join('\n')}\n`)
 await writeFile(PLACES, `[\n${places.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
 await writeFile(OKURIGANA, formatPacked(packOkurigana(okurigana)))
 await writeFile(JLPT, `[\n${jlpt.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
-console.log(`Wrote ${entries.length} entries, ${places.length} places, ${okurigana.length} okurigana pairs, ${jlpt.length} JLPT words, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)
+await writeFile(TATOEBA_OUTPUT, `[\n${tatoeba.map(p => JSON.stringify(p)).join(',\n')}\n]\n`)
+console.log(`Wrote ${entries.length} entries, ${places.length} places, ${okurigana.length} okurigana pairs, ${jlpt.length} JLPT words, ${tatoeba.length} words in example sentences, ${Object.keys(onyomi).length} kanji (${JSON.stringify(sources)})`)

@@ -11,6 +11,7 @@ export { BASE_FONTS } from './base-fonts'
 export type { BaseFont } from './base-fonts'
 export { FONT_VERSION } from './build'
 export type { BuiltFont, CompileOptions, CompileProgress } from './build'
+export { createRubyReader } from './simulate'
 export type { SubsetWasm } from './subset'
 export { toWoff2 } from './woff2'
 

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 const { dark, toggle } = useDarkMode()
 
-const links = [
-  { to: '/', label: 'nav.demo', class: '' },
-  { to: '/docs', label: 'nav.docs', class: '' },
-  { to: '/customize', label: 'nav.customize', class: '' },
-  // Phones have no room for it: the footer and the notice link there too.
-  { to: '/report', label: 'nav.report', class: 'hidden sm:block' },
-] as const
+const links: { to: string, label: `nav.${'demo' | 'docs' | 'customize' | 'report'}`, class?: string }[] = [{ to: '/', label: 'nav.demo' }]
+if (__TARGET_WEBSITE__)
+  links.push({ to: '/docs', label: 'nav.docs' })
+links.push({ to: '/customize', label: 'nav.customize' })
+// Phones have no room for it: the footer and the notice link there too.
+links.push({ to: '/report', label: 'nav.report', class: 'hidden sm:block' })
+// The devframe keeps running in its own tab.
+const siteTarget = __TARGET_DEVFRAME__ ? '_blank' : undefined
 </script>
 
 <template>
@@ -15,10 +16,10 @@ const links = [
     <nav class="relative mx-auto flex h-14 max-w-6xl items-center gap-3 border-x border-base px-3 sm:gap-6 sm:px-6">
       <UiCross class="-bottom-[6px] -left-[6px]" />
       <UiCross class="-bottom-[6px] -right-[6px]" />
-      <NuxtLink to="/" class="focus-ring flex items-center gap-2.5 font-mono text-sm font-medium">
+      <a :href="SITE" :target="siteTarget" class="focus-ring flex items-center gap-2.5 font-mono text-sm font-medium">
         <img src="/logo.svg" alt="" class="size-6" :class="{ invert: dark }" aria-hidden="true">
         <span class="hidden sm:inline">furifont</span>
-      </NuxtLink>
+      </a>
       <div class="flex items-center gap-1">
         <NuxtLink
           v-for="link in links"
