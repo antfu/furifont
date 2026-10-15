@@ -34,7 +34,7 @@ const PREVIEW = `${SITE}/og.png`
 export default defineNuxtConfig({
   ssr: false,
   css: ['~/assets/css/tokens.css'],
-  modules: ['@unocss/nuxt', studioBridge],
+  modules: ['@comark/nuxt', '@unocss/nuxt', studioBridge],
   alias: {
     // Types only: the studio's wire contract lives with its implementation.
     'furifont': source('cli'),

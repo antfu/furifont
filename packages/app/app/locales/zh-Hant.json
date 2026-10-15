@@ -5,6 +5,7 @@
   },
   "nav": {
     "demo": "簡介",
+    "docs": "文件",
     "customize": "自訂",
     "github": "GitHub 儲存庫",
     "light": "切換為淺色",
@@ -131,6 +132,11 @@
     "kanji": "漢字 / {count}",
     "copyWith": "複製帶有 {selector} 的「{text}」",
     "default": "預設"
+  },
+  "docs": {
+    "install": "安裝字型",
+    "website": "在網站上使用",
+    "readings": "選擇讀音"
   },
   "customize": {
     "connecting": "正在連線至 furifont dev",

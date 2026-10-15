@@ -16,6 +16,7 @@
     "vue-i18n": "catalog:frontend"
   },
   "devDependencies": {
+    "@comark/nuxt": "catalog:frontend",
     "@devframes/vite": "catalog:frontend",
     "@iconify-json/ph": "catalog:frontend",
     "@nuxt/kit": "catalog:frontend",

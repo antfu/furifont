@@ -128,7 +128,8 @@ catalogs:
     typescript: ^6.0.3
     vite: ^8.3.4
   frontend:
-    '@devframes/vite': ^1.2.5
+    '@comark/nuxt': ^0.7.0
+    '@devframes/vite': ^1.2.4
     '@iconify-json/ph': ^1.2.2
     '@nuxt/kit': ^4.6.1
     '@unocss/nuxt': ^66.11.0

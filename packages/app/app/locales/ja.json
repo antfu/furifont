@@ -5,6 +5,7 @@
   },
   "nav": {
     "demo": "はじめに",
+    "docs": "ドキュメント",
     "customize": "カスタマイズ",
     "github": "GitHub リポジトリ",
     "light": "ライトモードに切り替え",
@@ -131,6 +132,11 @@
     "kanji": "漢字 / {count}",
     "copyWith": "{text} を {selector} 付きでコピー",
     "default": "既定"
+  },
+  "docs": {
+    "install": "フォントのインストール",
+    "website": "ウェブサイトで使う",
+    "readings": "読みを選ぶ"
   },
   "customize": {
     "connecting": "furifont dev に接続しています",
