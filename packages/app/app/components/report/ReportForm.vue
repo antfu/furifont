@@ -49,9 +49,9 @@ function again(): void {
 
 <template>
   <UiSection v-if="status === 'sent'">
-    <div class="flex flex-col items-start gap-4 p-6">
-      <p class="flex items-center gap-2 text-sm">
-        <span class="i-ph-check-circle" aria-hidden="true" />
+    <div role="status" class="flex flex-col items-center gap-6 px-6 py-24 text-center">
+      <span class="i-ph-check-circle-light text-7xl" aria-hidden="true" />
+      <p class="display text-2xl font-semibold">
         {{ $t('report.sent') }}
       </p>
       <UiButton icon="i-ph-plus" @click="again">
