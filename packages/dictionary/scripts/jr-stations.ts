@@ -1,6 +1,6 @@
 /**
  * Compiles the JR station list of Desktop Tetsu (https://www.desktoptetsu.com/quiz/jr-stations.htm)
- * into raw/manual/jr-stations.json: the runs of kanji in the stations' names
+ * into raw/jr-stations.json: the runs of kanji in the stations' names
  * with the reading each takes, in inline notation, one a line.
  *
  *   node scripts/jr-stations.ts
@@ -9,7 +9,7 @@ import { writeFile } from 'node:fs/promises'
 import { hanRuns, isHan, parseNotation, toHiragana } from '@furifont/core'
 
 const URL_STATIONS = 'https://www.desktoptetsu.com/quiz/jr-stations.htm'
-const OUTPUT = new URL('../raw/manual/jr-stations.json', import.meta.url)
+const OUTPUT = new URL('../raw/jr-stations.json', import.meta.url)
 
 const ENTITIES: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': '\'', '&nbsp;': ' ' }
 

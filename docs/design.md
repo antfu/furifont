@@ -40,7 +40,7 @@ The repository is a pnpm monorepo. Each package has one job:
 
 | Package | Language | Job |
 | --- | --- | --- |
-| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT word lists into committed JSON under `raw/`. Its build fuses them, the word lists kept by hand and a short list of curated default readings into the published `data/`. |
+| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT word lists into committed JSON under `raw/`. Its build fuses them, the word lists kept by hand and each dataset's curated `.overrides.jsonc` into the published `data/`. |
 | `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
 | `@furifont/compiler` | TS | Draws the plan into the base font, compiles the rules and checks the output with HarfBuzz (harfbuzzjs, WebAssembly). Bytes in, bytes out. |
 | `@furifont/helper-web` | TS | Sets any web page's Japanese text in Furifont, for the bookmarklet and the userscript: font loading, the [font stacks](#web-pages) and the okurigana spans. It also builds as one minified IIFE that both inline. |
@@ -51,7 +51,7 @@ The repository is a pnpm monorepo. Each package has one job:
 JMdict + JMnedict + JmdictFurigana + KANJIDIC2 + JLPT lists + Tatoeba sentences
         | dict:update (maintainers, network)
         v
-packages/dictionary/raw/{jmdict,places,okurigana,jlpt,tatoeba}.json + raw/manual/ (committed, one entry per line)
+packages/dictionary/raw/{jmdict,places,okurigana,jlpt,tatoeba}.json + raw/{mahjong-yaku,jr-stations,yojijukugo}.json + raw/*.overrides.jsonc (committed, one entry per line)
         | fuseDictionary, in the dictionary's build
         v
 packages/dictionary/data/{dictionary,okurigana}.json (published, not committed)

@@ -35,7 +35,7 @@ function evidenceOf(table: Map<string, Readings>, text: string, key: string): Ev
 }
 
 /** Spans as a JmdictFurigana alignment: `0:に;1:ほん`, `0-1:きょう`. */
-function formatFurigana(spans: readonly RubySpan[]): string {
+export function formatFurigana(spans: readonly RubySpan[]): string {
   return spans.map(s => `${s.end - s.start > 1 ? `${s.start}-${s.end - 1}` : s.start}:${s.ruby}`).join(';')
 }
 

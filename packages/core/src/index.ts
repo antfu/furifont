@@ -1,7 +1,7 @@
 export { DEFAULTS, PREBUILT, VERSION_PROBE } from './defaults'
 export type { DictionaryEntry, DictionarySources, HanRun, RubySpan } from './dictionary'
 export { formatNotation, hanRuns, isHan, parseFurigana, parseNotation } from './dictionary'
-export { fuseDictionary } from './fuse'
+export { formatFurigana, fuseDictionary } from './fuse'
 export { glyphName } from './glyphs'
 export { isOnyomi, toHepburn, toHiragana, toKatakana } from './kana'
 export type { PlanReport, PlanResult } from './planner'

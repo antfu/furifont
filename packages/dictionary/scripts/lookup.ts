@@ -9,9 +9,9 @@
 import process from 'node:process'
 import { parseArgs } from 'node:util'
 import { createRubyReader } from '@furifont/compiler'
-import { createFontPlanner, formatNotation, parseFurigana, parseNotation, resolveOptions, SCORE } from '@furifont/core'
+import { createFontPlanner, formatNotation, parseFurigana, resolveOptions, SCORE } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
-import { BARE_FORMS, OVERRIDE_READINGS } from '../src/overrides.ts'
+import { formOf, isBare, notationOf, readAllOverrides } from './raw.ts'
 
 const { positionals: words, values: args } = parseArgs({ allowPositionals: true, options: { json: { type: 'boolean', default: false } } })
 
@@ -23,6 +23,7 @@ if (!runs.length) {
 }
 
 const dictionary = await loadDictionary()
+const overrides = Object.entries(await readAllOverrides()).flatMap(([dataset, entries]) => entries.map(entry => ({ dataset, entry })))
 
 /** Every character the dictionary writes, and the asked runs': the font a base font with every kanji would give. */
 const coverage = new Set([
@@ -45,8 +46,8 @@ const results = runs.map((text) => {
     /** Empty when the font leaves the run bare. */
     shown: shown.length ? formatNotation(text, shown) : undefined,
     readings,
-    override: OVERRIDE_READINGS.filter(n => parseNotation(n).form === text),
-    bare: BARE_FORMS.includes(text),
+    override: overrides.filter(o => !isBare(o.entry) && formOf(o.entry) === text).map(o => `${notationOf(o.entry)} (${o.dataset})`),
+    bare: overrides.some(o => isBare(o.entry) && formOf(o.entry) === text),
   }
 })
 

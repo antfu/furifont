@@ -1,0 +1,24 @@
+// Curated overrides of the place names (JMnedict), in inline notation. Add entries with `pnpm dict:override`.
+[
+  // 中院 is the family name Nakanoin (中院家), not ちゅういん.
+  // reported by anonymous 32a3ebbd-37d4-45dc-9332-f025d33bdd96
+  "中[なかの]院[いん]",
+  // 石神井 is the Tokyo place name Shakujii (石神井公園), not しゃくじん.
+  // reported by anonymous 3b190805-873e-4c3b-9b02-d226a2319bfa
+  "石[しゃく]神[じ]井[い]",
+  // 秋鹿 is the Matsue place name Aika (秋鹿郡, 秋鹿村, 秋鹿町), not あきしか.
+  // reported by anonymous 1f2e5c71-da94-456c-88b1-79b8e4da19a7
+  // reported by anonymous 269ed72e-a90c-48ad-91b4-24fa353da6a6
+  // reported by anonymous 6578e5bc-6be1-4f1f-a4a7-ec9faa1058d5
+  "秋[あい]鹿[か]",
+  // The Matsue district 秋鹿町 is あいかちょう (the old town of 秋鹿郡 was あいかまち).
+  // reported by anonymous c509d1b8-d468-4b03-8367-83f3512a86f9
+  "秋[あい]鹿[か]町[ちょう]",
+  // 秋鹿郡 is the former Izumo district Aikagun; 郡 alone is left bare, so the run carries it.
+  // reported by anonymous 1f2e5c71-da94-456c-88b1-79b8e4da19a7
+  "秋[あい]鹿[か]郡[ぐん]",
+  // 秋鹿村 is the former Matsue village Aikamura; 村 alone is left bare, so the run carries it.
+  // reported by anonymous 269ed72e-a90c-48ad-91b4-24fa353da6a6
+  // reported by anonymous 6578e5bc-6be1-4f1f-a4a7-ec9faa1058d5
+  "秋[あい]鹿[か]村[むら]"
+]

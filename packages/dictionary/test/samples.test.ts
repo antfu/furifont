@@ -1,9 +1,9 @@
 import { createRubyReader } from '@furifont/compiler'
-import { createFontPlanner, parseNotation, resolveOptions, toHiragana, WORD_SOURCES } from '@furifont/core'
+import { createFontPlanner, resolveOptions, toHiragana, WORD_SOURCES } from '@furifont/core'
 import { describe, expect, it } from 'vitest'
 import { SAMPLES } from '../../app/app/utils/samples'
+import { formOf, readAllOverrides } from '../scripts/raw'
 import { loadDictionary } from '../src'
-import { OVERRIDE_READINGS } from '../src/overrides'
 
 /** Words the site itself sets in the font, where a wrong reading is on show. */
 const INTERFACE_WORDS: { text: string, reading: string }[] = [
@@ -11,6 +11,7 @@ const INTERFACE_WORDS: { text: string, reading: string }[] = [
   { text: '明朝', reading: 'みんちょう' },
 ]
 
+const overrides = Object.values(await readAllOverrides()).flat()
 const planFont = createFontPlanner(await loadDictionary())
 const options = resolveOptions()
 /**
@@ -29,7 +30,7 @@ const EVERYDAY = [
 ]
 const coverage = new Set([
   ...[...SAMPLES, ...EVERYDAY].flatMap(s => [...s.text]),
-  ...OVERRIDE_READINGS.flatMap(n => [...parseNotation(n).form]),
+  ...overrides.flatMap(o => [...formOf(o)]),
   ...Array.from({ length: 0x30FF - 0x3041 + 1 }, (_, i) => String.fromCharCode(0x3041 + i)),
 ].map(c => c.codePointAt(0)!))
 
