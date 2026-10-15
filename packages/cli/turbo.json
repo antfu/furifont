@@ -6,7 +6,7 @@
       // The app it generates inlines @furifont/helper-web's build, which the CLI does not import.
       "dependsOn": ["^build", "@furifont/helper-web#build"],
       // The build also generates the app into dist/client, so its sources count as inputs.
-      "inputs": ["$TURBO_DEFAULT$", "../app/app/**", "../app/server/**", "../app/shared/**", "../app/public/**", "../app/nuxt.config.ts", "../app/uno.config.ts", "../dictionary/data/okurigana.json"],
+      "inputs": ["$TURBO_DEFAULT$", "../app/app/**", "../app/server/**", "../app/shared/**", "../app/public/**", "../app/nuxt.config.ts", "../app/uno.config.ts"],
       "outputs": ["dist/**"]
     }
   }

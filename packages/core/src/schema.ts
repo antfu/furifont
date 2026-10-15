@@ -6,6 +6,7 @@ export const PRIORITY_TAGS = ['ichi1', 'ichi2', 'news1', 'news2', 'spec1', 'spec
 /** Easiest first. */
 /** The dictionary's manually maintained sources, which a plan may include by name. */
 export const MANUAL_SOURCES = ['mahjong-yaku', 'jr-stations', 'yojijukugo'] as const
+export type ManualSource = typeof MANUAL_SOURCES[number]
 export const JLPT_LEVELS = ['N5', 'N4', 'N3', 'N2', 'N1'] as const
 export type RubyScript = typeof RUBY_SCRIPTS[number]
 
@@ -119,3 +120,119 @@ export const PlanSchema = v.object({
 })
 export type Plan = v.InferOutput<typeof PlanSchema>
 export type PlanGlyph = Plan['glyphs'][number]
+
+/** Sources that give a reading a number. */
+const MEASURES = {
+  /** JMdict lists it: the reading's position among its form's, 1000 on when the run is part of a longer form. */
+  jmdict: [0, Infinity],
+  /** The reading's corpus frequency, in newspaper buckets: a tagged form's bucket, else 24 for a `*1` tag and 48 for others. Only tagged readings have one. */
+  rank: [1, 48],
+  /** Best newspaper bucket (nf01..nf48) of a priority-tagged form with the reading. */
+  nf: [1, 48],
+  /** Easiest JLPT level listing it, 5 for N5. */
+  jlpt: [1, 5],
+  /** Uses in Tatoeba's example sentences. */
+  tatoeba: [1, Infinity],
+} as const
+/**
+ * Sources that only list a reading: JMdict's priority tags, the manual
+ * lists, JMnedict's place names, the curated defaults, and `inflecting`, a
+ * kanji read before okurigana in a JMdict word no list tags, such as 奉る.
+ */
+const LISTS = [...PRIORITY_TAGS, 'inflecting', 'place', ...MANUAL_SOURCES, 'default'] as const
+
+/** What each source says of one reading; a source that does not list it is left out. */
+export type ReadingSources = Partial<Record<keyof typeof MEASURES, number> & Record<typeof LISTS[number], true>>
+type Source = keyof ReadingSources
+
+/** Every source in the order the file writes them. */
+const SOURCES: readonly Source[] = ['jmdict', 'rank', 'nf', ...PRIORITY_TAGS, 'jlpt', 'tatoeba', 'inflecting', 'place', ...MANUAL_SOURCES, 'default']
+const isMeasure = (name: string): name is keyof typeof MEASURES => Object.hasOwn(MEASURES, name)
+
+/** `jmdict:0 rank:2 ichi1 jlpt:5`: the sources of a reading as the file writes them, as JMdict writes its priority tags. */
+function formatSources(sources: ReadingSources): string {
+  return SOURCES.filter(name => sources[name] !== undefined).map(name => isMeasure(name) ? `${name}:${sources[name]}` : name).join(' ')
+}
+
+/** The sources of a reading as `formatSources` writes them, or the token that is none. */
+function parseSources(text: string): ReadingSources | string {
+  const sources: ReadingSources = {}
+  for (const token of text.split(' ')) {
+    const [name = '', value] = token.split(':')
+    const n = Number(value)
+    const list = LISTS.find(l => l === name)
+    if (isMeasure(name) && Number.isInteger(n) && n >= MEASURES[name][0] && n <= MEASURES[name][1])
+      sources[name] = n
+    else if (list && value === undefined)
+      sources[list] = true
+    else
+      return token
+  }
+  return sources
+}
+
+type Table = Record<string, Record<string, string>>
+/** Checked by hand: valibot takes seconds over the 400,000 readings of the dictionary. */
+function isTable(input: unknown): input is Table {
+  const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
+  return isRecord(input) && Object.values(input).every(readings => isRecord(readings) && Object.values(readings).every(text => typeof text === 'string'))
+}
+
+/** Readings by run or kanji, then by alignment or reading, each with its sources. */
+const ReadingsSchema = v.pipe(
+  v.custom<Table>(isTable, 'Expected readings by run, each a string of sources'),
+  v.rawTransform(({ dataset, addIssue, NEVER }) => {
+    const table: Record<string, Record<string, ReadingSources>> = {}
+    for (const text in dataset.value) {
+      const readings: Record<string, ReadingSources> = table[text] = {}
+      for (const [key, value] of Object.entries(dataset.value[text]!)) {
+        const sources = parseSources(value)
+        if (typeof sources === 'string') {
+          addIssue({ message: `"${sources}" in ${text} ${key} is no source of a reading` })
+          return NEVER
+        }
+        readings[key] = sources
+      }
+    }
+    return table
+  }),
+)
+
+/**
+ * The compiled dictionary, the contract between `@furifont/dictionary` and
+ * the planner: readings by the Han run a font sees, each with what every
+ * source says of it. Run readings are JmdictFurigana alignments within the run.
+ */
+export const DictionarySchema = v.object({
+  /** Source datasets and the version each was compiled from. */
+  versions: v.record(v.string(), v.string()),
+  /** Kanji to its on'yomi, in hiragana. */
+  onyomi: v.record(v.string(), v.array(v.string())),
+  /** Runs of two or more kanji, then their alignments: `{ 日本: { '0-1:にほん': 'jmdict:0 rank:25 nf:25 news2 spec1 jlpt:3' } }`. */
+  runs: ReadingsSchema,
+  /** Kanji alone in a run, then their readings: `{ 来: { く: 'rank:3 nf:3 ichi1 news1 jlpt:5' } }`. */
+  kanji: ReadingsSchema,
+  /** Written forms never to annotate, such as 月, whose reading alone is a guess; users' removals add to them. */
+  bare: v.array(v.string()),
+})
+export type Dictionary = v.InferOutput<typeof DictionarySchema>
+
+/** The file `DictionarySchema` reads: an entry a line. */
+export function formatDictionary(dictionary: Dictionary): string {
+  const lines = <T>(table: Record<string, T>): string => Object.entries(table).map(([key, value]) => `${JSON.stringify(key)}:${JSON.stringify(value)}`).join(',\n')
+  const written = (table: Dictionary['runs']): Record<string, Record<string, string>> => Object.fromEntries(Object.entries(table).map(([text, readings]) => [text, Object.fromEntries(Object.entries(readings).map(([key, sources]) => [key, formatSources(sources)]))]))
+  return `{
+"versions":${JSON.stringify(dictionary.versions)},
+"bare":${JSON.stringify(dictionary.bare)},
+"onyomi":{
+${lines(dictionary.onyomi)}
+},
+"kanji":{
+${lines(written(dictionary.kanji))}
+},
+"runs":{
+${lines(written(dictionary.runs))}
+}
+}
+`
+}

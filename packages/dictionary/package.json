@@ -2,7 +2,7 @@
   "name": "@furifont/dictionary",
   "type": "module",
   "version": "0.3.0",
-  "description": "JMdict words aligned with per-kanji readings, compiled for Furifont",
+  "description": "JMdict, JMnedict and hand-kept word lists fused by the Han runs a font sees, compiled for Furifont",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "CC-BY-SA-4.0",
   "homepage": "https://github.com/antfu/furifont#readme",
@@ -15,7 +15,6 @@
   "sideEffects": false,
   "exports": {
     ".": "./dist/index.mjs",
-    "./okurigana": "./dist/okurigana.mjs",
     "./package.json": "./package.json"
   },
   "types": "./dist/index.d.mts",
@@ -25,8 +24,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "node scripts/compile.ts && tsdown",
     "prepack": "turbo run build --filter=@furifont/dictionary",
+    "compile": "node scripts/compile.ts",
     "update": "node scripts/update.ts",
     "update:manual": "node scripts/jr-stations.ts && node scripts/yojijukugo.ts",
     "audit": "node scripts/audit.ts"
@@ -36,6 +36,7 @@
     "valibot": "catalog:prod"
   },
   "devDependencies": {
-    "@furifont/compiler": "workspace:*"
+    "@furifont/compiler": "workspace:*",
+    "@furifont/helper-web": "workspace:*"
   }
 }

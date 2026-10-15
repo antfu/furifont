@@ -1,0 +1,10 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    // The build compiles raw/ into data/, which the package publishes.
+    "build": {
+      "outputs": ["dist/**", "data/**"]
+    }
+  }
+}

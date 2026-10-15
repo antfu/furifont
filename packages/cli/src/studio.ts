@@ -1,4 +1,4 @@
-import type { PlanReport } from '@furifont/core'
+import type { PlanReport, ReadingSources, RubySpan } from '@furifont/core'
 import type { DevframeNodeContext } from 'devframe'
 import type { SizeEstimate } from './build'
 import type { FurifontConfig, FurifontConfigInput } from './config'
@@ -6,7 +6,7 @@ import { Buffer } from 'node:buffer'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { BASE_FONTS } from '@furifont/compiler'
-import { formatNotation, hanRuns, parseFurigana } from '@furifont/core'
+import { formatNotation, parseFurigana, PRIORITY_TAGS } from '@furifont/core'
 import { defineRpcFunction } from 'devframe'
 import * as v from 'valibot'
 import { buildFont, estimateFont, getDictionary, planWithBase, previewFont } from './build'
@@ -64,23 +64,25 @@ declare module 'devframe' {
 
 const SEARCH_LIMIT = 40
 
+function wordReading(form: string, spans: RubySpan[], sources: ReadingSources): WordMatch['readings'][number] {
+  return { notation: formatNotation(form, spans), nf: sources.nf ?? 0, priority: PRIORITY_TAGS.filter(t => sources[t]).join(' ') }
+}
+
 async function searchWords(query: string): Promise<WordMatch[]> {
-  const matches = new Map<string, WordMatch>()
-  for (const entry of (await getDictionary()).entries) {
-    if (!entry.form.includes(query))
-      continue
-    let match = matches.get(entry.form)
-    if (!match) {
-      if (matches.size === SEARCH_LIMIT)
-        break
-      matches.set(entry.form, match = { form: entry.form, readings: [] })
-    }
-    const spans = parseFurigana(entry.furigana)
-    if (hanRuns(entry.form, spans).length)
-      match.readings.push({ notation: formatNotation(entry.form, spans), nf: entry.nf, priority: entry.priority })
+  const { runs, kanji } = await getDictionary()
+  const matches: WordMatch[] = []
+  for (const form of Object.keys(kanji).filter(k => k.includes(query)))
+    matches.push({ form, readings: Object.entries(kanji[form]!).map(([ruby, sources]) => wordReading(form, [{ start: 0, end: 1, ruby }], sources)) })
+  for (const form of Object.keys(runs).filter(k => k.includes(query))) {
+    if (matches.length >= SEARCH_LIMIT)
+      break
+    // JMdict's words, not the place names: a search for 日 means a word.
+    const readings = Object.entries(runs[form]!).filter(([, sources]) => sources.jmdict !== undefined)
+    if (readings.length)
+      matches.push({ form, readings: readings.map(([furigana, sources]) => wordReading(form, parseFurigana(furigana), sources)) })
   }
   // Exact and shorter forms first: what a search for 日 most likely means.
-  return [...matches.values()].filter(m => m.readings.length).sort((a, b) => a.form.length - b.form.length)
+  return matches.slice(0, SEARCH_LIMIT).sort((a, b) => a.form.length - b.form.length)
 }
 
 /** Every function the studio page calls; registered under {@link STUDIO_ID}. */
@@ -104,7 +106,7 @@ export async function setupStudio(ctx: DevframeNodeContext): Promise<void> {
         config: await loadConfig(ctx.cwd),
         configPath: join(ctx.cwd, CONFIG_FILE),
         outDir,
-        sources: (await getDictionary()).sources,
+        sources: (await getDictionary()).versions,
         baseFonts: BASE_FONTS.map(f => f.name),
       }),
     }),

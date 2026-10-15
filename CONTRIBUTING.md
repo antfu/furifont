@@ -33,7 +33,7 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 | `pnpm test:e2e` | Rendering in Chromium, Firefox and WebKit, and the studio. Run `pnpm build` first. |
 | `pnpm fonts` | All eight prebuilt fonts, OpenType and WOFF2, into `dist/fonts`, as the release builds them. It takes about 2 minutes. |
 | `node packages/cli/bin.mjs dev` | The studio as users get it, built from your checkout. |
-| `pnpm dict:update` | Downloads JMdict, JMnedict, JmdictFurigana, KANJIDIC2, the JLPT lists and Tatoeba's example sentences and recompiles the dictionary, the place names, the okurigana pairs, the JLPT levels and the words' uses in the sentences. |
+| `pnpm dict:update` | Downloads JMdict, JMnedict, JmdictFurigana, KANJIDIC2, the JLPT lists and Tatoeba's example sentences into `packages/dictionary/raw/`: the words, the place names, the okurigana pairs, the JLPT levels and the words' uses in the sentences. `pnpm build` then fuses them. |
 
 ## How it fits together
 
@@ -42,8 +42,8 @@ The first font build downloads Source Han Sans JP into `~/.cache/furifont`.
 - **`@furifont/core` reads no fonts, and `@furifont/compiler` decides no readings.** The plan (`PlanSchema`) is the only thing passed between them. A change to which words get ruby, or how, belongs in core. A change to how glyphs are drawn or compiled belongs in the compiler.
 - **Core, the compiler, the dictionary and helper-web run in browsers too.** They take and return bytes and use no Node APIs, and ESLint rejects `node:` imports in them. Files and the base-font cache belong to the CLI. Node's Brotli and hb-subset loader live in `@furifont/compiler/node`, which the CLI passes in.
 - **Browsers shape one script at a time.** A rule can only see a run of kanji, never the kana around it. HarfBuzz on a whole string matches rules that no browser does. So check any change to rendering with `pnpm test:e2e`, not with HarfBuzz alone.
-- **Never edit `packages/dictionary/data/dictionary.json`, `places.json`, `okurigana.json`, `jlpt.json` or `tatoeba.json` by hand.** Regenerate them with `pnpm dict:update`. To fix a wrong default reading, add the word to `packages/dictionary/src/overrides.ts`, with a comment that says why.
-- **Manual word lists** (such as the mahjong yaku) live in `packages/dictionary/src/manual/`, one file per source, registered in `index.ts`. A list too long to write by hand (`jr-stations`, `yojijukugo`) is compiled from its source into `data/manual/` by `pnpm -F @furifont/dictionary run update:manual`; do not edit it by hand. A build includes every source unless its `manual` option names a subset.
+- **Never edit `packages/dictionary/raw/` by hand.** Regenerate it with `pnpm dict:update`. To fix a wrong default reading, add the word to `packages/dictionary/src/overrides.ts`, with a comment that says why. The dictionary's build fuses `raw/` and the overrides into `data/dictionary.json` and `data/okurigana.json`, which it publishes; `data/` is not committed.
+- **Manual word lists** live in `packages/dictionary/raw/manual/`, one file per source, named in core's `MANUAL_SOURCES`. The mahjong yaku are kept by hand. The longer lists (`jr-stations`, `yojijukugo`) are compiled from their sources by `pnpm -F @furifont/dictionary run update:manual`; do not edit them by hand. A build includes every source unless its `manual` option names a subset.
 
 The app uses Nuxt and UnoCSS. Colors come only from the `--ff-*` tokens in `packages/app/uno.config.ts`. Corners are square, and SFCs have no `<style>` blocks.
 

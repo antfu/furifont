@@ -8,7 +8,7 @@ export default antfu(
     pnpm: true,
     antislop: true,
     ignores: [
-      'packages/dictionary/data/**',
+      'packages/dictionary/{data,raw}/**',
       '**/test/fixtures/**',
       '**/.nuxt/**',
       '**/.output*/**',

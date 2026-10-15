@@ -1,4 +1,6 @@
-/** One (written form, reading) pair, as compiled by `@furifont/dictionary`. */
+import type { ManualSource } from './schema'
+
+/** One (written form, reading) pair of JMdict, aligned by JmdictFurigana. */
 export interface DictionaryEntry {
   form: string
   /** JmdictFurigana alignment: `0:に;1:ほん`, or `0-1:きょう` for a reading spanning characters. */
@@ -17,20 +19,18 @@ export interface DictionaryEntry {
   tatoeba?: number
 }
 
-export interface Dictionary {
-  entries: DictionaryEntry[]
-  /** Kanji to its on'yomi, in hiragana. */
+/** Everything `fuseDictionary` merges into a `Dictionary`. */
+export interface DictionarySources {
+  versions: Record<string, string>
   onyomi: Record<string, string[]>
-  /** Source datasets and the version each was compiled from. */
-  sources: Record<string, string>
-  /** Written forms never to annotate, such as 月, whose reading alone is a guess; users' removals add to them. */
-  bare?: string[]
-  /** Curated default readings in inline notation, for words the data ranks wrong; pins override them. */
-  defaults?: string[]
+  entries: DictionaryEntry[]
   /** Place names, each with the one reading to show; common words take precedence over them. */
-  places?: { form: string, furigana: string }[]
+  places: { form: string, furigana: string }[]
   /** Word lists kept by hand, by source name, in inline notation; like place names, they fill runs no common word claims. */
-  manual?: Record<string, string[]>
+  manual: Partial<Record<ManualSource, string[]>>
+  /** Curated default readings in inline notation, for words the data ranks wrong; pins override them. */
+  defaults: string[]
+  bare: string[]
 }
 
 /** A ruby annotation over characters `[start, end)` of a run. */
@@ -52,12 +52,19 @@ export function isHan(char: string): boolean {
   return HAN.test(char)
 }
 
+/** Spans of a JmdictFurigana alignment; a loop, not splits, as the planner parses the 400,000 readings of the dictionary as it starts. */
 export function parseFurigana(furigana: string): RubySpan[] {
-  return furigana.split(';').filter(Boolean).map((part) => {
-    const [range, ruby = ''] = part.split(':')
-    const [start, end = start] = range!.split('-').map(Number)
-    return { start: start!, end: end! + 1, ruby }
-  })
+  const spans: RubySpan[] = []
+  for (const part of furigana.split(';')) {
+    if (!part)
+      continue
+    const colon = part.indexOf(':')
+    const range = colon < 0 ? part : part.slice(0, colon)
+    const dash = range.indexOf('-')
+    const start = Number(dash < 0 ? range : range.slice(0, dash))
+    spans.push({ start, end: (dash < 0 ? start : Number(range.slice(dash + 1))) + 1, ruby: colon < 0 ? '' : part.slice(colon + 1) })
+  }
+  return spans
 }
 
 /**

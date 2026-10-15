@@ -13,7 +13,7 @@ import type { RubySpan } from '@furifont/core'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
 import { createRubyReader } from '@furifont/compiler'
-import { createFontPlanner, formatNotation, hanRuns, parseFurigana, resolveOptions } from '@furifont/core'
+import { createFontPlanner, formatNotation, parseFurigana, resolveOptions } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
 
 const KINDS = ['misread', 'partial', 'bare', 'compound'] as const
@@ -42,25 +42,18 @@ const { values: args } = parseArgs({ options: {
 
 const dictionary = await loadDictionary()
 const runs = new Map<string, Map<string, Reading>>()
-function addRun(text: string, spans: RubySpan[], nf: number, tagged: boolean): void {
-  const readings = runs.get(text) ?? runs.set(text, new Map()).get(text)!
-  const key = formatNotation(text, spans)
-  const current = readings.get(key)
-  if (!current)
-    return void readings.set(key, { spans, nf, tagged })
-  if (nf && (!current.nf || nf < current.nf))
-    current.nf = nf
-  current.tagged ||= tagged
+for (const [table, spansOf] of [[dictionary.runs, parseFurigana], [dictionary.kanji, (ruby: string) => [{ start: 0, end: 1, ruby }]]] as const) {
+  for (const [text, readings] of Object.entries(table)) {
+    runs.set(text, new Map(Object.entries(readings).map(([key, sources]) => {
+      const spans = spansOf(key)
+      const tagged = sources.rank !== undefined
+      return [formatNotation(text, spans), { spans, nf: tagged ? sources.nf ?? 0 : 0, tagged }]
+    })))
+  }
 }
-for (const entry of dictionary.entries) {
-  for (const run of hanRuns(entry.form, parseFurigana(entry.furigana)))
-    addRun(run.text, run.spans, entry.priority ? entry.nf : 0, !!entry.priority)
-}
-for (const place of dictionary.places ?? [])
-  addRun(place.form, parseFurigana(place.furigana), 0, false)
 
 // Every character the dictionary writes: the font a base font with every kanji would give.
-const coverage = new Set([...runs.keys(), ...dictionary.entries.map(e => e.furigana)].flatMap(t => [...t].map(c => c.codePointAt(0)!)))
+const coverage = new Set([...runs].flatMap(([text, readings]) => [text, ...readings.keys()]).flatMap(t => [...t].map(c => c.codePointAt(0)!)))
 const { plan } = createFontPlanner(dictionary)(resolveOptions(), coverage)
 const read = createRubyReader(plan)
 

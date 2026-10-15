@@ -476,6 +476,9 @@ importers:
       '@furifont/compiler':
         specifier: workspace:*
         version: link:../compiler
+      '@furifont/helper-web':
+        specifier: workspace:*
+        version: link:../helper-web
 
   packages/helper-web:
     dependencies:

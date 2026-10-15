@@ -40,7 +40,7 @@ The repository is a pnpm monorepo. Each package has one job:
 
 | Package | Language | Job |
 | --- | --- | --- |
-| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT word lists into committed JSON. It also holds a short list of curated default readings. |
+| `@furifont/dictionary` | TS | `dict:update` compiles JMdict, JMnedict, JmdictFurigana, KANJIDIC2 and the JLPT word lists into committed JSON under `raw/`. Its build fuses them, the word lists kept by hand and a short list of curated default readings into the published `data/`. |
 | `@furifont/core` | TS | Pure: from a dictionary, options and the base font's coverage, makes the **plan** (JSON) and the feature file. It parses no fonts. |
 | `@furifont/compiler` | TS | Draws the plan into the base font, compiles the rules and checks the output with HarfBuzz (harfbuzzjs, WebAssembly). Bytes in, bytes out. |
 | `@furifont/helper-web` | TS | Sets any web page's Japanese text in Furifont, for the bookmarklet and the userscript: font loading, the [font stacks](#web-pages) and the okurigana spans. It also builds as one minified IIFE that both inline. |
@@ -51,7 +51,10 @@ The repository is a pnpm monorepo. Each package has one job:
 JMdict + JMnedict + JmdictFurigana + KANJIDIC2 + JLPT lists + Tatoeba sentences
         | dict:update (maintainers, network)
         v
-packages/dictionary/data/{dictionary,places,okurigana,jlpt,tatoeba}.json (committed, one entry per line)
+packages/dictionary/raw/{jmdict,places,okurigana,jlpt,tatoeba}.json + raw/manual/ (committed, one entry per line)
+        | fuseDictionary, in the dictionary's build
+        v
+packages/dictionary/data/{dictionary,okurigana}.json (published, not committed)
         |
         v
 createFontPlanner(dictionary)(options, coverage[, previewText]) -> { plan, report }
@@ -97,8 +100,8 @@ APIs, and ESLint rejects `node:` imports in their sources.
   loads brotli-wasm, an optional peer dependency, on first use. Neither takes
   font mode or the largest window, so a full font's WOFF2 comes out about 10%
   larger: 5.21 MB instead of 4.75 MB.
-- `loadDictionary()` imports its data as JSON modules. Node loads them, and
-  bundlers split them into lazy chunks.
+- `loadDictionary()` imports its data as a JSON module. Node loads it, and
+  bundlers split it into a lazy chunk.
 - The base fonts are fetched from `raw.githubusercontent.com`, which sends
   CORS headers. `github.com`'s redirect to it does not.
 
@@ -131,12 +134,34 @@ fourth.
 
 ## Rule planning
 
+### The compiled dictionary
+
+`fuseDictionary` in core splits every JMdict entry into Han runs with their
+aligned readings, and merges each reading with what every source says of it:
+`data/dictionary.json` holds the runs of two or more kanji and the lone kanji,
+then their readings, each with its sources in one string, as JMdict writes its
+priority tags:
+
+```json
+{
+  "日本": {
+    "0-1:にほん": "jmdict:0 rank:25 nf:25 news2 spec1 jlpt:3 tatoeba:1131 jr-stations",
+    "0-1:にっぽん": "jmdict:1 rank:25 nf:25 spec1 jlpt:3"
+  }
+}
+```
+
+`jmdict` is the reading's place in JMdict's order, `rank` the corpus weight in
+newspaper buckets, and the place names, the manual lists and the curated
+defaults are sources like the rest. What no plan can use is left out: a run
+whose kanji are not all annotated, or whose annotation crosses a kana; a lone
+kanji of a list, or of a word no list tags but before okurigana; the on'yomi of
+kanji no reading uses. The planner indexes the file as it is.
+
 ### Words
 
-Every dictionary entry is split into Han runs with their aligned readings. A
-run whose kanji are not all annotated is dropped, and so is one whose
-annotation crosses a kana. Runs of two or more kanji become **patterns** when
-their entry is selected:
+Runs of two or more kanji become **patterns** when a JMdict reading of theirs
+is selected:
 
 - its form has a newspaper bucket from `nfMin` (default 1) to `nfMax`
   (default 48),
@@ -376,7 +401,7 @@ undo history when nothing changes. It needs JavaScript, and that is a browser
 limit: a browser shapes each script on its own, so no font can see the kana
 after a kanji.
 
-The site serves `data/okurigana.json` as it is: `dict:update` writes it packed
+The site serves `data/okurigana.json` as it is: `dict:update` writes the pairs packed
 by run of kanji and then by reading, without losing a pair,
 `{"来": {"こ": ["ない", "なかった"], "き": ["ます"], "": ["に"]}}`, where `""`
 holds the okurigana that read two ways. That is a quarter fewer bytes than a
@@ -406,7 +431,12 @@ compound.
    a verb also starts with.
 4. **Size.** A key that only repeats the reading of a shorter key is dropped,
    and so is a run of several kanji with one reading everywhere, which the font
-   already shows. About 37,000 pairs remain (0.9 MB, 160 KB gzipped).
+   already shows. About 37,000 pairs remain in `raw/okurigana.json`.
+5. **Use.** The dictionary's build keeps only the pairs a page can act on with
+   the default font, or one that selects every tagged word: a reading that is
+   no selector of the run, or that the run shows anyway, reads as null, and a
+   key that reads as the shorter key it extends is dropped. About 16,500 pairs
+   remain (200 KB, 40 KB gzipped).
 
 The longest pair a run of kanji in a text starts with decides its reading.
 

@@ -1,16 +1,16 @@
 /**
  * Downloads JMdict, JMnedict, their JmdictFurigana alignments, KANJIDIC2, the
  * JLPT word lists and Tatoeba's example sentences, and compiles them into
- * data/dictionary.json, data/places.json, data/okurigana.json (packed by run
- * of kanji, as pages read it), data/jlpt.json and data/tatoeba.json, one
- * entry per line so updates diff well.
+ * raw/jmdict.json, raw/places.json, raw/okurigana.json (packed by run of
+ * kanji, as pages read it), raw/jlpt.json and raw/tatoeba.json, one entry
+ * per line so updates diff well. `scripts/compile.ts` fuses them.
  *
  *   node scripts/update.ts
  */
 import { writeFile } from 'node:fs/promises'
 import { gunzipSync } from 'node:zlib'
 import { hanRuns, parseFurigana } from '@furifont/core'
-import { formatPacked, packOkurigana } from '../src/pack.ts'
+import { formatPacked, packOkurigana } from '../src/okurigana.ts'
 
 const JMDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz'
 const JMNEDICT = 'http://ftp.edrdg.org/pub/Nihongo/JMnedict.xml.gz'
@@ -22,11 +22,11 @@ const FURIGANA_RELEASE = 'https://api.github.com/repos/Doublevil/JmdictFurigana/
 /** Jonathan Waller's JLPT lists, tied to JMdict entries; pinned, as the lists no longer change. */
 const JLPT_VOCAB = '2025.08.01.0'
 const JLPT_LEVELS = [5, 4, 3, 2, 1]
-const OUTPUT = new URL('../data/dictionary.json', import.meta.url)
-const PLACES = new URL('../data/places.json', import.meta.url)
-const OKURIGANA = new URL('../data/okurigana.json', import.meta.url)
-const JLPT = new URL('../data/jlpt.json', import.meta.url)
-const TATOEBA_OUTPUT = new URL('../data/tatoeba.json', import.meta.url)
+const OUTPUT = new URL('../raw/jmdict.json', import.meta.url)
+const PLACES = new URL('../raw/places.json', import.meta.url)
+const OKURIGANA = new URL('../raw/okurigana.json', import.meta.url)
+const JLPT = new URL('../raw/jlpt.json', import.meta.url)
+const TATOEBA_OUTPUT = new URL('../raw/tatoeba.json', import.meta.url)
 
 const HAN = /\p{Script=Han}/u
 const ALL_HAN = /^\p{Script=Han}{2,}$/u

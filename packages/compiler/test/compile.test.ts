@@ -1,8 +1,8 @@
-import type { Dictionary, Plan, PlanOptionsInput } from '@furifont/core'
+import type { DictionaryEntry, DictionarySources, Plan, PlanOptionsInput } from '@furifont/core'
 import { Buffer } from 'node:buffer'
 import { readFile } from 'node:fs/promises'
 import { brotliDecompressSync } from 'node:zlib'
-import { createFontPlanner, formatNotation, resolveOptions } from '@furifont/core'
+import { createFontPlanner, formatNotation, fuseDictionary, resolveOptions } from '@furifont/core'
 import * as hb from 'harfbuzzjs'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { compileFont, createRubyReader, readFontInfo, toWoff2 } from '../src'
@@ -14,13 +14,13 @@ const VERSION = '0.1.2'
 const DATE = new Date('2026-10-15T00:00:00Z')
 
 /** An untagged run read `first` on every kanji but the last, which reads `last`. */
-function run(form: string, last: string, first = 'あ'): Dictionary['entries'][number] {
+function run(form: string, last: string, first = 'あ'): DictionaryEntry {
   const size = [...form].length
   return { form, furigana: Array.from({ length: size }, (_, i) => `${i}:${i === size - 1 ? last : first}`).join(';'), nf: 0, priority: '', order: 0 }
 }
 
-const dictionary: Dictionary = {
-  sources: { fixture: '1' },
+const sources: DictionarySources = {
+  versions: { fixture: '1' },
   onyomi: {},
   entries: [
     { form: '日本', furigana: '0:に;1:ほん', nf: 1, priority: 'news1 nf01', order: 0 },
@@ -37,8 +37,12 @@ const dictionary: Dictionary = {
     ...['今', '大', '学', '日', '本', '桜', '語', '人人', '大大'].map(p => run(`${p}気`, 'き')),
     ...['人', '今', '大', '学', '日', '本', '桜', '人人', '大大', '日本', '本日'].map(p => run(`気${p}`, 'あ', 'き')),
   ],
+  places: [],
+  manual: {},
+  defaults: [],
+  bare: [],
 }
-const planFont = createFontPlanner(dictionary)
+const planFont = createFontPlanner(fuseDictionary(sources))
 
 interface Built {
   plan: Plan
@@ -171,7 +175,7 @@ describe.each([
   })
 
   it('shapes every run of up to four of its kanji as the ruby reader predicts', () => {
-    const kanji = [...new Set(dictionary.entries.flatMap(e => [...e.form]))]
+    const kanji = [...new Set(sources.entries.flatMap(e => [...e.form]))]
     let texts = ['']
     const all: string[] = []
     for (let n = 1; n <= 4; n++)

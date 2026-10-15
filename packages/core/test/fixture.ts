@@ -1,8 +1,9 @@
-import type { Dictionary } from '../src'
+import type { DictionarySources } from '../src'
+import { fuseDictionary } from '../src'
 
 /** A tiny dictionary exercising each planning rule. */
-export const dictionary: Dictionary = {
-  sources: { fixture: '1' },
+export const sources: DictionarySources = {
+  versions: { fixture: '1' },
   onyomi: { 日: ['にち', 'じつ'], 本: ['ほん'], 学: ['がく'], 校: ['こう'], 大: ['だい', 'たい'], 人: ['じん', 'にん'], 気: ['き', 'け'] },
   entries: [
     { form: '日本', furigana: '0:に;1:ほん', nf: 1, priority: 'ichi1 news1 nf01', order: 0 },
@@ -23,7 +24,13 @@ export const dictionary: Dictionary = {
     { form: '奉る', furigana: '0:たてまつ', nf: 0, priority: '', order: 0 },
     { form: '奉仕', furigana: '0:ほう;1:し', nf: 3, priority: 'ichi1 news1 nf03', order: 0 },
   ],
+  places: [],
+  manual: {},
+  defaults: [],
+  bare: [],
 }
+
+export const dictionary = fuseDictionary(sources)
 
 export const coverage = new Set<number>(
   [...'日本今学校大人気桜書来東京奉仕', ...'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽっゃゅょ', ...'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポッャュョ', ...'abcdefghijklmnopqrstuvwxyzōū\'']

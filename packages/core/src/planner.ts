@@ -1,10 +1,11 @@
-import type { Dictionary, DictionaryEntry, HanRun, RubySpan } from './dictionary'
+import type { HanRun, RubySpan } from './dictionary'
 import type { GlyphRegistry, RenderRuby, SingleLookups } from './glyphs'
-import type { Plan, PlanGlyph, PlanOptions } from './schema'
+import type { Dictionary, ManualSource, Plan, PlanGlyph, PlanOptions, ReadingSources } from './schema'
 import { formatNotation, hanRuns, isHan, parseFurigana, parseNotation } from './dictionary'
 import { emitFea } from './fea'
 import { codepoints, createGlyphRegistry, createSingleLookups, glyphName, isGrouped } from './glyphs'
 import { isOnyomi, toHepburn, toKatakana } from './kana'
+import { MANUAL_SOURCES, PRIORITY_TAGS } from './schema'
 
 /** VS225: shows the kanji before it without ruby. */
 export const SELECTOR_SUPPRESS = 0xE01E0
@@ -19,8 +20,6 @@ const SUFFIX_MIN_SHARE = 0.9
 const SUFFIX_MIN_RUNS = 10
 /** With this many uses alone in the example sentences, they decide a lone kanji rather than the word lists. */
 const LONE_MIN_USES = 20
-/** JMdict orders readings within a form; a run read inside a longer form ranks after the form's own readings. */
-const OTHER_FORM_ORDER = 1000
 
 interface RunReading {
   spans: RubySpan[]
@@ -33,7 +32,7 @@ interface RunReading {
   /** Easiest JLPT level listing an entry with this reading, 0 when none. */
   jlpt: number
   /** Priority tags of the entries with this reading. */
-  tags: Set<string>
+  tags: ReadonlySet<string>
   /** Most uses in Tatoeba's sentences among the entries with this reading. */
   tatoeba?: number
   /** Made the default by the dictionary's curated list (1) or by the user (2). */
@@ -46,7 +45,7 @@ interface SingleReading {
   weight: number
   nf: number
   jlpt: number
-  tags: Set<string>
+  tags: ReadonlySet<string>
 }
 
 interface DictionaryIndex {
@@ -58,6 +57,11 @@ interface DictionaryIndex {
   inflecting: Map<string, Set<string>>
   /** Uses of each reading of a kanji alone in its run in Tatoeba's sentences, tagged words or not: 箱 はこ and ゴミ箱 ばこ alike. */
   loneUses: Map<string, Map<string, number>>
+  /** Runs each manual source lists. */
+  manual: Map<ManualSource, HanRun[]>
+  places: HanRun[]
+  /** The curated defaults: a lone kanji among them is pinned. */
+  defaults: HanRun[]
 }
 
 export interface PlanReport {
@@ -113,7 +117,7 @@ interface PlanContext {
   options: PlanOptions
   removed: Set<string>
   covered: (text: string) => boolean
-  selected: (reading: { nf: number, tags: Set<string>, tatoeba?: number }) => boolean
+  selected: (reading: { nf: number, tags: ReadonlySet<string>, tatoeba?: number }) => boolean
   /** Among the most common words, or on the JLPT lists the reader knows: left bare. */
   skipped: (reading: { nf: number, jlpt: number }) => boolean
   render: RenderRuby
@@ -133,83 +137,67 @@ function rank(a: RunReading, b: RunReading): number {
     || b.weight - a.weight
 }
 
-/** Rough corpus frequency of an entry: nf buckets hold ~500 words each, ranked by frequency. */
-function entryWeight(entry: DictionaryEntry): number {
-  if (!entry.priority)
-    return 0
-  const nf = entry.nf || Number(/nf(\d+)/.exec(entry.priority)?.[1] ?? 0)
-  if (nf)
-    return 1 / nf
-  return /[a-z]1\b/.test(entry.priority) ? 1 / 24 : 1 / 48
-}
-
-function keepBest<T extends { weight: number, nf: number, jlpt: number, tags: Set<string> }>(current: T, value: T): void {
-  current.weight = Math.max(current.weight, value.weight)
-  if (value.nf && (!current.nf || value.nf < current.nf))
-    current.nf = value.nf
-  current.jlpt = Math.max(current.jlpt, value.jlpt)
-  for (const tag of value.tags)
-    current.tags.add(tag)
-}
-
-function priorityTags(entry: DictionaryEntry): Set<string> {
-  return new Set(entry.priority.split(' ').filter(Boolean))
-}
-
-function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
+export function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
   let value = map.get(key)
   if (value === undefined)
     map.set(key, value = create())
   return value
 }
 
-function indexRun(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
-  const order = run.text === entry.form ? entry.order : OTHER_FORM_ORDER + entry.order
-  const reading = { spans: run.spans, weight: entryWeight(entry), tagged: !!entry.priority, order, nf: entry.priority ? entry.nf : 0, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry), tatoeba: entry.tatoeba ?? 0 }
-  const readings = getOrCreate(index.runs, run.text, () => new Map())
-  const current = readings.get(spanKey(run.spans))
-  if (!current) {
-    readings.set(spanKey(run.spans), reading)
-    return
-  }
-  keepBest(current, reading)
-  current.tagged ||= reading.tagged
-  current.order = Math.min(current.order, reading.order)
-  current.tatoeba = Math.max(current.tatoeba ?? 0, reading.tatoeba)
+const NO_TAGS: ReadonlySet<string> = new Set()
+function tagsOf(sources: ReadingSources): ReadonlySet<string> {
+  const tags = PRIORITY_TAGS.filter(t => sources[t])
+  return tags.length ? new Set(tags) : NO_TAGS
 }
 
-function indexSingle(index: DictionaryIndex, run: HanRun, entry: DictionaryEntry): void {
-  const ruby = run.spans[0]!.ruby
-  const readings = getOrCreate(index.singles, run.text, () => new Map())
-  // 来る reads く, き or こ as it conjugates: its dictionary form alone is no evidence.
-  for (const r of entry.conjugatesReading && ruby === 'く' ? ['く', 'き', 'こ'] : [ruby]) {
-    const value = { weight: entryWeight(entry), nf: entry.nf, jlpt: entry.jlpt ?? 0, tags: priorityTags(entry) }
-    const current = readings.get(r)
-    if (current)
-      keepBest(current, value)
-    else
-      readings.set(r, value)
+function runReading(spans: RubySpan[], order: number, sources: ReadingSources): RunReading {
+  return { spans, weight: sources.rank ? 1 / sources.rank : 0, tagged: !!sources.rank, order, nf: sources.nf ?? 0, jlpt: sources.jlpt ?? 0, tags: tagsOf(sources), tatoeba: sources.tatoeba ?? 0 }
+}
+
+/** The lists that name a run read this way, rather than JMdict. */
+function indexListed(index: DictionaryIndex, run: HanRun, sources: ReadingSources): void {
+  for (const [name, listed] of index.manual) {
+    if (sources[name])
+      listed.push(run)
+  }
+  if (sources.place)
+    index.places.push(run)
+  if (sources.default)
+    index.defaults.push(run)
+}
+
+function indexRuns(index: DictionaryIndex, runs: Dictionary['runs']): void {
+  for (const text in runs) {
+    for (const [furigana, sources] of Object.entries(runs[text]!)) {
+      const run = { text, spans: parseFurigana(furigana) }
+      if (sources.jmdict !== undefined)
+        getOrCreate(index.runs, text, () => new Map()).set(spanKey(run.spans), runReading(run.spans, sources.jmdict, sources))
+      indexListed(index, run, sources)
+    }
   }
 }
 
-const OKURIGANA = /[\u3041-\u3096]/
-
-function indexEntry(index: DictionaryIndex, entry: DictionaryEntry): void {
-  for (const run of hanRuns(entry.form, parseFurigana(entry.furigana))) {
-    if (length(run.text) > 1) {
-      indexRun(index, run, entry)
-      continue
+function indexKanji(index: DictionaryIndex, kanji: Dictionary['kanji']): void {
+  for (const text in kanji) {
+    for (const [ruby, sources] of Object.entries(kanji[text]!)) {
+      if (sources.rank)
+        getOrCreate(index.singles, text, () => new Map()).set(ruby, { weight: 1 / sources.rank, nf: sources.nf ?? 0, jlpt: sources.jlpt ?? 0, tags: tagsOf(sources) })
+      if (sources.tatoeba)
+        getOrCreate(index.loneUses, text, () => new Map()).set(ruby, sources.tatoeba)
+      if (sources.inflecting)
+        getOrCreate(index.inflecting, text, () => new Set()).add(ruby)
+      if (sources.default)
+        index.defaults.push({ text, spans: [{ start: 0, end: 1, ruby }] })
     }
-    // 来る's dictionary form says nothing of 来た.
-    if (entry.tatoeba && !entry.conjugatesReading) {
-      const uses = getOrCreate(index.loneUses, run.text, () => new Map<string, number>())
-      uses.set(run.spans[0]!.ruby, (uses.get(run.spans[0]!.ruby) ?? 0) + entry.tatoeba)
-    }
-    if (entry.priority)
-      indexSingle(index, run, entry)
-    else if (OKURIGANA.test(entry.form[entry.form.indexOf(run.text) + run.text.length] ?? ''))
-      getOrCreate(index.inflecting, run.text, () => new Set<string>()).add(run.spans[0]!.ruby)
   }
+}
+
+/** The compiled dictionary as the planner looks it up. */
+function indexDictionary(dictionary: Dictionary): DictionaryIndex {
+  const index: DictionaryIndex = { runs: new Map(), singles: new Map(), inflecting: new Map(), loneUses: new Map(), manual: new Map(MANUAL_SOURCES.map(name => [name, []])), places: [], defaults: [] }
+  indexRuns(index, dictionary.runs)
+  indexKanji(index, dictionary.kanji)
+  return index
 }
 
 function createContext(dictionary: Dictionary, options: PlanOptions, coverage: ReadonlySet<number>): PlanContext {
@@ -227,7 +215,7 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
   const known = options.skipJlpt ? Number(options.skipJlpt.slice(1)) : Infinity
   return {
     options,
-    removed: new Set([...(dictionary.bare ?? []), ...options.words.remove]),
+    removed: new Set([...dictionary.bare, ...options.words.remove]),
     covered,
     selected: r => (r.nf >= options.nfMin && r.nf <= options.nfMax)
       || options.selectTags.some(t => r.tags.has(t))
@@ -240,9 +228,13 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
 
 type Patterns = Map<string, RunReading[]>
 
-function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notation: string, pinned: number, ctx: PlanContext): void {
+function notationRuns(notation: string): HanRun[] {
   const { form, spans } = parseNotation(notation)
-  for (const run of hanRuns(form, spans).filter(ctx.renderable)) {
+  return hanRuns(form, spans)
+}
+
+function addCustomRuns(patterns: Patterns, lonePins: Map<string, string>, runs: HanRun[], pinned: number, ctx: PlanContext): void {
+  for (const run of runs.filter(ctx.renderable)) {
     if (length(run.text) === 1) {
       if (pinned)
         lonePins.set(run.text, run.spans[0]!.ruby)
@@ -260,26 +252,12 @@ function addCustomWord(patterns: Patterns, lonePins: Map<string, string>, notati
   }
 }
 
-/** Place names fill the runs no common word claims, nor a skipped one. */
-function addPlaces(patterns: Patterns, places: Dictionary['places'], skipped: Set<string>, ctx: PlanContext): void {
-  for (const place of places ?? []) {
-    const spans = parseFurigana(place.furigana)
-    if (patterns.has(place.form) || skipped.has(place.form) || ctx.removed.has(place.form) || !ctx.renderable({ text: place.form, spans }))
+/** Words of the manual sources, then place names, fill the runs no common word claims, nor a skipped one. */
+function addListed(patterns: Patterns, runs: HanRun[], skipped: Set<string>, ctx: PlanContext): void {
+  for (const run of runs) {
+    if (patterns.has(run.text) || skipped.has(run.text) || ctx.removed.has(run.text) || !ctx.renderable(run))
       continue
-    patterns.set(place.form, [{ spans, weight: 0, tagged: false, order: 0, nf: 0, jlpt: 0, tags: new Set(), place: true }])
-  }
-}
-
-/** Words of the manual sources fill the runs no common word claims, nor a skipped one; they come before place names. */
-function addManual(patterns: Patterns, manual: NonNullable<Dictionary['manual']>, skipped: Set<string>, ctx: PlanContext): void {
-  const names = ctx.options.manual ?? Object.keys(manual)
-  for (const notation of names.flatMap(name => manual[name] ?? [])) {
-    const { form, spans } = parseNotation(notation)
-    for (const run of hanRuns(form, spans).filter(ctx.renderable)) {
-      if (length(run.text) === 1 || patterns.has(run.text) || skipped.has(run.text) || ctx.removed.has(run.text))
-        continue
-      patterns.set(run.text, [{ spans: run.spans, weight: 0, tagged: false, order: 0, nf: 0, jlpt: 0, tags: new Set(), place: true }])
-    }
+    patterns.set(run.text, [{ spans: run.spans, weight: 0, tagged: false, order: 0, nf: 0, jlpt: 0, tags: new Set(), place: true }])
   }
 }
 
@@ -299,7 +277,7 @@ function addUntagged(patterns: Patterns, index: DictionaryIndex, skipped: Set<st
  * lone kanji are returned apart. A word is skipped whole: were only its known
  * reading dropped, 今日 would show こんにち.
  */
-function selectWords(index: DictionaryIndex, dictionary: Dictionary, ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string>, skipped: Set<string> } {
+function selectWords(index: DictionaryIndex, ctx: PlanContext): { patterns: Patterns, lonePins: Map<string, string>, skipped: Set<string> } {
   const patterns: Patterns = new Map()
   const skipped = new Set<string>()
   for (const [text, readings] of index.runs) {
@@ -313,19 +291,15 @@ function selectWords(index: DictionaryIndex, dictionary: Dictionary, ctx: PlanCo
     if (common.length)
       patterns.set(text, common.map(r => ({ ...r })))
   }
-  if (dictionary.manual)
-    addManual(patterns, dictionary.manual, skipped, ctx)
+  addListed(patterns, (ctx.options.manual ?? MANUAL_SOURCES).flatMap(name => index.manual.get(name)!), skipped, ctx)
   if (ctx.options.places)
-    addPlaces(patterns, dictionary.places, skipped, ctx)
+    addListed(patterns, index.places, skipped, ctx)
   if (ctx.options.untagged)
     addUntagged(patterns, index, skipped, ctx)
   const lonePins = new Map<string, string>()
-  for (const notation of ctx.options.words.add)
-    addCustomWord(patterns, lonePins, notation, 0, ctx)
-  for (const notation of dictionary.defaults ?? [])
-    addCustomWord(patterns, lonePins, notation, 1, ctx)
-  for (const notation of ctx.options.words.pin)
-    addCustomWord(patterns, lonePins, notation, 2, ctx)
+  addCustomRuns(patterns, lonePins, ctx.options.words.add.flatMap(notationRuns), 0, ctx)
+  addCustomRuns(patterns, lonePins, index.defaults, 1, ctx)
+  addCustomRuns(patterns, lonePins, ctx.options.words.pin.flatMap(notationRuns), 2, ctx)
   for (const readings of patterns.values())
     readings.sort(rank).splice(MAX_READINGS)
   return { patterns, lonePins, skipped }
@@ -680,20 +654,18 @@ interface LoneGlyph {
 }
 
 /**
- * Indexes the dictionary once into Han runs, then plans fonts from it. Every
+ * Indexes the compiled dictionary once, then plans fonts from it. Every
  * decision about readings happens here: which words get ruby, which reading
  * is the default, which longer words must be protected from a shorter match.
  */
 export function createFontPlanner(dictionary: Dictionary) {
-  const index: DictionaryIndex = { runs: new Map(), singles: new Map(), inflecting: new Map(), loneUses: new Map() }
-  for (const entry of dictionary.entries)
-    indexEntry(index, entry)
-  const sources = Object.entries(dictionary.sources).map(([name, version]) => `${name} ${version}`).join(', ')
+  const index = indexDictionary(dictionary)
+  const sources = Object.entries(dictionary.versions).map(([name, version]) => `${name} ${version}`).join(', ')
 
   /** Every decision for one set of options, over the whole dictionary: slow, and the same whatever the preview text. */
   function analyze(options: PlanOptions, coverage: ReadonlySet<number>): Analysis {
     const ctx = createContext(dictionary, options, coverage)
-    const { patterns, lonePins, skipped } = selectWords(index, dictionary, ctx)
+    const { patterns, lonePins, skipped } = selectWords(index, ctx)
     const { isolated, kanjiReadings } = chooseLoneKanji(index, patterns, lonePins, ctx)
     const suffixes = chooseSuffixes(index, ctx)
     const protectedRuns = findMisreadRuns(index, patterns, kanjiReadings, suffixes, skipped, ctx)

@@ -42,7 +42,7 @@
     "storybook": "Run Storybook, where the Open Graph image is composed from the app's components",
     "fonts": "Build every prebuilt font, OpenType and WOFF2, into dist/fonts",
     "fonts:fetch": "Download the fonts the site serves from this version's GitHub Release into .cache/fonts",
-    "dict:update": "Download JMdict, JmdictFurigana, KANJIDIC2 and the JLPT lists and recompile the dictionary",
+    "dict:update": "Download JMdict, JMnedict, JmdictFurigana, KANJIDIC2, the JLPT lists and Tatoeba into the dictionary's raw/, which its build fuses",
     "dict:audit": "List the dictionary's runs and common compounds a font with the default options shows wrong (build the packages first)",
     "knip": "Find unused files, exports and dependencies",
     "lint": "Check for code style issues",

@@ -1,7 +1,7 @@
 import type { Plan, PlanOptionsInput } from '../src'
 import { describe, expect, it } from 'vitest'
-import { createFontPlanner, resolveOptions } from '../src'
-import { coverage, dictionary } from './fixture'
+import { createFontPlanner, fuseDictionary, resolveOptions } from '../src'
+import { coverage, dictionary, sources } from './fixture'
 
 /** These tests are about which words the lists select, so unranked words stay out. */
 const resolve = (options: PlanOptionsInput = {}) => resolveOptions({ untagged: false, ...options })
@@ -43,19 +43,19 @@ describe('planner', () => {
   })
 
   it('still selects tagged words that have no frequency bucket', () => {
-    const entries = [...dictionary.entries, { form: '奉書', furigana: '0:ほう;1:しょ', nf: 0, priority: 'spec1', order: 0 }]
-    const { plan: p } = createFontPlanner({ ...dictionary, entries })(resolve({ nfMin: 48, nfMax: 48 }), coverage)
+    const entries = [...sources.entries, { form: '奉書', furigana: '0:ほう;1:しょ', nf: 0, priority: 'spec1', order: 0 }]
+    const { plan: p } = createFontPlanner(fuseDictionary({ ...sources, entries }))(resolve({ nfMin: 48, nfMax: 48 }), coverage)
     expect(drawn(p)).toContain('書:しょ')
   })
 
   it('selects words the example sentences use often, after the tagged readings', () => {
-    const planner = (uses: number) => createFontPlanner({
-      ...dictionary,
+    const planner = (uses: number) => createFontPlanner(fuseDictionary({
+      ...sources,
       entries: [
-        ...dictionary.entries.map(e => e.furigana === '0:こん;1:じつ' ? { ...e, tatoeba: uses } : e),
+        ...sources.entries.map(e => e.furigana === '0:こん;1:じつ' ? { ...e, tatoeba: uses } : e),
         { form: '本日', furigana: '0:ほん;1:じつ', nf: 0, priority: '', order: 0, tatoeba: uses },
       ],
-    })
+    }))
     const often = planner(3)(resolve(), coverage)
     expect(drawn(often.plan)).toContain('日:じつ')
     expect(often.report.ivs.words['今日']).toEqual(['今日[きょう]', '今[こん]日[にち]', '今[こん]日[じつ]'])
@@ -64,10 +64,10 @@ describe('planner', () => {
   })
 
   it('reads a lone kanji as the example sentences use it alone, given enough uses', () => {
-    const planner = (kaku: number, sho: number) => createFontPlanner({
-      ...dictionary,
-      entries: dictionary.entries.map(e => e.form === '書く' ? { ...e, tatoeba: kaku } : e.form === '書' ? { ...e, tatoeba: sho } : e),
-    })
+    const planner = (kaku: number, sho: number) => createFontPlanner(fuseDictionary({
+      ...sources,
+      entries: sources.entries.map(e => e.form === '書く' ? { ...e, tatoeba: kaku } : e.form === '書' ? { ...e, tatoeba: sho } : e),
+    }))
     const often = planner(30, 2)(resolve(), coverage).report.ivs
     expect(often.lone['書']).toBe('か')
     expect(often.kanji['書']).toEqual(['か', 'しょ'])
@@ -78,8 +78,8 @@ describe('planner', () => {
 
   it('skips the words on the JLPT lists the reader knows', () => {
     const levels: Record<string, number> = { '今日|0-1:きょう': 5, '学校|0:がっ;1:こう': 4, '桜|0:さくら': 3 }
-    const entries = dictionary.entries.map(e => ({ ...e, jlpt: levels[`${e.form}|${e.furigana}`] }))
-    const planner = createFontPlanner({ ...dictionary, entries })
+    const entries = sources.entries.map(e => ({ ...e, jlpt: levels[`${e.form}|${e.furigana}`] }))
+    const planner = createFontPlanner(fuseDictionary({ ...sources, entries }))
     const n5 = planner(resolve({ skipJlpt: 'N5' }), coverage)
     expect(drawn(n5.plan)).not.toContain('今日:きょう')
     expect(drawn(n5.plan)).not.toContain('今:こん')
@@ -92,10 +92,10 @@ describe('planner', () => {
   })
 
   it('leaves a skipped word bare where a place name or a shorter word would read it', () => {
-    const entries = dictionary.entries.map(e => e.form === '大人気' ? { ...e, jlpt: 1 } : e)
+    const entries = sources.entries.map(e => e.form === '大人気' ? { ...e, jlpt: 1 } : e)
     const places = [{ form: '日本', furigana: '0:ひ;1:もと' }]
     const coverageWithPlaces = new Set([...coverage, ...[...'もと'].map(c => c.codePointAt(0)!)])
-    const { plan: p, report } = createFontPlanner({ ...dictionary, entries, places })(resolve({ nfMin: 2, skipJlpt: 'N1' }), coverageWithPlaces)
+    const { plan: p, report } = createFontPlanner(fuseDictionary({ ...sources, entries, places }))(resolve({ nfMin: 2, skipJlpt: 'N1' }), coverageWithPlaces)
     expect(drawn(p)).not.toContain('本:もと')
     expect(report.stats.places).toBe(0)
     expect(p.fea).toContain('ignore sub uni5927\' uni4EBA\' uni6C17\';')
@@ -109,7 +109,7 @@ describe('planner', () => {
   })
 
   it('lets the user\'s words, not the curated defaults, bring a skipped word back', () => {
-    const curated = createFontPlanner({ ...dictionary, defaults: ['今[こん]日[にち]'] })
+    const curated = createFontPlanner(fuseDictionary({ ...sources, defaults: ['今[こん]日[にち]'] }))
     expect(drawn(curated(resolve({ nfMin: 3 }), coverage).plan)).not.toContain('今:こん')
     expect(drawn(curated(resolve({ nfMin: 3, words: { add: ['今日[きょう]'] } }), coverage).plan)).toContain('今日:きょう')
   })
@@ -132,9 +132,9 @@ describe('planner', () => {
   })
 
   it('leaves a run bare when it may be another word with another reading', () => {
-    const entries = [...dictionary.entries, { form: '大人気ない', furigana: '0-1:おとな;2:げ', nf: 0, priority: 'ichi1', order: 0 }]
+    const entries = [...sources.entries, { form: '大人気ない', furigana: '0-1:おとな;2:げ', nf: 0, priority: 'ichi1', order: 0 }]
     // Tagged ichi1, it would be a word of its own with the default tags: this test is about one that is not selected.
-    const { plan: p } = createFontPlanner({ ...dictionary, entries })(resolve({ selectTags: ['spec1'] }), coverage)
+    const { plan: p } = createFontPlanner(fuseDictionary({ ...sources, entries }))(resolve({ selectTags: ['spec1'] }), coverage)
     expect(p.fea).toContain('ignore sub uni5927\' uni4EBA\' uni6C17\';')
   })
 
@@ -151,7 +151,7 @@ describe('planner', () => {
   describe('suffixes', () => {
     /** Untagged runs of each of `prefixes` then `kanji` read `ruby`: with 学校, what makes 校 a suffix. */
     const ending = (kanji: string, ruby: string, prefixes: string) => [...prefixes].map(p => ({ form: p + kanji, furigana: `0:あ;1:${ruby}`, nf: 0, priority: '', order: 0 }))
-    const withEntries = (entries: typeof dictionary.entries, options: PlanOptionsInput = {}) => createFontPlanner({ ...dictionary, entries: [...dictionary.entries, ...entries] })(resolve(options), coverage)
+    const withEntries = (entries: typeof sources.entries, options: PlanOptionsInput = {}) => createFontPlanner(fuseDictionary({ ...sources, entries: [...sources.entries, ...entries] }))(resolve(options), coverage)
     const NINE = '日本今大人気桜書来'
 
     it('reads a kanji no word claims after another kanji as it reads ending most runs', () => {
@@ -182,7 +182,7 @@ describe('planner', () => {
   })
 
   it('lets the dictionary\'s curated defaults yield to the user\'s pins', () => {
-    const curated = createFontPlanner({ ...dictionary, defaults: ['今[こん]日[にち]'] })
+    const curated = createFontPlanner(fuseDictionary({ ...sources, defaults: ['今[こん]日[にち]'] }))
     expect(curated(resolve(), coverage).report.ivs.words['今日']![0]).toBe('今[こん]日[にち]')
     expect(curated(resolve({ words: { pin: ['今日[きょう]'] } }), coverage).report.ivs.words['今日']![0]).toBe('今日[きょう]')
   })
@@ -195,7 +195,7 @@ describe('planner', () => {
 
   it('reads place names where no common word claims the run', () => {
     const places = [{ form: '渋谷', furigana: '0:しぶ;1:や' }, { form: '日本', furigana: '0:ひ;1:もと' }]
-    const planner = createFontPlanner({ ...dictionary, places })
+    const planner = createFontPlanner(fuseDictionary({ ...sources, places }))
     const coverageWithPlaces = new Set([...coverage, ...[...'渋谷しぶやもと'].map(c => c.codePointAt(0)!)])
     const { plan: p, report } = planner(resolve(), coverageWithPlaces)
     expect(drawn(p)).toEqual(expect.arrayContaining(['渋:しぶ', '谷:や', '日:に', '本:ほん']))
