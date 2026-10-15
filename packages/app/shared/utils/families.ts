@@ -14,6 +14,9 @@ export const FAMILIES: Family[] = PREBUILT.fonts.map(({ family, face, rubyScript
 /** Static weights on the release, beside the variable font of every weight that the site serves. */
 export const WEIGHTS = PREBUILT.weights
 
+/** The lightest and heaviest weight of the variable font. */
+export const [MIN_WEIGHT, MAX_WEIGHT] = PREBUILT.variable.weights
+
 export const REPOSITORY = 'https://github.com/antfu/furifont'
 
 /** The demo site: other pages load the fonts from here. */

@@ -1,6 +1,6 @@
 /**
  * Builds the prebuilt fonts: hiragana and romaji ruby on Source Han Sans JP and
- * Source Han Serif JP, each as Regular, Bold and a variable font of every weight.
+ * Source Han Serif JP, each as Regular and a variable font of every weight.
  *
  *   node scripts/build-fonts.ts [outDir]   all of them, OpenType and WOFF2, for the release (default: dist/fonts)
  *   node scripts/build-fonts.ts --site     the variable WOFF2s the site serves, into fonts/, which git keeps

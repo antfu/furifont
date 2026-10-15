@@ -3,6 +3,7 @@ const text = ref('今日は日本語の勉強をします。\n明日は東京の
 const { face, script, ruby, okurigana, family, faces, scripts } = useFontSettings()
 const { reader } = useOkurigana(family)
 const size = ref(30)
+const weight = ref(400)
 const { copied, copy } = useCopy()
 </script>
 
@@ -18,6 +19,9 @@ const { copied, copy } = useCopy()
       <UiField :label="$t('playground.size', { size })">
         <UiSlider v-model="size" :min="16" :max="64" />
       </UiField>
+      <UiField :label="$t('playground.weight', { weight })">
+        <UiSlider v-model="weight" :min="MIN_WEIGHT" :max="MAX_WEIGHT" :step="10" />
+      </UiField>
       <UiToggle v-model="ruby">
         {{ $t('playground.ruby') }}
       </UiToggle>
@@ -32,7 +36,7 @@ const { copied, copy } = useCopy()
     </div>
     <div class="flex min-w-0 flex-col">
       <div class="min-h-72 flex-1 px-6 py-8">
-        <FuriText v-model:text="text" :family="family.family" :ruby :size :okurigana="okurigana ? reader : undefined" />
+        <FuriText v-model:text="text" :family="family.family" :ruby :size :weight :okurigana="okurigana ? reader : undefined" />
       </div>
       <div class="flex items-center gap-3 border-t border-base px-6 py-3">
         <div class="text-xs color-muted">

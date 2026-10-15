@@ -18,8 +18,8 @@ rules. It differs in three ways:
 
 ## Goals
 
-- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and
-  Bold, and a variable font of every weight, from Source Han Sans JP and
+- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular
+  and a variable font of every weight, from Source Han Sans JP and
   Source Han Serif JP, with hiragana or Hepburn romaji ruby. Katakana for on'yomi is a build option.
 - A build anyone can run with another base font, word list or options.
 - A local studio, served by Devframe, to tune, preview and build.
@@ -529,7 +529,7 @@ both formats would add over 300 MB to the history per release, against 27 MB.
 The tag runs `release.yml`:
 
 - npm publishing and the changelog, through `sxzz/workflows`;
-- all twelve fonts, Regular and Bold as OpenType and WOFF2 and the variable
+- all eight fonts, Regular as OpenType and WOFF2 and the variable
   fonts as TrueType and WOFF2, built again from the tagged code and attached
   to the GitHub Release with the OFL and the data license.
 

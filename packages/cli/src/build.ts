@@ -89,9 +89,10 @@ export async function buildFont(config: FurifontConfig, options: { cwd: string, 
 }
 
 /** Compiles a small font covering only `text`, for a live preview. */
-export async function previewFont(config: FurifontConfig, text: string, cwd: string): Promise<{ font: Uint8Array, report: PlanReport }> {
+export async function previewFont(config: FurifontConfig, text: string, cwd: string): Promise<{ font: Uint8Array, report: PlanReport, variable: boolean }> {
   const planned = await planWithBase(config, cwd, text)
-  return { font: (await compileOpenType(planned)).font, report: planned.report }
+  const { font, variable } = await compileOpenType(planned)
+  return { font, report: planned.report, variable }
 }
 
 /** Bytes of the fonts a build would write. */

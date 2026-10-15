@@ -20,15 +20,15 @@ export const DEFAULTS = {
     isolatedMinShare: 0.8,
     /** Sizes in em, relative to the base font. */
     metrics: {
-      rubyScale: 0.4,
+      rubyScale: 0.5,
       rubyGap: 0.05,
-      compressionFloor: 0.6,
+      compressionFloor: 0.8,
       maxRubyWidth: 1.6,
     },
   },
   /** What the CLI adds to a plan: where the glyphs are drawn, and what is written. */
   build: {
-    base: 'Source Han Sans JP Regular',
+    base: 'Source Han Sans JP VF',
     formats: ['otf', 'woff2'],
   },
 } as const
@@ -42,10 +42,9 @@ export const PREBUILT = {
     { family: 'Furifont Serif', base: 'Source Han Serif JP', face: 'serif', rubyScript: 'hiragana' },
     { family: 'Furifont Serif Romaji', base: 'Source Han Serif JP', face: 'serif', rubyScript: 'hepburn' },
   ],
-  /** The weights of the release, each of the base's weights by name. */
+  /** The static weights of the release, each of the base's weights by name. Bold is the variable font's. */
   weights: [
     { style: 'Regular', weight: 400 },
-    { style: 'Bold', weight: 700 },
   ],
   /**
    * Every weight in one font, from the base's variable font (`<base> VF`). It
