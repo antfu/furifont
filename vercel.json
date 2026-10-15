@@ -4,13 +4,11 @@
   "build": { "env": { "ENABLE_EXPERIMENTAL_COREPACK": "1" } },
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm fonts:fetch && pnpm build",
-  "outputDirectory": "packages/app/.output/public",
   "headers": [
     {
       "source": "/fonts/(.*)",
       "has": [{ "type": "query", "key": "v" }],
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     }
-  ],
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/200.html" }]
+  ]
 }

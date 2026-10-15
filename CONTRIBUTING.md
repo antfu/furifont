@@ -50,7 +50,7 @@ The interface is in English, Japanese, Simplified Chinese and Traditional Chines
 
 ## Reports
 
-Readers report wrong readings on the `/report` page. The site's static, so the page posts to a Vercel Function, `api/report.ts`. The function stores each report in Upstash Redis, as JSON, under `report:<ISO time>:<id>`.
+Readers report wrong readings on the `/report` page. The page posts to a Nitro endpoint of the site, `packages/app/server/api/report.post.ts`. It stores each report in Upstash Redis, as JSON, under `report:<ISO time>:<id>`.
 
 Under `pnpm dev`, the page posts to the dev server instead. With no database set up, the dev server prints each report in the terminal and stores nothing. To test with a database of your own:
 

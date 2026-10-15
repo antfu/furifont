@@ -52,8 +52,8 @@ export default defineNuxtConfig({
     '@furifont/core': source('core'),
   },
   nitro: {
-    // Always plain static files, in .output/public or the CLI's client: on Vercel, Nitro would otherwise write its own output format elsewhere.
-    preset: 'static',
+    // The studio is plain static files in the CLI's client; the site is a server, for the report endpoint (Vercel's preset on Vercel).
+    preset: DEVFRAME ? 'static' : undefined,
     // The devframe's own output directory, so it never clobbers the site's.
     output: DEVFRAME ? { dir: '.output-devframe', publicDir: fileURLToPath(new URL('../cli/dist/client', import.meta.url)) } : undefined,
     // The prebuilt fonts of this version's release, as `scripts/fetch-fonts.ts` downloads them; the studio serves the ones you build.
@@ -64,8 +64,6 @@ export default defineNuxtConfig({
       // The engine the userscript inlines, as @furifont/helper-web builds it.
       { baseName: 'helper-web', dir: fileURLToPath(new URL('../helper-web/dist', import.meta.url)), pattern: 'index.iife.js' },
     ],
-    // The report endpoint is a Vercel Function (api/report.ts); this serves it to `nuxt dev`.
-    handlers: [{ route: '/api/report', method: 'post', handler: fileURLToPath(new URL('server/dev/report.ts', import.meta.url)), env: 'dev' }],
     prerender: { routes: ['/furifont.user.js', '/okurigana.json', '/version.json'] },
   },
   app: {

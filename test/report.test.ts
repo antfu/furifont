@@ -1,7 +1,7 @@
-import type { ReportStore, StoredReport } from '../api/report.ts'
+import type { ReportStore, StoredReport } from '../packages/app/server/utils/report.ts'
 import type { ReportInput } from '../packages/app/shared/utils/report.ts'
 import { describe, expect, it } from 'vitest'
-import { receiveReport } from '../api/report.ts'
+import { receiveReport } from '../packages/app/server/utils/report.ts'
 
 function memoryStore() {
   const counters = new Map<string, number>()

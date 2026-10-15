@@ -5,13 +5,14 @@
   "description": "The Furifont demo site and studio",
   "scripts": {
     "dev": "nuxi dev",
-    "build": "nuxi generate",
+    "build": "nuxi build",
     "build:devframe": "FURIFONT_TARGET=devframe nuxi generate",
     "typecheck": "nuxi typecheck",
     "storybook": "storybook dev -p 6006 --no-open"
   },
   "dependencies": {
     "@furifont/helper-web": "workspace:*",
+    "@upstash/redis": "catalog:prod",
     "devframe": "catalog:prod",
     "valibot": "catalog:prod",
     "vue-i18n": "catalog:frontend"

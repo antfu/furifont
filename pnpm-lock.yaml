@@ -295,10 +295,6 @@ patchedDependencies:
 importers:
 
   .:
-    dependencies:
-      '@upstash/redis':
-        specifier: catalog:prod
-        version: 1.39.0
     devDependencies:
       '@antfu/eslint-config':
         specifier: catalog:cli
@@ -372,6 +368,9 @@ importers:
       '@furifont/helper-web':
         specifier: workspace:*
         version: link:../helper-web
+      '@upstash/redis':
+        specifier: catalog:prod
+        version: 1.39.0
       devframe:
         specifier: catalog:prod
         version: 1.2.5(cac@7.1.0)(srvx@1.0.5)

@@ -1,8 +1,7 @@
-import type { Report } from '../packages/app/shared/utils/report.ts'
+import type { Report } from '../../shared/utils/report.ts'
 import { Buffer } from 'node:buffer'
-import { Redis } from '@upstash/redis'
 import * as v from 'valibot'
-import { ReportSchema } from '../packages/app/shared/utils/report.ts'
+import { ReportSchema } from '../../shared/utils/report.ts'
 
 /** Reports one address can send per window. */
 const RATE_LIMIT = 10
@@ -61,11 +60,6 @@ export async function receiveReport(request: Request, store: ReportStore, now = 
   return json(201, { id })
 }
 
-export function POST(request: Request): Promise<Response> {
-  // Upstash for Redis from the Vercel Marketplace sets KV_REST_API_URL and KV_REST_API_TOKEN.
-  return receiveReport(request, Redis.fromEnv())
-}
-
-export function OPTIONS(): Response {
+export function preflight(): Response {
   return new Response(null, { status: 204, headers: CORS })
 }

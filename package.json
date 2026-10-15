@@ -53,9 +53,6 @@
     "ci": "Run the full continuous integration pipeline",
     "prepare": "Set up git hooks and skills"
   },
-  "dependencies": {
-    "@upstash/redis": "catalog:prod"
-  },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:cli",
     "@antfu/skills": "catalog:agentic",
