@@ -1,5 +1,7 @@
 <script setup lang="ts">
 const { status, state } = provideCustomize()
+const overviewOpen = ref(true)
+const dictionaryOpen = ref(true)
 </script>
 
 <template>
@@ -26,10 +28,13 @@ const { status, state } = provideCustomize()
         <UiSection index="02" :title="$t('customize.sections.build')" class="lg:border-t-0">
           <CustomizeBuild />
         </UiSection>
-        <UiSection index="03" :title="$t('customize.sections.dictionary')">
-          <CustomizeWords />
+        <UiSection v-model:open="overviewOpen" expandable index="03" :title="$t('customize.sections.overview')">
+          <CustomizeOverview />
         </UiSection>
-        <UiSection index="04" :title="$t('customize.sections.words')">
+        <UiSection v-model:open="dictionaryOpen" expandable index="04" :title="$t('customize.sections.dictionary')">
+          <CustomizeWords class="no-ruby" />
+        </UiSection>
+        <UiSection index="05" :title="$t('customize.sections.words')">
           <CustomizeCustomWords />
         </UiSection>
       </div>

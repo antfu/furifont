@@ -4,7 +4,7 @@ export { formatNotation, hanRuns, isHan, parseFurigana, parseNotation } from './
 export { formatFurigana, fuseDictionary } from './fuse'
 export { glyphName } from './glyphs'
 export { isOnyomi, toHepburn, toHiragana, toKatakana } from './kana'
-export type { PlanReport, PlanResult } from './planner'
+export type { PlanReport, PlanResult, WordBuckets } from './planner'
 export { createFontPlanner, MAX_READINGS, SELECTOR_FIRST_READING, SELECTOR_SUPPRESS } from './planner'
 export type { Dictionary, ManualSource, Plan, PlanGlyph, PlanOptions, PlanOptionsInput, Reading, RubyMetrics, RubyScript, Source, WordSource } from './schema'
 export { DictionarySchema, formatDictionary, JLPT_LEVELS, MANUAL_SOURCES, PlanOptionsSchema, PlanSchema, resolveOptions, RUBY_SCRIPTS, SCORE, scoreOf, sourceBit, SOURCES, sourcesIn, weightOf, WORD_SOURCES } from './schema'

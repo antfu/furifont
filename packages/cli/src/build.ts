@@ -1,5 +1,5 @@
 import type { BuiltFont, CompileProgress } from '@furifont/compiler'
-import type { Dictionary, Plan, PlanReport, PlanResult } from '@furifont/core'
+import type { Dictionary, Plan, PlanReport, PlanResult, WordBuckets } from '@furifont/core'
 import type { FurifontConfig } from './config'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
@@ -42,14 +42,26 @@ export function getDictionary(): Promise<Dictionary> {
   return dictionary ??= loadDictionary()
 }
 
-/** Plans a font for `config`; with `previewText`, only what that text needs. */
-export async function planWithBase(config: FurifontConfig, cwd: string, previewText?: string): Promise<PlanResult & { base: string }> {
+/** The planner, and the base font's path with the codepoints it draws. */
+async function plannerFor(config: FurifontConfig, cwd: string): Promise<{ plan: ReturnType<typeof createFontPlanner>, base: string, coverage: Set<number> }> {
   planner ??= getDictionary().then(createFontPlanner)
   const base = await resolveBase(config.base, cwd)
   let coverage = coverages.get(base)
   if (!coverage)
     coverages.set(base, coverage = readFile(base).then(font => new Set(readFontInfo(font).codepoints)))
-  return { ...(await planner)(config, await coverage, previewText), base }
+  return { plan: await planner, base, coverage: await coverage }
+}
+
+/** Plans a font for `config`; with `previewText`, only what that text needs. */
+export async function planWithBase(config: FurifontConfig, cwd: string, previewText?: string): Promise<PlanResult & { base: string }> {
+  const { plan, base, coverage } = await plannerFor(config, cwd)
+  return { ...plan(config, coverage, previewText), base }
+}
+
+/** Every word of the dictionary, most common first, as `config` skips, takes or leaves it. */
+export async function bucketWords(config: FurifontConfig, cwd: string): Promise<WordBuckets> {
+  const { plan, coverage } = await plannerFor(config, cwd)
+  return plan.wordBuckets(config, coverage)
 }
 
 /** `<Family>-<Style>`, or a variable font's `<Family>`: its one file has every style. */

@@ -24,7 +24,7 @@ function add(): void {
         {{ $t('customize.custom.add') }}
       </button>
     </form>
-    <div v-for="list in lists" :key="list.key" class="flex flex-col gap-2">
+    <div v-for="list in lists" :key="list.key" class="flex flex-col gap-2 no-ruby">
       <span class="label">{{ $t(list.label, { count: list.items.length }) }}</span>
       <div class="flex flex-wrap gap-2">
         <button

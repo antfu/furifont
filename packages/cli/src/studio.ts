@@ -9,7 +9,7 @@ import { BASE_FONTS } from '@furifont/compiler'
 import { formatNotation, parseFurigana, sourceBit, sourcesIn } from '@furifont/core'
 import { defineRpcFunction } from 'devframe'
 import * as v from 'valibot'
-import { buildFont, estimateFont, getDictionary, planWithBase, previewFont } from './build'
+import { bucketWords, buildFont, estimateFont, getDictionary, planWithBase, previewFont } from './build'
 import { CONFIG_FILE, FurifontConfigSchema, loadConfig } from './config'
 
 /** The RPC namespace the app's studio calls into. */
@@ -48,6 +48,20 @@ export interface WordMatch {
   readings: { notation: string, score: number, sources: Source[] }[]
 }
 
+/** A spread of one bucket of words, as the overview lists it. */
+export interface WordSample {
+  /** Words in the bucket. */
+  size: number
+  /** Each with its place among all the words, most common first, and its best reading. */
+  words: { rank: number, notation: string }[]
+}
+
+export interface WordSamples {
+  skip: WordSample
+  take: WordSample
+  rest: WordSample
+}
+
 /** The wire contract of the functions below, as the studio page calls them. */
 export interface StudioFunctions {
   'furifont:state': () => Promise<StudioState>
@@ -57,6 +71,7 @@ export interface StudioFunctions {
   'furifont:build': (config: FurifontConfigInput) => { streamId: string }
   'furifont:save': (config: FurifontConfigInput) => Promise<string>
   'furifont:search': (query: string) => Promise<WordMatch[]>
+  'furifont:sample': (config: FurifontConfigInput) => Promise<WordSamples>
 }
 
 declare module 'devframe' {
@@ -64,6 +79,36 @@ declare module 'devframe' {
 }
 
 const SEARCH_LIMIT = 40
+/** Words listed from each bucket of the overview. */
+const SAMPLE_SIZE = 20
+/** How far, of one step, a sampled word may stray from its even place. */
+const SAMPLE_JITTER = 0.6
+
+/** `count` indexes spread over `size`, one per step, each moved by up to half of {@link SAMPLE_JITTER} of a step either way. */
+function spreadIndexes(size: number, count: number, random: () => number = Math.random): number[] {
+  if (size <= count)
+    return Array.from({ length: size }, (_, i) => i)
+  const step = size / count
+  return Array.from({ length: count }, (_, n) => Math.min(size - 1, Math.max(0, Math.round(n * step + (random() - 0.5) * SAMPLE_JITTER * step))))
+}
+
+async function sampleWords(config: FurifontConfig, cwd: string): Promise<WordSamples> {
+  const [{ runs }, buckets] = await Promise.all([getDictionary(), bucketWords(config, cwd)])
+  let offset = 0
+  const sample = (words: string[]): WordSample => {
+    const start = offset
+    offset += words.length
+    return {
+      size: words.length,
+      words: spreadIndexes(words.length, SAMPLE_SIZE).map((i) => {
+        const form = words[i]!
+        const [furigana] = Object.entries(runs[form] ?? {}).reduce((a, b) => b[1][0] > a[1][0] ? b : a)
+        return { rank: start + i + 1, notation: formatNotation(form, parseFurigana(furigana)) }
+      }),
+    }
+  }
+  return { skip: sample(buckets.skip), take: sample(buckets.take), rest: sample(buckets.rest) }
+}
 
 function wordReading(form: string, spans: RubySpan[], [score, sources]: Reading): WordMatch['readings'][number] {
   return { notation: formatNotation(form, spans), score, sources: sourcesIn(sources) }
@@ -170,6 +215,12 @@ export async function setupStudio(ctx: DevframeNodeContext): Promise<void> {
       type: 'query',
       jsonSerializable: true,
       handler: (query: string): Promise<WordMatch[]> => searchWords(v.parse(Query, query)),
+    }),
+    defineRpcFunction({
+      name: 'sample',
+      type: 'query',
+      jsonSerializable: true,
+      handler: (options: FurifontConfigInput): Promise<WordSamples> => sampleWords(parse(options), ctx.cwd),
     }),
   ]
   for (const fn of functions)

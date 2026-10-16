@@ -6,17 +6,17 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const { config, state, report, reset } = useCustomize()
 
-// Words by score, 500 a step; past the last step of `take`, every word.
-const STEP = 500
-const MAX_SKIP = 24_000
-const MAX_TAKE = 30_000
+// Words by score, 1,000 a step, up to the words the sources offer; past the last step of `take`, every word.
+const STEP = 1000
+const ceil = (count: number): number => Math.ceil(count / STEP) * STEP
+const maxWords = computed(() => ceil(report.value?.stats.candidates ?? 0) || 30_000)
 const skip = computed({
   get: () => config.value.skip ?? DEFAULTS.plan.skip,
   set: value => config.value.skip = value,
 })
 const words = computed({
-  get: () => config.value.take ?? MAX_TAKE + STEP,
-  set: value => config.value.take = value > MAX_TAKE ? undefined : value,
+  get: () => config.value.take ?? maxWords.value + STEP,
+  set: value => config.value.take = value > maxWords.value ? undefined : value,
 })
 const annotated = computed(() => report.value && report.value.stats.patterns - report.value.stats.places)
 const jlpt = computed({
@@ -122,16 +122,16 @@ function toggle(source: WordSource): void {
       :display="skip ? skip.toLocaleString('en') : $t('customize.options.none')"
       :hint="$t('customize.options.skipHint')"
       :min="0"
-      :max="MAX_SKIP"
+      :max="maxWords"
       :step="STEP"
     />
     <UiRange
       v-model="words"
       :label="$t('customize.options.words')"
-      :display="words > MAX_TAKE ? $t('customize.options.all') : words.toLocaleString('en')"
+      :display="words > maxWords ? $t('customize.options.all') : words.toLocaleString('en')"
       :hint="annotated === undefined ? undefined : $t('customize.options.wordsHint', { count: annotated.toLocaleString('en') })"
       :min="STEP"
-      :max="MAX_TAKE + STEP"
+      :max="maxWords + STEP"
       :step="STEP"
     />
     <div class="h-px bg-[var(--ff-line)]" />

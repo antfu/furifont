@@ -1,5 +1,5 @@
 import type { DevframeRpcClient, DevframeScopedClientRpc } from 'devframe/client'
-import type { BuildEvent, FurifontConfigInput, PlanReport, SizeEstimate, STUDIO_ID as StudioId, StudioState, WordMatch } from 'furifont'
+import type { BuildEvent, FurifontConfigInput, PlanReport, SizeEstimate, STUDIO_ID as StudioId, StudioState, WordMatch, WordSamples } from 'furifont'
 import type { InjectionKey } from 'vue'
 import { PlanOptionsSchema } from '@furifont/core'
 import * as v from 'valibot'
@@ -262,6 +262,11 @@ function createCustomize() {
     return rpc!.call('search', query)
   }
 
+  /** A fresh spread of the words the config skips, takes and leaves. */
+  function sample(): Promise<WordSamples> {
+    return rpc!.call('sample', toRaw(config.value))
+  }
+
   /** Adds `notation` to one of the custom word lists, or takes it out again. */
   function toggleWord(list: 'add' | 'remove' | 'pin', notation: string): void {
     const words = config.value.words ??= {}
@@ -275,7 +280,7 @@ function createCustomize() {
       document.fonts.delete(face)
   })
 
-  return { status, state, config, report, text, preview, estimate, build, savedTo, unlock, runBuild, save, reset, search, toggleWord }
+  return { status, state, config, report, text, preview, estimate, build, savedTo, unlock, runBuild, save, reset, search, sample, toggleWord }
 }
 
 export type Customize = ReturnType<typeof createCustomize>

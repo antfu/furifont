@@ -204,6 +204,7 @@
     "sections": {
       "preview": "Preview",
       "build": "Build",
+      "overview": "Overview",
       "dictionary": "Dictionary",
       "words": "Your words"
     },
@@ -307,6 +308,15 @@
       "estimating": "Estimating the size",
       "run": "Build font",
       "save": "Save settings"
+    },
+    "overview": {
+      "hint": "Words sampled at an even distance from each part of the dictionary, most common first.",
+      "randomize": "Randomize",
+      "skip": "Skipped",
+      "take": "Taken",
+      "rest": "Left bare",
+      "count": "{count} words",
+      "empty": "No words here."
     },
     "dictionary": {
       "search": "Search the dictionary: 今日, 生",

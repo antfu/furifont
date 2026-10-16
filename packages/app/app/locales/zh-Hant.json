@@ -204,6 +204,7 @@
     "sections": {
       "preview": "預覽",
       "build": "建置",
+      "overview": "概覽",
       "dictionary": "辭典",
       "words": "你的詞語"
     },
@@ -307,6 +308,15 @@
       "estimating": "正在估算大小",
       "run": "建置字型",
       "save": "儲存設定"
+    },
+    "overview": {
+      "hint": "從辭典的每一部分等距抽取的詞語，依常用程度排序。",
+      "randomize": "重新抽取",
+      "skip": "已跳過",
+      "take": "已採用",
+      "rest": "不加注音",
+      "count": "{count} 個詞",
+      "empty": "這裡沒有詞語。"
     },
     "dictionary": {
       "search": "搜尋辭典：今日、生",

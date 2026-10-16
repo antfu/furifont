@@ -55,6 +55,8 @@ interface DictionaryIndex {
 
 export interface PlanReport {
   stats: {
+    /** Words the sources offer, the skipped and the left bare among them: the range of `skip` and `take`. */
+    candidates: number
     patterns: number
     places: number
     ambiguous: number
@@ -229,6 +231,14 @@ interface Selection {
   skipped: Set<string>
   /** Lone kanji among the most common, or whose reading is on the JLPT lists the reader knows. */
   skippedKanji: Set<string>
+  buckets: WordBuckets
+}
+
+/** The words the sources hold, most common first, in three runs: the skipped (the most common, and those the reader knows), the taken, and the rest the font leaves bare. */
+export interface WordBuckets {
+  skip: string[]
+  take: string[]
+  rest: string[]
 }
 
 /**
@@ -242,11 +252,13 @@ function selectWords(index: DictionaryIndex, ctx: PlanContext): Selection {
   const skipped = new Set<string>()
   const skippedKanji = new Set<string>()
   const words: [text: string, readings: RunReading[]][] = []
+  const known: { text: string, score: number }[] = []
   for (const [text, readings] of index.runs) {
     if (ctx.removed.has(text))
       continue
     if (readings.some(r => ctx.known(r.sources))) {
       skipped.add(text)
+      known.push({ text, score: Math.max(...readings.map(r => r.score)) })
       continue
     }
     const chosen = wordReadings(text, readings, wanted, ctx)
@@ -262,7 +274,17 @@ function selectWords(index: DictionaryIndex, ctx: PlanContext): Selection {
   ].sort((a, b) => b.score - a.score)
   for (const { text, word } of byScore.slice(0, ctx.options.skip))
     (word ? skipped : skippedKanji).add(text)
-  const taken = new Set(byScore.slice(ctx.options.skip).filter(item => item.word).slice(0, ctx.options.take).map(item => item.text))
+  const buckets: WordBuckets = {
+    skip: [...known, ...byScore.slice(0, ctx.options.skip).filter(item => item.word)].sort((a, b) => b.score - a.score).map(item => item.text),
+    take: [],
+    rest: [],
+  }
+  const after = byScore.slice(ctx.options.skip).filter(item => item.word).map(item => item.text)
+  // No `take` means every word: slice(undefined) would hand the whole list to the rest too.
+  const take = ctx.options.take ?? after.length
+  buckets.take = after.slice(0, take)
+  buckets.rest = after.slice(take)
+  const taken = new Set(buckets.take)
   const patterns: Patterns = new Map(words.filter(([text]) => taken.has(text)))
   const lonePins = new Map<string, string>()
   addCustomRuns(patterns, lonePins, ctx.options.words.add.flatMap(notationRuns), 0, ctx)
@@ -270,7 +292,7 @@ function selectWords(index: DictionaryIndex, ctx: PlanContext): Selection {
   addCustomRuns(patterns, lonePins, ctx.options.words.pin.flatMap(notationRuns), 2, ctx)
   for (const readings of patterns.values())
     readings.sort(rank).splice(MAX_READINGS)
-  return { patterns, lonePins, skipped, skippedKanji }
+  return { patterns, lonePins, skipped, skippedKanji, buckets }
 }
 
 /** Readings of a lone kanji the font can draw, heaviest first, with their share of the evidence. */
@@ -593,7 +615,7 @@ function smokeChecks(patterns: Patterns, lone: { glyph: PlanGlyph }[], glyphs: G
 }
 
 /** Everything the planner decides for one set of options, before a preview narrows it. */
-type Analysis = Pick<ReturnType<typeof selectWords>, 'patterns'>
+type Analysis = Pick<ReturnType<typeof selectWords>, 'patterns' | 'buckets'>
   & ReturnType<typeof chooseLoneKanji>
   & ReturnType<typeof buildRules>
   & {
@@ -610,12 +632,18 @@ interface LoneGlyph {
   glyph: PlanGlyph
 }
 
+export interface FontPlanner {
+  (options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult
+  /** The words of the dictionary by what the font does with them, for the options. */
+  wordBuckets: (options: PlanOptions, coverage: ReadonlySet<number>) => WordBuckets
+}
+
 /**
  * Indexes the compiled dictionary once, then plans fonts from it. Every
  * decision about readings happens here: which words get ruby, which reading
  * is the default, which longer words must be protected from a shorter match.
  */
-export function createFontPlanner(dictionary: Dictionary) {
+export function createFontPlanner(dictionary: Dictionary): FontPlanner {
   const index = indexDictionary(dictionary)
   const sources = Object.entries(dictionary.versions).map(([name, version]) => `${name} ${version}`).join(', ')
 
@@ -630,7 +658,7 @@ export function createFontPlanner(dictionary: Dictionary) {
     const glyphs = createGlyphRegistry(ctx.render)
     const { rules, ligatures, singles, variants, variantReadings, alternates, ivsWords } = buildRules(patterns, kanjiReadings, protectedRuns, glyphs)
     const loneGlyphs = (readings: Map<string, string>): LoneGlyph[] => [...readings].map(([kanji, ruby]) => ({ base: glyphName(kanji.codePointAt(0)!), glyph: glyphs.lone(kanji, ruby) }))
-    return { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone: loneGlyphs(isolated), suffixes: loneGlyphs(suffixes.readings), finalSuffixes: new Set([...suffixes.final].map(k => glyphName(k.codePointAt(0)!))) }
+    return { patterns, buckets: selection.buckets, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone: loneGlyphs(isolated), suffixes: loneGlyphs(suffixes.readings), finalSuffixes: new Set([...suffixes.final].map(k => glyphName(k.codePointAt(0)!))) }
   }
 
   // A live preview plans on every keystroke and the report on every change, with the same options: keep the last analysis.
@@ -643,8 +671,8 @@ export function createFontPlanner(dictionary: Dictionary) {
   }
 
   /** Plans a font; with `previewText`, keeps only what that text can trigger. */
-  return function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
-    const { patterns, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone, suffixes, finalSuffixes } = analysisFor(options, coverage)
+  function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
+    const { patterns, buckets, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone, suffixes, finalSuffixes } = analysisFor(options, coverage)
 
     const sample = previewText === undefined ? undefined : new Set(codepoints(previewText))
     const inSample = (cps: readonly number[]): boolean => !sample || cps.every(cp => sample.has(cp))
@@ -699,6 +727,7 @@ export function createFontPlanner(dictionary: Dictionary) {
       },
       report: {
         stats: {
+          candidates: buckets.skip.length + buckets.take.length + buckets.rest.length,
           patterns: patterns.size,
           places: [...patterns.values()].filter(r => r[0]!.place).length,
           ambiguous: Object.keys(ivsWords).length,
@@ -713,4 +742,11 @@ export function createFontPlanner(dictionary: Dictionary) {
       },
     }
   }
+
+  /** The words of the dictionary by what the font does with them, for the options. */
+  function wordBuckets(options: PlanOptions, coverage: ReadonlySet<number>): WordBuckets {
+    return analysisFor(options, coverage).buckets
+  }
+
+  return Object.assign(planFont, { wordBuckets })
 }

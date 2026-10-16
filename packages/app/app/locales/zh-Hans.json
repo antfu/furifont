@@ -204,6 +204,7 @@
     "sections": {
       "preview": "预览",
       "build": "构建",
+      "overview": "概览",
       "dictionary": "词典",
       "words": "你的词语"
     },
@@ -307,6 +308,15 @@
       "estimating": "正在估算大小",
       "run": "构建字体",
       "save": "保存设置"
+    },
+    "overview": {
+      "hint": "从词典的每一部分等距抽取的词语，按常用程度排序。",
+      "randomize": "重新抽取",
+      "skip": "已跳过",
+      "take": "已采用",
+      "rest": "不加注音",
+      "count": "{count} 个词",
+      "empty": "这里没有词语。"
     },
     "dictionary": {
       "search": "搜索词典：今日、生",

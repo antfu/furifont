@@ -204,6 +204,7 @@
     "sections": {
       "preview": "プレビュー",
       "build": "ビルド",
+      "overview": "概要",
       "dictionary": "辞書",
       "words": "あなたの単語"
     },
@@ -307,6 +308,15 @@
       "estimating": "サイズを見積もり中",
       "run": "フォントをビルド",
       "save": "設定を保存"
+    },
+    "overview": {
+      "hint": "辞書の各部分から、等間隔に選んだ単語です。よく使われる順に並びます。",
+      "randomize": "選び直す",
+      "skip": "対象外",
+      "take": "ルビを付ける",
+      "rest": "ルビなし",
+      "count": "{count} 語",
+      "empty": "単語はありません。"
     },
     "dictionary": {
       "search": "辞書を検索：今日、生",
