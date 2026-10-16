@@ -5,6 +5,13 @@ import { useI18n } from 'vue-i18n'
 const REPORT_URL = import.meta.dev ? '/api/report' : `${SITE}/api/report`
 
 const { t, locale } = useI18n()
+// What the visitor sees now: the typeface and ruby they chose on the site.
+const { family: shownFamily, ruby } = useFontSettings()
+const previewStyle = computed(() => ({
+  fontFamily: `"${shownFamily.value.family}", sans-serif`,
+  lineHeight: LINE_HEIGHT,
+  fontFeatureSettings: ruby.value ? 'normal' : '"ss01"',
+}))
 
 const blankWord = () => ({ word: '', expected: '', shown: '', context: '' })
 const words = ref([blankWord()])
@@ -63,29 +70,40 @@ function again(): void {
   </UiSection>
   <form v-else @submit.prevent="send">
     <UiSection index="01" :title="$t('report.sections.words', { count: words.length })">
-      <div v-for="(item, i) in words" :key="i" class="grid gap-4 border-b border-base p-6 sm:grid-cols-3">
-        <UiField :label="$t('report.word')">
-          <input v-model="item.word" required maxlength="32" lang="ja" placeholder="市場" class="input">
-        </UiField>
-        <UiField :label="$t('report.expected')">
-          <input v-model="item.expected" required maxlength="64" lang="ja" placeholder="いちば" class="input">
-        </UiField>
-        <UiField :label="$t('report.shown')">
-          <input v-model="item.shown" maxlength="64" lang="ja" placeholder="しじょう" class="input">
-        </UiField>
-        <div class="flex items-end gap-2 sm:col-span-3">
-          <UiField :label="$t('report.context')" class="flex-1">
-            <input v-model="item.context" maxlength="200" lang="ja" placeholder="駅前の市場で魚を買った。" class="input">
+      <div v-for="(item, i) in words" :key="i" class="grid border-b border-base sm:grid-cols-[1fr_16rem]">
+        <div class="grid gap-4 p-6 sm:grid-cols-3">
+          <UiField :label="$t('report.word')">
+            <input v-model="item.word" required maxlength="32" lang="ja" placeholder="市場" class="input">
           </UiField>
-          <button
-            v-if="words.length > 1"
-            type="button"
-            class="btn-ghost focus-ring w-9 shrink-0 px-0"
-            :aria-label="$t('report.remove', { word: item.word || i + 1 })"
-            @click="words.splice(i, 1)"
-          >
-            <span class="i-ph-trash" />
-          </button>
+          <UiField :label="$t('report.expected')">
+            <input v-model="item.expected" required maxlength="64" lang="ja" placeholder="いちば" class="input">
+          </UiField>
+          <UiField :label="$t('report.shown')">
+            <input v-model="item.shown" maxlength="64" lang="ja" placeholder="しじょう" class="input">
+          </UiField>
+          <div class="flex items-end gap-2 sm:col-span-3">
+            <UiField :label="$t('report.context')" class="flex-1">
+              <input v-model="item.context" maxlength="200" lang="ja" placeholder="駅前の市場で魚を買った。" class="input">
+            </UiField>
+            <button
+              v-if="words.length > 1"
+              type="button"
+              class="btn-ghost focus-ring w-9 shrink-0 px-0"
+              :aria-label="$t('report.remove', { word: item.word || i + 1 })"
+              @click="words.splice(i, 1)"
+            >
+              <span class="i-ph-trash" />
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-col gap-2 border-t border-base p-6 sm:border-l sm:border-t-0">
+          <span class="label">{{ $t('report.preview') }}</span>
+          <p lang="ja" class="break-words text-3xl" :style="previewStyle" aria-live="polite">
+            {{ item.word || '市場' }}
+          </p>
+          <p v-if="item.context" lang="ja" class="break-words text-base" :style="previewStyle">
+            {{ item.context }}
+          </p>
         </div>
       </div>
       <div class="px-6 py-3">

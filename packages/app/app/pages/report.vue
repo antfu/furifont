@@ -5,7 +5,7 @@
       <h1 class="display text-4xl font-semibold">
         {{ $t('report.title') }}
       </h1>
-      <p class="max-w-[60ch] text-[15px] lh-1.625 color-muted ws-pre-line">
+      <p class="max-w-[80ch] text-[15px] lh-1.625 color-muted ws-pre-line">
         {{ $t('report.body') }}
       </p>
     </div>

@@ -138,7 +138,7 @@
   "report": {
     "eyebrow": "Report",
     "title": "Report a wrong reading",
-    "body": "Did Furifont show the wrong furigana, or none where a word needs it? Tell us the words and the readings they should have. You can report several words at once. We go through the reports to fix the dictionary.",
+    "body": "Did Furifont show the wrong furigana, or none where a word needs it? Tell us the words and the readings they should have. You can report several words at once. We go through the reports to fix the dictionary.\n\nWe are fixing and improving the font fast, so make sure you are using the latest font and scripts. You can also check the preview to see if it behaves like the problem you have encountered.",
     "link": "Report a wrong reading.",
     "sections": {
       "words": "Words / {count}",
@@ -149,6 +149,7 @@
     "expected": "Correct reading",
     "shown": "Reading shown (optional)",
     "context": "Sentence (optional)",
+    "preview": "Preview",
     "remove": "Remove {word}",
     "add": "Add another word",
     "environment": "Environment",
