@@ -17,7 +17,7 @@
   },
   "footer": {
     "fonts": "フォントは{license}です。Source Han Sans と Source Han Serif から作りました。",
-    "data": "読みのデータは {jmdict}、{jmnedict}、{kanjidic}（EDRDG）、{furigana} から取っています。ライセンスは CC BY-SA 4.0 です。",
+    "data": "読みのデータは {jmdict}、{jmnedict}、{kanjidic}（EDRDG）、{furigana}、{japanpost}（地名）、{desktoptetsu}（JRの駅名）から取っています。ライセンスは CC BY-SA 4.0 です。",
     "code": "ツールは MIT ライセンスです。",
     "report": "読みの誤りを報告",
     "source": "GitHub のソースコード",

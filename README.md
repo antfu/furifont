@@ -69,4 +69,4 @@ Furifont is inspired by:
 
 - **Code:** [MIT](LICENSE.md).
 - **Fonts:** [SIL OFL 1.1](OFL.txt), derived from Source Han Sans and Serif by Adobe.
-- **Dictionary data and reading rules:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict, JMnedict, KANJIDIC2 (EDRDG), JmdictFurigana, yomitan-jlpt-vocab and Tatoeba (CC BY 2.0 FR).
+- **Dictionary data and reading rules:** [CC BY-SA 4.0](packages/dictionary/LICENSE.md), from JMdict, JMnedict, KANJIDIC2 (EDRDG), JmdictFurigana, yomitan-jlpt-vocab and Tatoeba (CC BY 2.0 FR), with place names from Japan Post's postal code data and JR station names from Desktop Tetsu.

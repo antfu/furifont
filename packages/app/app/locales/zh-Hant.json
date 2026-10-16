@@ -17,7 +17,7 @@
   },
   "footer": {
     "fonts": "字型採用{license}，源自 Source Han Sans 和 Source Han Serif。",
-    "data": "讀音資料來自 {jmdict}、{jmnedict}、{kanjidic}（EDRDG）和 {furigana}，採用 CC BY-SA 4.0 授權。",
+    "data": "讀音資料來自 {jmdict}、{jmnedict}、{kanjidic}（EDRDG）、{furigana}、{japanpost}（地名）和 {desktoptetsu}（JR 站名），採用 CC BY-SA 4.0 授權。",
     "code": "工具採用 MIT 授權。",
     "report": "回報錯誤讀音",
     "source": "GitHub 上的原始碼",

@@ -5,6 +5,8 @@ const sources = {
   jmnedict: ['JMnedict', 'https://www.edrdg.org/enamdict/enamdict_doc.html'],
   kanjidic: ['KANJIDIC2', 'https://www.edrdg.org/wiki/index.php/KANJIDIC_Project'],
   furigana: ['JmdictFurigana', 'https://github.com/Doublevil/JmdictFurigana'],
+  japanpost: ['Japan Post', 'https://www.post.japanpost.jp/zipcode/download.html'],
+  desktoptetsu: ['Desktop Tetsu', 'https://www.desktoptetsu.com/quiz/jr-stations.htm'],
 } as const
 </script>
 
