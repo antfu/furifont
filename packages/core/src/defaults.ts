@@ -51,7 +51,7 @@ export const PREBUILT = {
     weights: [250, 900],
   },
   /** Options set on every prebuilt font over the defaults above, such as `{ take: 20000 }`. */
-  options: {},
+  options: { take: 40000 },
 } as const satisfies {
   fonts: readonly { family: string, base: string, face: 'sans' | 'serif', rubyScript: 'hiragana' | 'hepburn' }[]
   weights: readonly { style: string, weight: number }[]
