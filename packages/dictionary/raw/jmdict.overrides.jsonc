@@ -35,5 +35,8 @@
   // reported by anonymous 8c2df88c-4638-4d31-b9c8-905e90635e98
   "源[みなもとの]頼[より]朝[とも]",
   // Alone, 凪 is なぎ (a calm; also a given name); JMdict has only な, from 凪ぐ.
-  "凪[なぎ]"
+  "凪[なぎ]",
+  // 再掲載 is read さいけいさい; the font left 載 without a reading.
+  // reported by ささ 12169a85-50db-44dc-a1ad-57a218f8a0f0
+  "再[さい]掲[けい]載[さい]"
 ]
