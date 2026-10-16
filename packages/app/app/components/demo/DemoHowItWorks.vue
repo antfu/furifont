@@ -14,7 +14,7 @@ const steps = ['build', 'ligatures', 'longest', 'bare', 'okurigana'] as const
         <h3 class="text-base font-semibold tracking-tight">
           {{ $t(`how.${step}.title`) }}
         </h3>
-        <p class="text-sm leading-relaxed color-muted">
+        <p class="text-sm lh-1.625 color-muted">
           {{ $t(`how.${step}.body`) }}
         </p>
       </li>

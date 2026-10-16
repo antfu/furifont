@@ -2,15 +2,19 @@
     --ff-bg: #fff;
     --ff-fg: #0a0a0a;
     --ff-muted: #0a0a0a9e;
+    --ff-faint: #0a0a0a59;
     --ff-line: #0a0a0a1f;
     --ff-line-strong: #0a0a0a66;
     --ff-hover: #0a0a0a0d;
+    /* The multiplier for every line height (`lh-*` in uno.config.ts). */
+    --ff-lh: 1;
     color-scheme: light;
 }
 html.dark {
     --ff-bg: #0a0a0a;
     --ff-fg: #fafafa;
     --ff-muted: #fafafa9e;
+    --ff-faint: #fafafa59;
     --ff-line: #fafafa2b;
     --ff-line-strong: #fafafa66;
     --ff-hover: #fafafa12;
@@ -18,6 +22,11 @@ html.dark {
 }
 html {
     scrollbar-gutter: stable;
+    line-height: calc(1.5 * var(--ff-lh));
+}
+/* Furifont's ruby sits above the kanji, so the Japanese site needs taller lines. */
+:lang(ja) {
+    --ff-lh: 1.3;
 }
 html, body {
     background: var(--ff-bg);
@@ -26,11 +35,10 @@ html, body {
 body {
     -webkit-font-smoothing: antialiased;
 }
-/* The Japanese site is set in Furifont itself, as the visitor chose it; the line height leaves room for the ruby. */
+/* The Japanese site is set in Furifont itself, as the visitor chose it; its line height comes from `--ff-lh`. */
 :lang(ja) body {
     font-family: var(--ff-font), ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: var(--ff-features);
-    line-height: 2;
 }
 ::selection {
     background: var(--ff-fg);
@@ -43,7 +51,7 @@ body {
 }
 :lang(ja) .display, :lang(zh) .display {
     letter-spacing: 0;
-    line-height: 1.2;
+    line-height: 1.8;
     word-break: auto-phrase;
 }
 .hero-title {

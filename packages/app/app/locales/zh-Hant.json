@@ -159,6 +159,7 @@
       "mobile": "行動應用程式"
     },
     "family": "字型",
+    "familyAny": "（不限）",
     "url": "頁面網址（選填）",
     "app": "應用程式（選填）",
     "appPlaceholder": {

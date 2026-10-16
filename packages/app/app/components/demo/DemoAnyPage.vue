@@ -23,7 +23,7 @@ const userscript = `${useRuntimeConfig().app.baseURL}furifont.user.js`
 <template>
   <div class="grid lg:grid-cols-[340px_1fr]">
     <div class="flex flex-col gap-5 border-b border-base p-6 lg:border-b-0 lg:border-r">
-      <p class="text-sm leading-relaxed color-muted">
+      <p class="text-sm lh-1.625 color-muted">
         {{ $t('anyPage.body') }}
       </p>
       <UiField :label="$t('playground.script')">
@@ -36,7 +36,7 @@ const userscript = `${useRuntimeConfig().app.baseURL}furifont.user.js`
         <UiToggle v-model="okurigana">
           {{ $t('anyPage.okurigana') }}
         </UiToggle>
-        <p class="text-xs leading-relaxed color-muted">
+        <p class="text-xs lh-1.625 color-muted">
           {{ $t('anyPage.okuriganaHint') }}
         </p>
       </div>
@@ -48,7 +48,7 @@ const userscript = `${useRuntimeConfig().app.baseURL}furifont.user.js`
           <span class="i-ph-bookmark-simple" />
           {{ family.family }}
         </a>
-        <p class="text-sm leading-relaxed color-muted">
+        <p class="text-sm lh-1.625 color-muted">
           {{ $t('anyPage.bookmarkletHint') }}
         </p>
       </div>
@@ -57,7 +57,7 @@ const userscript = `${useRuntimeConfig().app.baseURL}furifont.user.js`
         <UiButton :href="userscript" icon="i-ph-puzzle-piece" class="self-start">
           {{ $t('anyPage.install') }}
         </UiButton>
-        <p class="text-sm leading-relaxed color-muted">
+        <p class="text-sm lh-1.625 color-muted">
           {{ $t('anyPage.userscriptHint') }}
         </p>
       </div>

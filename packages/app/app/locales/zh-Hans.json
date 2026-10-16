@@ -159,6 +159,7 @@
       "mobile": "移动应用"
     },
     "family": "字体",
+    "familyAny": "（不限）",
     "url": "页面地址（可选）",
     "app": "应用（可选）",
     "appPlaceholder": {

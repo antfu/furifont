@@ -39,13 +39,13 @@
       </tbody>
     </table>
     <div class="flex flex-col gap-4 p-6">
-      <p class="text-sm color-muted">
+      <p class="text-sm color-muted lh-1.625">
         {{ $t('downloads.formats') }}
       </p>
       <UiButton :href="releaseUrl('Furifont.zip')" icon="i-ph-download-simple" class="self-start">
         {{ $t('downloads.all') }}
       </UiButton>
-      <p class="text-sm color-muted">
+      <p class="text-sm color-muted lh-1.625">
         {{ $t('downloads.buildOwn') }}
       </p>
       <UiButton to="/customize" icon="i-ph-sliders-horizontal" class="self-start">

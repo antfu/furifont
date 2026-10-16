@@ -6,9 +6,9 @@ defineProps<{
 </script>
 
 <template>
-  <label class="flex flex-col gap-1.5">
+  <label class="flex flex-col gap-1.5 no-ruby">
     <span class="label">{{ label }}</span>
     <slot />
-    <span v-if="hint" class="text-xs color-muted">{{ hint }}</span>
+    <span v-if="hint" class="text-xs color-muted lh-1.625">{{ hint }}</span>
   </label>
 </template>

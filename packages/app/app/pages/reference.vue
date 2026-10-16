@@ -5,7 +5,7 @@
       <h1 class="display text-4xl font-semibold">
         {{ $t('reference.title') }}
       </h1>
-      <p class="max-w-[60ch] text-[15px] leading-relaxed color-muted">
+      <p class="max-w-[60ch] text-[15px] lh-1.625 color-muted">
         {{ $t('reference.body') }}
       </p>
     </div>

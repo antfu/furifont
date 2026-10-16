@@ -26,7 +26,7 @@ i18n.locale.value = 'en'
           <h1 class="display text-[64px] font-semibold">
             {{ $t('hero.title1') }}<br>{{ $t('hero.title2') }}
           </h1>
-          <p class="max-w-[46ch] leading-relaxed color-muted">
+          <p class="max-w-[46ch] lh-1.625 color-muted">
             {{ $t('hero.body') }}
           </p>
         </div>

@@ -159,6 +159,7 @@
       "mobile": "モバイルアプリ"
     },
     "family": "フォント",
+    "familyAny": "（指定なし）",
     "url": "ページのアドレス（任意）",
     "app": "アプリ（任意）",
     "appPlaceholder": {

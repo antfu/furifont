@@ -159,6 +159,7 @@
       "mobile": "Mobile app"
     },
     "family": "Font",
+    "familyAny": "(Any)",
     "url": "Page address (optional)",
     "app": "App (optional)",
     "appPlaceholder": {

@@ -10,7 +10,7 @@ const command = 'npx furifont dev'
       <h1 class="display text-4xl font-semibold">
         {{ $t('customize.offline.title') }}
       </h1>
-      <i18n-t keypath="customize.offline.body" tag="p" class="max-w-[52ch] text-[15px] leading-relaxed color-muted">
+      <i18n-t keypath="customize.offline.body" tag="p" class="max-w-[52ch] text-[15px] lh-1.625 color-muted">
         <template #folder>
           <code class="font-mono">./fonts</code>
         </template>

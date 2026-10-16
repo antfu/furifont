@@ -15,7 +15,7 @@ const { family, ruby } = useFontSettings()
 <template>
   <div class="grid sm:grid-cols-[1fr_2fr] overflow-hidden">
     <div class="flex flex-col gap-4 border-b border-base p-6 sm:border-b-0 sm:border-r">
-      <p class="text-sm leading-relaxed color-muted">
+      <p class="text-sm lh-1.625 color-muted">
         {{ $t('selectors.body') }}
       </p>
       <UiButton to="/reference" icon="i-ph-list-magnifying-glass" class="self-start">

@@ -29,7 +29,7 @@ const { copied, copy } = useCopy()
         <UiToggle v-model="okurigana">
           {{ $t('playground.okurigana') }}
         </UiToggle>
-        <p class="text-xs leading-relaxed color-muted">
+        <p class="text-xs lh-1.625 color-muted">
           {{ $t('playground.okuriganaHint') }}
         </p>
       </div>

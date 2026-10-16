@@ -26,7 +26,7 @@ type Status = 'done' | 'invalid'
 interface Report {
   words: { word: string, expected: string, shown?: string, context?: string }[]
   environment: { type: string, url?: string, app?: string, os?: string }
-  family: string
+  family?: string
   version: string
   locale: string
   note?: string
@@ -105,7 +105,7 @@ function describe({ id, report }: Entry): string {
   const { environment, words } = report
   const where = environment.url ?? environment.app ?? environment.type
   const lines = [
-    `${id}  ${report.createdAt.slice(0, 16).replace('T', ' ')}  [${report.status ?? 'open'}]  ${report.family} ${report.version} ${report.locale}  ${where}`,
+    `${id}  ${report.createdAt.slice(0, 16).replace('T', ' ')}  [${report.status ?? 'open'}]  ${report.family ?? 'any font'} ${report.version} ${report.locale}  ${where}`,
     ...words.map(({ word, expected, shown, context }) =>
       `    ${word} → ${expected}${shown ? ` (shown: ${shown})` : ''}${context ? `  「${context}」` : ''}`),
   ]

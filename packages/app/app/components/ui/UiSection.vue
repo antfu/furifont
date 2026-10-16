@@ -7,7 +7,7 @@ defineProps<{
 </script>
 
 <template>
-  <section class="relative border-t border-base">
+  <section class="relative border-t border-base no-ruby">
     <UiCross class="-left-[6px] -top-[6px]" />
     <UiCross class="-right-[6px] -top-[6px]" />
     <header v-if="title" class="flex items-baseline gap-3 border-b border-base px-6 py-3">

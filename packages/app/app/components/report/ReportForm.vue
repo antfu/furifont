@@ -5,12 +5,11 @@ import { useI18n } from 'vue-i18n'
 const REPORT_URL = import.meta.dev ? '/api/report' : `${SITE}/api/report`
 
 const { t, locale } = useI18n()
-const { family: current } = useFontSettings()
 
 const blankWord = () => ({ word: '', expected: '', shown: '', context: '' })
 const words = ref([blankWord()])
 const environment = reactive({ type: 'playground' as typeof REPORT_ENVIRONMENTS[number], url: '', app: '', os: '' })
-const family = ref(current.value.family)
+const family = ref('')
 const note = ref('')
 // Kept for the next report.
 const name = ref('')
@@ -18,6 +17,9 @@ const nickname = ref('')
 const status = ref<'idle' | 'sending' | 'sent' | 'failed' | 'limited'>('idle')
 
 const environments = computed(() => REPORT_ENVIRONMENTS.map(value => ({ value, label: t(`report.environments.${value}`) })))
+
+/** The fields the form requires; the button stays clickable so the browser can point at what is missing. */
+const ready = computed(() => words.value.every(w => w.word.trim() && w.expected.trim()))
 
 async function send(): Promise<void> {
   status.value = 'sending'
@@ -102,10 +104,16 @@ function again(): void {
           </select>
         </UiField>
         <UiField :label="$t('report.family')">
-          <input v-model="family" required maxlength="100" list="report-families" class="input">
-          <datalist id="report-families">
-            <option v-for="f in FAMILIES" :key="f.family" :value="f.family" />
-          </datalist>
+          <select v-model="family" class="input">
+            <option value="">
+              {{ $t('report.familyAny') }}
+            </option>
+            <template v-for="f in FAMILIES" :key="f.family">
+              <option v-for="build in ['Regular', 'VF']" :key="build" :value="`${f.family} ${build}`">
+                {{ f.family }} {{ build }}
+              </option>
+            </template>
+          </select>
         </UiField>
         <UiField v-if="environment.type === 'website'" :label="$t('report.url')">
           <input v-model="environment.url" type="url" maxlength="500" placeholder="https://" class="input">
@@ -121,12 +129,12 @@ function again(): void {
     <UiSection index="03" :title="$t('report.sections.note')">
       <div class="flex flex-col gap-4 p-6">
         <textarea v-model="note" maxlength="2000" rows="4" :placeholder="$t('report.notePlaceholder')" :aria-label="$t('report.sections.note')" class="input resize-y" />
-        <UiField :label="$t('report.name')" :hint="$t('report.nameHint')" class="sm:max-w-sm">
+        <UiField :label="$t('report.name')" :hint="$t('report.nameHint')">
           <input v-model="name" maxlength="100" autocomplete="nickname" class="input">
         </UiField>
         <input v-model="nickname" name="nickname" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only">
         <div class="flex flex-wrap items-center gap-4">
-          <button type="submit" class="btn-solid focus-ring" :disabled="status === 'sending'">
+          <button type="submit" class="focus-ring" :class="ready ? 'btn-solid' : 'btn-outline'" :disabled="status === 'sending'">
             <span class="i-ph-paper-plane-tilt" />
             {{ status === 'sending' ? $t('report.sending') : $t('report.send') }}
           </button>

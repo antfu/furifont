@@ -39,8 +39,8 @@ export const ReportSchema = v.object({
     app: optional(100),
     os: optional(100),
   }),
-  /** One of `FAMILIES`, or what the reader typed for an older install. */
-  family: required(100),
+  /** A font of `FAMILIES` with its `Regular` or `VF` build, or none when the reader does not know which. */
+  family: optional(100),
   /** The site's release, which says what dictionary the playground used. */
   version: required(32),
   locale: required(16),
