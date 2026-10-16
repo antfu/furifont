@@ -12,8 +12,8 @@
     "light": "Switch to light",
     "dark": "Switch to dark",
     "language": "Language",
-    "rubyOff": "Hide the ruby",
-    "rubyOn": "Show the ruby"
+    "rubyOff": "Hide the furigana",
+    "rubyOn": "Show the furigana"
   },
   "footer": {
     "fonts": "The fonts use the {license}. They come from Source Han Sans and Source Han Serif.",
@@ -52,7 +52,7 @@
     "anyPage": "On Websites"
   },
   "playground": {
-    "script": "Ruby letters",
+    "script": "Furigana letters",
     "face": "Font style",
     "size": "Size / {size}px",
     "weight": "Weight / {weight}",
@@ -65,7 +65,7 @@
   "how": {
     "build": {
       "title": "Customized build",
-      "body": "Furifont is compiled from a base font, Source Han Sans or Serif. A build step reads a dictionary of thousands of words and draws the ruby into new glyphs. The result is a normal font file. It needs no JavaScript and no plugin."
+      "body": "Furifont is compiled from a base font, Source Han Sans or Serif. A build step reads a dictionary of thousands of words and draws the furigana into new glyphs. The result is a normal font file. It needs no JavaScript and no plugin."
     },
     "ligatures": {
       "title": "Ligatures do the work",
@@ -76,8 +76,8 @@
       "body": "Furifont compares each group of kanji with a list of thousands of common words. It tries the longest word first. For example, it picks 日本語 before 日本. It reads 今日 as one word, きょう."
     },
     "bare": {
-      "title": "No ruby when unsure",
-      "body": "A single kanji gets ruby only when one reading is clearly the most likely. 大人気 can be read だいにんき or おとなげ, so Furifont shows no ruby."
+      "title": "No furigana when unsure",
+      "body": "A single kanji gets furigana only when one reading is clearly the most likely. 大人気 can be read だいにんき or おとなげ, so Furifont shows no furigana."
     },
     "okurigana": {
       "title": "Opt-in Okurigana",
@@ -85,22 +85,22 @@
     }
   },
   "selectors": {
-    "body": "Some words have more than one common reading. Furifont shows the most common one. To choose another, put a variation selector (an invisible character) right after the first kanji. VS226 gives reading 1, VS227 gives reading 2, and so on. VS225 removes the ruby.",
+    "body": "Some words have more than one common reading. Furifont shows the most common one. To choose another, put a variation selector (an invisible character) right after the first kanji. VS226 gives reading 1, VS227 gives reading 2, and so on. VS225 removes the furigana.",
     "lookUp": "Look up readings",
     "default": "Default",
     "reading2": "Reading 2 (VS227)",
-    "none": "No ruby (VS225)"
+    "none": "No furigana (VS225)"
   },
   "downloads": {
     "all": "Download all as zip",
     "family": "Family",
-    "ruby": "Ruby",
+    "ruby": "Furigana",
     "variable": "Variable",
     "formats": "OTF and TTF are commonly used for installing on your computer. WOFF2 is optimized for websites. We recommend the variable fonts for the best experience. In some cases you may need the static weights for compatibility.",
-    "buildOwn": "Or build your own font. You can choose another base font, a list with fewer or more words, other ruby letters, or other sizes."
+    "buildOwn": "Or build your own font. You can choose another base font, a list with fewer or more words, other furigana letters, or other sizes."
   },
   "anyPage": {
-    "body": "You can use Furifont on any website. Lines with kanji get extra space for the ruby. If Furifont is installed on your computer, nothing downloads. If it is not, the font loads from this site.",
+    "body": "You can use Furifont on any website. Lines with kanji get extra space for the furigana. If Furifont is installed on your computer, nothing downloads. If it is not, the font loads from this site.",
     "bookmarklet": "Bookmarklet",
     "bookmarkletHint": "Drag it to your bookmarks bar. On any page, click it to turn Furifont on. Click it again to turn Furifont off. Some sites, such as X and GitHub, do not let fonts load from other sites. On those sites, install Furifont on your computer.",
     "okurigana": "Okurigana readings",
@@ -124,7 +124,7 @@
   "reference": {
     "eyebrow": "Reference",
     "title": "Pick a reading",
-    "body": "Furifont shows the most common reading of a word. To show another reading, put a variation selector (an invisible character) right after the first kanji of the word. VS226 gives reading 1, VS227 gives reading 2, and so on. After a single kanji, the selector chooses the reading of that kanji. VS225 shows the kanji with no ruby.",
+    "body": "Furifont shows the most common reading of a word. To show another reading, put a variation selector (an invisible character) right after the first kanji of the word. VS226 gives reading 1, VS227 gives reading 2, and so on. After a single kanji, the selector chooses the reading of that kanji. VS225 shows the kanji with no furigana.",
     "search": "Search a word or kanji: 市場, 今日, 生",
     "searchLabel": "Search readings",
     "hint": "Click a reading to copy the word with its selector.",
@@ -211,17 +211,17 @@
     "options": {
       "family": "Font name",
       "base": "Base font",
-      "baseHint": "The font to add ruby to. Use a font to download, such as Source Han Serif JP Bold, or the path to another font file on your computer.",
-      "script": "Ruby letters",
+      "baseHint": "The font to add furigana to. Use a font to download, such as Source Han Serif JP Bold, or the path to another font file on your computer.",
+      "script": "Furigana letters",
       "hiragana": "Hiragana",
       "katakanaOn": "Kata on",
       "hepburn": "Romaji",
       "skip": "Skip the most common words",
-      "skipHint": "Of the words left, the most common get no ruby, because a reader already knows them. Words and single kanji are sorted by how common they are, in steps of 500.",
-      "words": "Then add ruby to",
-      "wordsHint": "The next words, the most common first. In all, {count} words get ruby.",
+      "skipHint": "Of the words left, the most common get no furigana, because a reader already knows them. Words and single kanji are sorted by how common they are, in steps of 500.",
+      "words": "Then add furigana to",
+      "wordsHint": "The next words, the most common first. In all, {count} words get furigana.",
       "jlpt": "Skip JLPT words",
-      "jlptHint": "Words on the JLPT lists (for the Japanese-Language Proficiency Test) up to this level get no ruby. N5 is the easiest level.",
+      "jlptHint": "Words on the JLPT lists (for the Japanese-Language Proficiency Test) up to this level get no furigana. N5 is the easiest level.",
       "none": "None",
       "all": "All",
       "sources": "Take words from",
@@ -275,13 +275,13 @@
           "hint": "Names of municipalities and towns, such as 一宮, from Japan Post's postal code data. Furifont uses them where no common word matches the text."
         }
       },
-      "isolated": "Ruby on single kanji",
+      "isolated": "Furigana on single kanji",
       "share": "Single kanji: how sure",
-      "shareHint": "A single kanji gets ruby only when one reading makes up at least this share of its uses in the dictionary. Use a number from 0.5 to 1. A higher number gives ruby to fewer kanji.",
-      "rubyScale": "Ruby size (× kanji)",
+      "shareHint": "A single kanji gets furigana only when one reading makes up at least this share of its uses in the dictionary. Use a number from 0.5 to 1. A higher number gives furigana to fewer kanji.",
+      "rubyScale": "Furigana size (× kanji)",
       "rubyGap": "Space above kanji (em)",
       "squeeze": "Narrowest squeeze (× normal)",
-      "maxWidth": "Widest ruby (em)",
+      "maxWidth": "Widest furigana (em)",
       "reset": "Reset to defaults",
       "resetHint": "Go back to the settings that Customize loaded. Your words stay."
     },
@@ -297,7 +297,7 @@
       "ambiguous": "Several readings",
       "lone": "Single kanji",
       "protected": "Your changes",
-      "glyphs": "Ruby glyphs",
+      "glyphs": "Furigana glyphs",
       "rules": "Rules",
       "planning": "Planning",
       "estimate": {
@@ -324,7 +324,7 @@
       "hint": "These words have several common readings. Pin one to make it the default reading.",
       "noTag": "not a common word",
       "restore": "Restore",
-      "remove": "Never add ruby"
+      "remove": "Never add furigana"
     },
     "custom": {
       "placeholder": "日[に]本[ほん] or 今日[きょう]",
@@ -332,7 +332,7 @@
       "add": "Add word",
       "added": "Added / {count}",
       "pinned": "Pinned / {count}",
-      "removed": "Never given ruby / {count}",
+      "removed": "Never given furigana / {count}",
       "none": "None",
       "takeOut": "Remove {item}"
     }

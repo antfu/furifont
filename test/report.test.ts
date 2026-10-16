@@ -82,12 +82,12 @@ describe('receiveReport', () => {
   it('limits how many reports one address sends', async () => {
     const { store, reports } = memoryStore()
     const statuses = []
-    for (let i = 0; i < 11; i++)
+    for (let i = 0; i < 101; i++)
       statuses.push((await receiveReport(post(report), store)).status)
 
-    expect(statuses.slice(0, 10).every(status => status === 201)).toBe(true)
-    expect(statuses[10]).toBe(429)
+    expect(statuses.slice(0, 100).every(status => status === 201)).toBe(true)
+    expect(statuses[100]).toBe(429)
     expect((await receiveReport(post(report, '198.51.100.1'), store)).status).toBe(201)
-    expect(reports.size).toBe(11)
+    expect(reports.size).toBe(101)
   })
 })

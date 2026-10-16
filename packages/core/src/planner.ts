@@ -1,11 +1,13 @@
 import type { HanRun, RubySpan } from './dictionary'
 import type { GlyphRegistry, RenderRuby, SingleLookups } from './glyphs'
 import type { Dictionary, Plan, PlanGlyph, PlanOptions } from './schema'
+import type { Suffixes } from './suffixes'
 import { formatNotation, getOrCreate, hanRuns, isHan, parseFurigana, parseNotation } from './dictionary'
 import { emitFea } from './fea'
 import { codepoints, createGlyphRegistry, createSingleLookups, glyphName, isGrouped } from './glyphs'
 import { isOnyomi, toHepburn, toKatakana } from './kana'
 import { JLPT_LEVELS, SCORE, sourceBit, weightOf } from './schema'
+import { pickSuffixes } from './suffixes'
 
 /** VS225: shows the kanji before it without ruby. */
 export const SELECTOR_SUPPRESS = 0xE01E0
@@ -15,9 +17,6 @@ export const SELECTOR_FIRST_READING = 0xE01E1
 export const MAX_READINGS = 15
 /** A lone kanji's reading needs this share of the evidence to be offered through a selector. */
 const MIN_ALTERNATE_SHARE = 0.02
-/** A suffix reading is the one a kanji takes in this share of the runs it ends, out of at least `SUFFIX_MIN_RUNS`. */
-const SUFFIX_MIN_SHARE = 0.9
-const SUFFIX_MIN_RUNS = 10
 
 interface RunReading {
   spans: RubySpan[]
@@ -172,10 +171,10 @@ function createContext(dictionary: Dictionary, options: PlanOptions, coverage: R
   const covered = (text: string): boolean => codepoints(text).every(cp => coverage.has(cp))
   const render: RenderRuby = (run, index) => {
     const span = run.spans[index]!
-    if (options.rubyScript === 'hepburn')
+    if (options.furiganaScript === 'hepburn')
       return toHepburn(span.ruby, run.spans.slice(index + 1).map(s => s.ruby).join(''))
     const kanji = [...run.text].slice(span.start, span.end)
-    if (options.rubyScript === 'katakanaOn' && kanji.length === 1 && isOnyomi(span.ruby, dictionary.onyomi[kanji[0]!] ?? []))
+    if (options.furiganaScript === 'katakanaOn' && kanji.length === 1 && isOnyomi(span.ruby, dictionary.onyomi[kanji[0]!] ?? []))
       return toKatakana(span.ruby)
     return span.ruby
   }
@@ -364,45 +363,18 @@ function chooseLoneKanji(index: DictionaryIndex, { patterns, lonePins, skippedKa
   return { isolated, kanjiReadings }
 }
 
-interface Suffixes {
-  readings: Map<string, string>
-  /** Suffixes that start more of the dictionary's runs than they end: before another kanji, they may start a word the font does not know, as 大 does. */
-  final: Set<string>
-}
-
 /**
  * A kanji no word claimed after another kanji, as 的 in 平均的 or 者 in
  * 被災者支援, reads as it reads ending the dictionary's runs, when one reading
  * clearly dominates there: 的 てき, 化 か; not 人, にん or じん.
  */
 function chooseSuffixes(index: DictionaryIndex, ctx: PlanContext): Suffixes {
-  const suffixes: Suffixes = { readings: new Map(), final: new Set() }
   if (!ctx.options.isolated)
-    return suffixes
-  const evidence = new Map<string, Map<string, number>>()
-  const count = (counts: Map<string, number>, key: string): void => void counts.set(key, (counts.get(key) ?? 0) + 1)
-  const starts = new Map<string, number>()
-  const ends = new Map<string, number>()
-  for (const [text, readings] of index.jmdict) {
-    const chars = [...text]
-    count(starts, chars[0]!)
-    count(ends, chars.at(-1)!)
-    for (const { spans } of readings) {
-      const span = spans.at(-1)!
-      if (span.end - span.start === 1)
-        count(getOrCreate(evidence, chars.at(-1)!, () => new Map()), span.ruby)
-    }
-  }
-  for (const [kanji, counts] of evidence) {
-    const total = [...counts.values()].reduce((a, b) => a + b, 0)
-    const [ruby, top] = [...counts].sort((a, b) => b[1] - a[1])[0]!
-    if (total < SUFFIX_MIN_RUNS || top / total < SUFFIX_MIN_SHARE || ctx.removed.has(kanji) || !ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] }))
-      continue
-    suffixes.readings.set(kanji, ruby)
-    if ((starts.get(kanji) ?? 0) > ends.get(kanji)!)
-      suffixes.final.add(kanji)
-  }
-  return suffixes
+    return { readings: new Map(), final: new Set() }
+  const { readings, final } = pickSuffixes([...index.jmdict].map(([text, rs]) => [text, rs.map(r => r.spans)]))
+  const usable = ([kanji, ruby]: [string, string]): boolean => !ctx.removed.has(kanji) && ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] })
+  const kept = new Map([...readings].filter(usable))
+  return { readings: kept, final: new Set([...final].filter(kanji => kept.has(kanji))) }
 }
 
 /** Per character, the span reading it; keys are relative so they compare at any offset. */

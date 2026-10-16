@@ -8,7 +8,7 @@ A variation selector is an invisible character. It stays in the text, so it work
 
 | Selector | Code point | Result |
 | --- | --- | --- |
-| VS225 | U+E01E0 | No ruby |
+| VS225 | U+E01E0 | No furigana |
 | VS226 | U+E01E1 | Reading 1, the default |
 | VS227 | U+E01E2 | Reading 2 |
 | VS228 | U+E01E3 | Reading 3 |

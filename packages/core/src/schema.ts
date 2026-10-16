@@ -1,7 +1,7 @@
 import * as v from 'valibot'
 import { DEFAULTS } from './defaults'
 
-export const RUBY_SCRIPTS = ['hiragana', 'katakanaOn', 'hepburn'] as const
+export const FURIGANA_SCRIPTS = ['hiragana', 'katakanaOn', 'hepburn'] as const
 /** The dictionary's manually maintained sources. */
 export const MANUAL_SOURCES = ['mahjong-yaku', 'jr-stations', 'yojijukugo', 'japan-post'] as const
 export type ManualSource = typeof MANUAL_SOURCES[number]
@@ -25,7 +25,7 @@ export type Source = typeof SOURCES[number]
 export const sourceBit = (source: Source): number => 1 << SOURCES.indexOf(source)
 /** The sources a mask of `SOURCES` bits names. */
 export const sourcesIn = (mask: number): Source[] => SOURCES.filter(source => mask & sourceBit(source))
-export type RubyScript = typeof RUBY_SCRIPTS[number]
+export type FuriganaScript = typeof FURIGANA_SCRIPTS[number]
 
 /** Sizes in em, relative to the base font. */
 const RubyMetricsSchema = v.object({
@@ -44,7 +44,7 @@ const Count = v.pipe(v.number(), v.integer(), v.minValue(0))
 
 export const PlanOptionsSchema = v.object({
   family: v.optional(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.check(name => !/source/i.test(name), 'Source is a reserved font name of the base font')), DEFAULTS.plan.family),
-  rubyScript: v.optional(v.picklist(RUBY_SCRIPTS), DEFAULTS.plan.rubyScript),
+  furiganaScript: v.optional(v.picklist(FURIGANA_SCRIPTS), DEFAULTS.plan.furiganaScript),
   /** The sources whose words get ruby. */
   sources: v.optional(v.array(v.picklist(WORD_SOURCES)), () => [...WORD_SOURCES]),
   /** The most common words left bare, by score: a reader knows them. Lone kanji count too. */

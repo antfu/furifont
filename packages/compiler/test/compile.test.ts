@@ -289,7 +289,7 @@ describe('a variable base font', () => {
   })
 
   it('keeps romaji centred over its kanji as the letters widen with the weight', async () => {
-    const built = await build(FILE, undefined, { rubyScript: 'hepburn' })
+    const built = await build(FILE, undefined, { furiganaScript: 'hepburn' })
     const sakura = glyphOf(built, 'sakura')
     const centre = (weight: number): number => rubyInk(built, sakura, weight).reduce((a, b) => a + b) / 2
     expect(Math.abs(centre(900) - centre(250))).toBeLessThan(4)

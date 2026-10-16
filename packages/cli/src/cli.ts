@@ -1,7 +1,7 @@
 import type { FurifontConfigInput } from './config'
 import { relative } from 'node:path'
 import process from 'node:process'
-import { RUBY_SCRIPTS } from '@furifont/core'
+import { FURIGANA_SCRIPTS } from '@furifont/core'
 import { cac } from 'cac'
 import * as v from 'valibot'
 import pkg from '../package.json' with { type: 'json' }
@@ -17,7 +17,7 @@ cli
   .option('--config <file>', `Config file`, { default: CONFIG_FILE })
   .option('--base <font>', 'A font to download, such as "Source Han Serif JP Bold", or a font file')
   .option('--family <name>', 'Font family name')
-  .option('--script <script>', `Ruby script: ${RUBY_SCRIPTS.join(', ')}`)
+  .option('--script <script>', `Furigana script: ${FURIGANA_SCRIPTS.join(', ')}`)
   .option('--take <words>', 'Annotate this many words, the most common first')
   .option('--formats <list>', `Fonts to write, comma-separated: ${FONT_FORMATS.join(', ')}`)
   .option('--out <dir>', 'Output directory', { default: 'fonts' })
@@ -26,7 +26,7 @@ cli
     const overrides: FurifontConfigInput = {
       ...(flags.base && { base: flags.base }),
       ...(flags.family && { family: flags.family }),
-      ...(flags.script && { rubyScript: v.parse(v.picklist(RUBY_SCRIPTS), flags.script) }),
+      ...(flags.script && { furiganaScript: v.parse(v.picklist(FURIGANA_SCRIPTS), flags.script) }),
       ...(flags.take && { take: Number(flags.take) }),
       ...(flags.formats && { formats: v.parse(v.array(v.picklist(FONT_FORMATS)), flags.formats.split(',')) }),
     }
@@ -38,7 +38,7 @@ cli
     })
     process.stderr.write('\r'.padEnd(24))
     const { stats } = report
-    console.log(`\r${stats.patterns} words, ${stats.isolated} lone kanji, ${stats.glyphs} ruby glyphs`)
+    console.log(`\r${stats.patterns} words, ${stats.isolated} lone kanji, ${stats.glyphs} furigana glyphs`)
     for (const file of files)
       console.log(`  ${relative(cwd, file.path)}  ${(file.bytes / 1024 / 1024).toFixed(1)} MB`)
   })

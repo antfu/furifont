@@ -4,7 +4,7 @@ import * as v from 'valibot'
 import { ReportSchema } from '../../shared/utils/report.ts'
 
 /** Reports one address can send per window. */
-const RATE_LIMIT = 10
+const RATE_LIMIT = 100
 const RATE_WINDOW_SECONDS = 60 * 60
 
 /** Stored under `report:<ISO time>:<id>`, so a scan of `report:*` lists them by date. */

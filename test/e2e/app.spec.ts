@@ -86,7 +86,7 @@ test('applies the font chosen in the playground to the whole site, and remembers
 test('previews, plans and builds a font in the formats chosen', async ({ page }) => {
   await page.goto(url)
   await expect(page.getByText(/\d+ glyphs \/ \d+ ms/)).toBeVisible({ timeout: 60_000 })
-  await expect(page.getByText('Ruby glyphs', { exact: true })).toBeVisible()
+  await expect(page.getByText('Furigana glyphs', { exact: true })).toBeVisible()
 
   await page.getByRole('radio', { name: 'Romaji' }).click()
   await expect(page.locator('main [style*="Furifont Preview"]')).toBeVisible()
@@ -108,7 +108,7 @@ test('estimates the size, keeps settings across reloads, and resets them but not
   await expect(page.getByText(/≈ \d+\.\d\d MB WOFF2 · \d+\.\d\d MB OTF/)).toBeVisible({ timeout: 60_000 })
 
   const skip = page.getByRole('slider', { name: /Skip the most common words/ })
-  const isolated = page.getByRole('checkbox', { name: 'Ruby on single kanji' })
+  const isolated = page.getByRole('checkbox', { name: 'Furigana on single kanji' })
   await skip.focus()
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('ArrowRight')

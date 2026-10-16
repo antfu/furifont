@@ -12,7 +12,7 @@ describe('defaults', () => {
 
   it('make the first prebuilt font, in its variable form, the default one', () => {
     const [first] = PREBUILT.fonts
-    expect(first).toMatchObject({ family: DEFAULTS.plan.family, rubyScript: DEFAULTS.plan.rubyScript })
+    expect(first).toMatchObject({ family: DEFAULTS.plan.family, furiganaScript: DEFAULTS.plan.furiganaScript })
     expect(DEFAULTS.build.base).toBe(`${first.base} ${PREBUILT.variable.style}`)
   })
 

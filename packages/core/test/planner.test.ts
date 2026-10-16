@@ -222,8 +222,8 @@ describe('planner', () => {
   })
 
   it('renders ruby in the chosen script', () => {
-    expect(drawn(plan({ rubyScript: 'hepburn' }).plan)).toEqual(expect.arrayContaining(['学:gak', '校:kō', '今日:kyō']))
-    expect(drawn(plan({ rubyScript: 'katakanaOn' }).plan)).toEqual(expect.arrayContaining(['本:ホン', '日:に', '学:ガッ', '今日:きょう']))
+    expect(drawn(plan({ furiganaScript: 'hepburn' }).plan)).toEqual(expect.arrayContaining(['学:gak', '校:kō', '今日:kyō']))
+    expect(drawn(plan({ furiganaScript: 'katakanaOn' }).plan)).toEqual(expect.arrayContaining(['本:ホン', '日:に', '学:ガッ', '今日:きょう']))
   })
 
   it('plans a preview with only what the sample text needs', () => {

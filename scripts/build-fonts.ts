@@ -24,10 +24,10 @@ await copyFile(new URL('../packages/dictionary/LICENSE.md', import.meta.url), jo
 // What is built, and how, is in PREBUILT: the families, weights and options.
 const { variable } = PREBUILT
 for (const style of [...PREBUILT.weights.map(w => w.style), variable.style]) {
-  await Promise.all(PREBUILT.fonts.map(async ({ base, family, rubyScript }) => {
+  await Promise.all(PREBUILT.fonts.map(async ({ base, family, furiganaScript }) => {
     // The variable family is named apart, as Source Han's is, so it can be installed beside the static ones.
     const name = style === variable.style ? `${family} ${variable.style}` : family
-    const config = v.parse(FurifontConfigSchema, { ...PREBUILT.options, family: name, rubyScript, base: `${base} ${style}` })
+    const config = v.parse(FurifontConfigSchema, { ...PREBUILT.options, family: name, furiganaScript, base: `${base} ${style}` })
     const { files } = await buildFont(config, { cwd: cwd(), outDir })
     console.log(files.map(f => f.name).join('  '))
   }))

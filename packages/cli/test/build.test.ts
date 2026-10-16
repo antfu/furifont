@@ -16,10 +16,10 @@ afterAll(() => rm(cwd, { recursive: true, force: true }))
 
 describe('pREBUILT', () => {
   it('makes a valid config for every font and weight, as build-fonts.ts does', () => {
-    for (const { base, family, rubyScript } of PREBUILT.fonts) {
+    for (const { base, family, furiganaScript } of PREBUILT.fonts) {
       for (const style of PREBUILT.weights.map(w => w.style)) {
-        const config = v.parse(FurifontConfigSchema, { ...PREBUILT.options, family, rubyScript, base: `${base} ${style}` })
-        expect(config).toMatchObject({ family, rubyScript, base: `${base} ${style}`, formats: [...DEFAULTS.build.formats] })
+        const config = v.parse(FurifontConfigSchema, { ...PREBUILT.options, family, furiganaScript, base: `${base} ${style}` })
+        expect(config).toMatchObject({ family, furiganaScript, base: `${base} ${style}`, formats: [...DEFAULTS.build.formats] })
       }
     }
   })
@@ -28,12 +28,12 @@ describe('pREBUILT', () => {
 describe('loadConfig', () => {
   it('fills defaults when there is no config file', async () => {
     const config = await loadConfig(cwd)
-    expect(config).toMatchObject({ family: DEFAULTS.plan.family, base: DEFAULTS.build.base, rubyScript: DEFAULTS.plan.rubyScript, skip: DEFAULTS.plan.skip, formats: [...DEFAULTS.build.formats] })
+    expect(config).toMatchObject({ family: DEFAULTS.plan.family, base: DEFAULTS.build.base, furiganaScript: DEFAULTS.plan.furiganaScript, skip: DEFAULTS.plan.skip, formats: [...DEFAULTS.build.formats] })
   })
 
   it('names the file and the problem when the config is invalid', async () => {
-    await writeFile(join(cwd, 'bad.json'), JSON.stringify({ rubyScript: 'cyrillic' }))
-    await expect(loadConfig(cwd, 'bad.json')).rejects.toThrow(/bad\.json.*rubyScript/s)
+    await writeFile(join(cwd, 'bad.json'), JSON.stringify({ furiganaScript: 'cyrillic' }))
+    await expect(loadConfig(cwd, 'bad.json')).rejects.toThrow(/bad\.json.*furiganaScript/s)
   })
 
   it('refuses a version that a font revision cannot carry', async () => {

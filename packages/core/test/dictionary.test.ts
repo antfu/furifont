@@ -1,7 +1,7 @@
 import type { Source } from '../src'
 import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
-import { DictionarySchema, formatDictionary, formatNotation, fuseDictionary, hanRuns, parseFurigana, parseNotation, sourceBit } from '../src'
+import { DictionarySchema, formatDictionary, formatNotation, fuseDictionary, hanRuns, parseFurigana, parseNotation, pruneRuns, sourceBit } from '../src'
 import { dictionary, sources } from './fixture'
 
 describe('dictionary', () => {
@@ -56,6 +56,19 @@ describe('fuseDictionary', () => {
     })
   })
 
+  it('scores a run past four kanji lower the longer it is, within its tier', () => {
+    const entry = (form: string, furigana: string, nf: number) => ({ form, furigana, nf, priority: 'nf', order: 0 })
+    const fused = fuseDictionary({ ...sources, places: [], entries: [
+      entry('社会保険', '0:しゃ;1:かい;2:ほ;3:けん', 1),
+      entry('社会保険庁', '0:しゃ;1:かい;2:ほ;3:けん;4:ちょう', 1),
+      entry('社会保険診療報酬', '0:しゃ;1:かい;2:ほ;3:けん;4:しん;5:りょう;6:ほう;7:しゅう', 1),
+      entry('社会保険診療報酬支払基金', '0:しゃ;1:かい;2:ほ;3:けん;4:しん;5:りょう;6:ほう;7:しゅう;8:し;9:はらい;10:き;11:きん', 1),
+    ] })
+    const [four, five, eight, twelve] = ['社会保険', '社会保険庁', '社会保険診療報酬', '社会保険診療報酬支払基金'].map(t => Object.values(fused.runs[t]!)[0]![0])
+    expect([four! - five!, four! - eight!]).toEqual([2, 8])
+    expect(twelve).toBeGreaterThan(50)
+  })
+
   it('reads a lone kanji by its tagged words, or by an untagged one before okurigana', () => {
     expect(Object.keys(dictionary.kanji['来']!)).toEqual(['く', 'き', 'こ'])
     expect(dictionary.kanji['奉']).toEqual({ たてまつ: [0, mask('jmdict', 'inflecting')] })
@@ -67,5 +80,60 @@ describe('fuseDictionary', () => {
     expect(v.parse(DictionarySchema, file)).toEqual(dictionary)
     expect(() => v.parse(DictionarySchema, { ...file, runs: { 日本: { '0:に;1:ほん': [101, 1] } } })).toThrow(/score/)
     expect(() => v.parse(DictionarySchema, { ...file, sources: { jmdict: 2 } })).toThrow(/sources/)
+  })
+})
+
+describe('pruneRuns', () => {
+  const [jmdict, place, tagged] = [sourceBit('jmdict'), sourceBit('place'), sourceBit('nf')]
+  const table = (runs: Record<string, Record<string, [number, number]>>): Parameters<typeof pruneRuns>[0] => ({ ...fuseDictionary({ ...sources, entries: [], places: [] }), runs })
+
+  it('drops a run its parts read right, and gives the parts its score and sources', () => {
+    const { dictionary: pruned, pruned: dropped } = pruneRuns(table({
+      公認: { '0:こう;1:にん': [5, jmdict] },
+      会計士: { '0:かい;1:けい;2:し': [5, jmdict] },
+      公認会計士: { '0:こう;1:にん;2:かい;3:けい;4:し': [62, jmdict | tagged] },
+    }))
+    expect(dropped).toEqual(['公認会計士'])
+    expect(Object.keys(pruned.runs)).toEqual(['公認', '会計士'])
+    expect(pruned.runs['公認']).toEqual({ '0:こう;1:にん': [62, jmdict | tagged] })
+  })
+
+  it('reads a place name whole by the parts that write its reading, whatever their spans', () => {
+    const { pruned: dropped } = pruneRuns(table({
+      三国町: { '0-2:みくにちょう': [10, place] },
+      青葉台: { '0-2:あおばだい': [10, place] },
+      三国町青葉台: { '0-5:みくにちょうあおばだい': [10, place] },
+    }))
+    expect(dropped).toEqual(['三国町青葉台'])
+  })
+
+  it('keeps a run the parts read differently, as the longest match chooses them', () => {
+    const { pruned: dropped } = pruneRuns(table({
+      大人: { '0:おと;1:な': [90, jmdict] },
+      大人気: { '0:だい;1:にん;2:き': [60, jmdict] },
+      資本: { '0:し;1:ほん': [90, jmdict] },
+      資本主: { '0:し;1:ほん;2:しゅ': [5, jmdict] },
+      主義: { '0:しゅ;1:ぎ': [90, jmdict] },
+      資本主義: { '0:し;1:ほん;2:しゅ;3:ぎ': [75, jmdict] },
+    }))
+    // 大人気 would read おとな and a bare 気; 資本主義 would read 資本主 and a bare 義.
+    expect(dropped).toEqual([])
+  })
+
+  it('reads a kanji no word claims by its suffix reading, while enough runs still end with it', () => {
+    const ends = (count: number): Record<string, Record<string, [number, number]>> => Object.fromEntries([...'美知科理私公性目学文化論'].slice(0, count - 1).map(k => [`${k}的`, { [`0:${k};1:てき`]: [5, jmdict] } as Record<string, [number, number]>]))
+    const base: Record<string, Record<string, [number, number]>> = { 平均: { '0:へい;1:きん': [90, jmdict] }, 平均的: { '0:へい;1:きん;2:てき': [60, jmdict] } }
+    // The run is one of the ten 的 ends: without it nine remain, and 的 is no suffix.
+    expect(pruneRuns(table({ ...base, ...ends(10) })).pruned).toEqual([])
+    expect(pruneRuns(table({ ...base, ...ends(12) })).pruned).toEqual(['平均的'])
+  })
+
+  it('keeps a run with another reading, a curated default or a JLPT level', () => {
+    const parts: Record<string, Record<string, [number, number]>> = { 東京: { '0:とう;1:きょう': [90, jmdict] }, 大学: { '0:だい;1:がく': [90, jmdict] } }
+    const whole = '0:とう;1:きょう;2:だい;3:がく'
+    expect(pruneRuns(table({ ...parts, 東京大学: { [whole]: [60, jmdict], '0:ひがし;1:みやこ;2:だい;3:がく': [5, jmdict] } })).pruned).toEqual([])
+    expect(pruneRuns(table({ ...parts, 東京大学: { [whole]: [60, jmdict | sourceBit('default')] } })).pruned).toEqual([])
+    expect(pruneRuns(table({ ...parts, 東京大学: { [whole]: [60, jmdict | sourceBit('N5')] } })).pruned).toEqual([])
+    expect(pruneRuns(table({ ...parts, 東京大学: { [whole]: [60, jmdict] } })).pruned).toEqual(['東京大学'])
   })
 })

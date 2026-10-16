@@ -66,7 +66,7 @@ if (args.json) {
 else {
   process.stdout.write(`${results.map(({ text, shown, readings, rank, override, bare }) => [
     text,
-    `  font shows: ${shown ?? '(bare: no ruby)'}`,
+    `  font shows: ${shown ?? '(bare: no furigana)'}`,
     readings.length ? '  dictionary:' : `  dictionary: ${[...text].length > 1 ? 'not a run of its own, so the font reads it by parts' : 'none'}`,
     ...readings.map(r => `    ${r.reading}  score ${r.score}${r.common ? ' (common)' : ''}`),
     ...(rank ? [`  rank: ${rank.rank} of ${rank.of}, ${rank.prebuilt ? 'within' : 'out of'} the prebuilt target of ${rank.take}`] : []),

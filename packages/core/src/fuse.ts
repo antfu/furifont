@@ -100,8 +100,20 @@ function sourcesOf(evidence: Evidence): number {
   return evidence.sources | (level ? sourceBit(level) : 0) | ((evidence.uses ?? 0) >= MIN_USES ? sourceBit('tatoeba') : 0)
 }
 
-/** How common a run's reading is, by the most telling of its sources. */
-function runScore(evidence: Evidence): number {
+/** Kanji up to this many are scored as the sources say; each one more costs {@link LONG_PENALTY} points. */
+const LONG_RUN = 4
+const LONG_PENALTY = 2
+
+/** The lowest score still in the tier of `score`: a long run scores lower, but never as another kind of word. */
+const tierFloor = (score: number): number => score > SCORE.tagged ? SCORE.tagged + 1 : score > SCORE.used ? SCORE.used + 1 : score > SCORE.listed ? SCORE.listed + 1 : score
+
+/** How common a run's reading is, by the most telling of its sources, less for each kanji past {@link LONG_RUN}: a long word is rarer than its parts. */
+function runScore(evidence: Evidence, size: number): number {
+  const score = sourceScore(evidence)
+  return Math.max(tierFloor(score), score - Math.max(0, size - LONG_RUN) * LONG_PENALTY)
+}
+
+function sourceScore(evidence: Evidence): number {
   const uses = evidence.uses ?? 0
   return Math.max(
     evidence.rank ? scoreOf(1 / evidence.rank) : 0,
@@ -129,11 +141,11 @@ interface Scored {
  * kana are one, under the alignment that splits them most: 倉本 くら・もと
  * rather than くらもと.
  */
-function rankReadings(readings: Readings): [string, Reading][] {
+function rankReadings(readings: Readings, size: number): [string, Reading][] {
   const byKana = new Map<string, Scored>()
   for (const [key, evidence] of readings) {
     const spans = parseFurigana(key)
-    const reading = { key, spans, score: runScore(evidence), sources: sourcesOf(evidence), order: evidence.order ?? Infinity }
+    const reading = { key, spans, score: runScore(evidence, size), sources: sourcesOf(evidence), order: evidence.order ?? Infinity }
     const kana = spans.map(s => s.ruby).join('')
     const same = byKana.get(kana)
     if (!same) {
@@ -225,7 +237,7 @@ export function fuseDictionary(sources: DictionarySources): Dictionary {
   }
   for (const [run, name] of listedRuns(sources))
     evidenceOf(runs, run.text, formatFurigana(run.spans)).sources |= sourceBit(name)
-  const ranked = new Map([...runs].map(([text, readings]) => [text, new Map(rankReadings(readings))]))
+  const ranked = new Map([...runs].map(([text, readings]) => [text, new Map(rankReadings(readings, [...text].length))]))
   const lone = kanjiReadings(kanji)
   // A default only pins a reading, so it comes last among the run's.
   for (const run of sources.defaults.flatMap(notationRuns)) {

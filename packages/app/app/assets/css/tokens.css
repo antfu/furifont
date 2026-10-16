@@ -51,12 +51,17 @@ body {
 }
 :lang(ja) .display, :lang(zh) .display {
     letter-spacing: 0;
-    line-height: 1.8;
     word-break: auto-phrase;
+}
+:lang(ja) .display {
+    line-height: 1.8;
 }
 .hero-title {
     font-size: clamp(2.75rem, 6vw, 4.75rem);
 }
 :lang(ja) .hero-title, :lang(zh) .hero-title {
     font-size: clamp(2.25rem, 4.4vw, 3.5rem);
+}
+rt {
+    user-select: none;
 }

@@ -1,6 +1,6 @@
 # Furifont design
 
-A Japanese font that shows furigana (ruby) above kanji without changing the text. OpenType rules compiled from a dictionary choose each reading, so plain text stays plain: copy, paste, search and selection all see the original characters.
+A Japanese font that shows furigana above kanji without changing the text. OpenType rules compiled from a dictionary choose each reading, so plain text stays plain: copy, paste, search and selection all see the original characters.
 
 Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-font) proved the approach for pinyin. Furifont keeps its glyph model: one glyph per character and reading, the annotation above the em box, chosen by `rclt` chain rules. It differs in three ways:
 
@@ -10,7 +10,7 @@ Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-fo
 
 ## Goals
 
-- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and a variable font of every weight, from Source Han Sans JP and Source Han Serif JP, with hiragana or Hepburn romaji ruby. Katakana for on'yomi is a build option.
+- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and a variable font of every weight, from Source Han Sans JP and Source Han Serif JP, with hiragana or Hepburn romaji furigana. Katakana for on'yomi is a build option.
 - A build anyone can run with another base font, word list or options.
 - A local studio, served by Devframe, to tune, preview and build.
 - A static demo site that loads the prebuilt fonts.
@@ -19,8 +19,8 @@ Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-fo
 ## Out of scope
 
 - Personal names. From JMnedict, only stations and places are read.
-- Ruby on kana. Only kanji are annotated.
-- Vertical writing. The base font's `vert` feature is kept, but ruby glyphs are drawn for horizontal text only.
+- Furigana on kana. Only kanji are annotated.
+- Vertical writing. The base font's `vert` feature is kept, but furigana glyphs are drawn for horizontal text only.
 - Latin, digits, Chinese and Korean text, which are left as they are.
 
 ## Architecture
@@ -106,7 +106,11 @@ The score is the most telling of the reading's sources:
 - one Tatoeba's sentences use, spelled and read that way, at least 3 times scores 20 and its uses, up to 50;
 - one of the manual lists scores 15, a place name 10, any other JMdict word 5.
 
+A run of more than four kanji scores 2 points less for each kanji past the fourth, never below the lowest score of its kind (above 50 for a tagged word, 20 for one the sentences use, 5 for a listed one): a long word is rarer than its parts, and a `take` drops it first.
+
 A run's readings come ranked, the default first: the tagged ones, then those the sentences use, each in JMdict's order (a run read inside a longer form ranks after the word's own readings); then the lists', the place names' and the other JMdict words', by score. Readings of the same kana are one, under the alignment that splits them most, with every source of either: 倉本 くら・もと, from JMdict, JMnedict and the JR stations, not くらもと as well.
+
+`pruneRuns` then drops the runs the font reads right without them. A run is dropped when it has one reading, no JLPT level and no curated default, and the longest-match rules, with the words kept, split it into words whose default readings write its reading together: 公認会計士 is 公認 and 会計士; 三国町青葉台 is 三国町 and 青葉台. A kanji no word claims after another reads by its suffix reading (see Suffixes), so 妊娠高血圧症候群 is 妊娠, 高血圧, 症 and 候群. The runs are judged shortest first, so a dropped run never takes a part another one needs. A run the parts read otherwise stays: 資本主義 would read 資本主, which is a word, and leave 義 bare. Dropping words moves the suffix counts, so a suffix that no longer holds after a pass is not counted on, and the pass repeats until none moves. The parts take over the run's score and its priority tags, so any `take` or `skip` that reaches the run reaches them. A plan that narrows `sources` to where the run comes from but not its parts (`place` alone, whose parts are JMdict's words) reads the parts only. About 65,000 of 299,000 runs go, and the font reads every run of the dictionary as before with the default options.
 
 What no plan can use is left out: a run whose kanji are not all annotated, or whose annotation crosses a kana; a lone kanji of a list, or of a word no list tags but before okurigana; the on'yomi of kanji no reading uses.
 
@@ -116,7 +120,7 @@ A plan picks its words in four steps:
 
 1. **Sources.** Every run with a reading from the plan's `sources` (default: all of `jmdict`, `ichi`, `news`, `spec`, `gai`, `nf`, `tatoeba`, `place` and the manual lists). Its readings are those the lists or the sentences back, the default first; a run with none takes its first reading, which is no evidence for its kanji's own.
 2. **Removals.** A run is **skipped** whole when any of its readings is on the JLPT lists up to `skipJlpt` (`N4` covers N5 and N4); so is a form the dictionary keeps bare (月, 日, 年) or the user removes.
-3. **Skip and take.** Runs and lone kanji are sorted by score, and the `skip` most common are skipped (default 0); then `take` runs get ruby (default: all of them).
+3. **Skip and take.** Runs and lone kanji are sorted by score, and the `skip` most common are skipped (default 0); then `take` runs get furigana (default: all of them).
 4. **The user's words** (`words.add`), the curated defaults and the user's pins.
 
 Dropping only a known reading would leave another one as the default: 今日 would show こんにち. The curated defaults don't bring a skipped word back; the user's own words do. A skipped run stays bare: no place name claims it, it gets no selectors, and protection gives it no reading.
@@ -156,11 +160,11 @@ A kanji alone in its run has no context at all, so it is annotated only when one
 
 The evidence is how Tatoeba's sentences use the kanji alone, when they do so at least 20 times: the dictionary then scores each reading by its share of those uses, keeping a tagged reading's at 60 at most. Every word counts, tagged or not, so ゴミ箱 ごみばこ weighs against 箱 はこ only as often as it is written. A number written in digits counts for the kanji after it: ３人 is a use of 人 にん, which keeps 人 bare, since running text writes counters after digits more than the sentences do. Otherwise the evidence is the best weight of any priority-tagged word in which the kanji stands alone. 来る counts as く, き and こ equally, because its reading changes as it conjugates, and its uses in the sentences don't count. About 1,700 kanji pass, such as 桜, 駅, 箱 and 書. 人, 生 and 出 stay bare.
 
-On half of the sentences, reading the other half, this takes lone kanji read right from 59% to 81%, and read wrong from 3.5% to 1.8%. 方 and 入 lose their ruby: the lists favoured かた and い, which the sentences show is half the uses.
+On half of the sentences, reading the other half, this takes lone kanji read right from 59% to 81%, and read wrong from 3.5% to 1.8%. 方 and 入 lose their furigana: the lists favoured かた and い, which the sentences show is half the uses.
 
-A lone kanji is skipped like a word when its dominant reading is: 私 わたし scores high and is on the N5 list. `take` doesn't limit lone kanji. With `isolated` off, no lone kanji gets ruby, and a pinned one only orders its readings.
+A lone kanji is skipped like a word when its dominant reading is: 私 わたし scores high and is on the N5 list. `take` doesn't limit lone kanji. With `isolated` off, no lone kanji gets furigana, and a pinned one only orders its readings.
 
-The rule is class-based: no lone-kanji reading applies when a Han glyph comes right before or after it. That includes ruby and variant glyphs.
+The rule is class-based: no lone-kanji reading applies when a Han glyph comes right before or after it. That includes furigana and variant glyphs.
 
 ### Suffixes
 
@@ -168,7 +172,7 @@ A kanji that no word claims, right after another kanji, is most often a suffix: 
 
 A suffix that starts more of the dictionary's runs than it ends, such as 大, 小 or 都, gets its reading only at the end of a run. Before another kanji it may start a word the font doesn't know. Suffixes follow `isolated`, and protection counts them.
 
-The audit (below) measured the effect. Without suffixes, 79.6% of the kanji in the dictionary's runs got ruby; with them, 83.4%. Text made of three words around a suffix went from 81% to 97%, with no new misreadings.
+The audit (below) measured the effect. Without suffixes, 79.6% of the kanji in the dictionary's runs got furigana; with them, 83.4%. Text made of three words around a suffix went from 81% to 97%, with no new misreadings.
 
 Every kanji also gets an ordered list of its readings for the selectors: each reading with at least 2% of the evidence, then the readings it has before okurigana in untagged words (奉 たてまつ, for 奉る). These last ones give selectors a reading to pick for verbs too rare to rank. A skipped lone kanji gets no list.
 
@@ -183,18 +187,18 @@ Protected runs become rules themselves, so the check repeats until nothing chang
 
 ### Glyphs
 
-Each glyph is keyed by what it draws: one or more base characters plus ruby spans. Every word sharing a reading therefore shares the glyph. A run whose reading spans several kanji (今日 きょう) becomes one ligature glyph for the whole run. Single substitutions are packed into `rb_<n>` lookups, so that each lookup maps an input glyph only once.
+Each glyph is keyed by what it draws: one or more base characters plus furigana spans. Every word sharing a reading therefore shares the glyph. A run whose reading spans several kanji (今日 きょう) becomes one ligature glyph for the whole run. Single substitutions are packed into `rb_<n>` lookups, so that each lookup maps an input glyph only once.
 
 ### Feature file
 
 | Lookup | Feature | Role |
 | --- | --- | --- |
-| `rb_*`, `lig_*`, `isolated`, `suffixes` | (nested) | Base or variant glyph to ruby glyph |
+| `rb_*`, `lig_*`, `isolated`, `suffixes` | (nested) | Base or variant glyph to furigana glyph |
 | `furigana` | `rclt` | Chain rules, longest first per first glyph; then the suffix and lone-kanji class rules in their own subtable |
 | `alternates` | `salt` | `salt` n picks the nth reading of a kanji, before `furigana` sees it |
 | `variant_readings` | `rclt` | A selector no word claimed picks the kanji's own reading |
 | `variants_off` | `ccmp` | Variant glyphs left over go back to plain kanji, for example when `rclt` is off |
-| `ruby_off`, `ruby_off_ligatures` | `ss01` | Ruby glyphs back to their bases |
+| `ruby_off`, `ruby_off_ligatures` | `ss01` | Furigana glyphs back to their bases |
 
 The order of these lookups matters more than their features. Shapers apply lookups in lookup-list order, so the fallbacks only see what `furigana` left.
 
@@ -206,12 +210,12 @@ Each sequence of kanji + variation selector in VS225..VS240 is mapped in `cmap` 
 
 | Selector | Meaning |
 | --- | --- |
-| VS225 (U+E01E0) | No ruby on this kanji |
+| VS225 (U+E01E0) | No furigana on this kanji |
 | VS226 + n (U+E01E1 + n) | Reading n + 1 |
 
 After the first kanji of a pattern with several readings, a selector picks the word's reading: 市 + VS227 + 場 is しじょう. After any other kanji, the selector picks that kanji's own reading. Each kanji's readings are ordered by evidence.
 
-The rules always replace a placeholder: with a ruby glyph, or with the plain kanji through `variants_off`. Placeholders therefore cost nothing in outlines. The reading lists ship as `<font>.ivs.json`, with the reading each lone kanji shows by default (`lone`), and on the demo's reference page.
+The rules always replace a placeholder: with a furigana glyph, or with the plain kanji through `variants_off`. Placeholders therefore cost nothing in outlines. The reading lists ship as `<font>.ivs.json`, with the reading each lone kanji shows by default (`lone`), and on the demo's reference page.
 
 ### Salt
 
@@ -221,7 +225,7 @@ A selector is a character in the text, and it shows up in copy and paste. Markup
 
 The bookmarklet and the userscript set a page that is not Furifont's in Furifont. Each element that holds Japanese, and each text field, gets `data-furifont="n"`, and a rule in the page's adopted stylesheet puts Furifont in front of that element's own font stack, the nth the page uses: `font-family: "Furifont Sans", "Google Sans", Roboto, sans-serif`. The faces Furifont adds have a `unicode-range` of kanji, kana, CJK punctuation, full-width forms and the variation selectors. So the page's fonts keep everything else: Latin text, and the icon fonts that draw ligatures (`search`) or private-use code points, as on Google Maps. A stack that is monospaced, by its generic family or by its first family's name, sets code and is left alone.
 
-An installed Furifont needs no download: its faces come from `local()`, each weight by its full name. Otherwise the site's variable font downloads, which draws every weight, bold included. Of the elements Furifont sets, those with a line height under 1.6 em also get `data-furifont-tight`, which sets `line-height: normal` for the ruby.
+An installed Furifont needs no download: its faces come from `local()`, each weight by its full name. Otherwise the site's variable font downloads, which draws every weight, bold included. Of the elements Furifont sets, those with a line height under 1.6 em also get `data-furifont-tight`, which sets `line-height: normal` for the furigana.
 
 Each carries its own version. Once Furifont is on, the bookmarklet on each click and the userscript once a day fetch `/version.json`, the release the site serves. A toast links to a newer bookmarklet or userscript, and to the downloads when the installed font is older. A page cannot read a font's tables, so each font maps 。 and VS1 (`VERSION_PROBE` in core) to an empty glyph two ems wide plus its revision, which the page measures on a canvas: `0.1.2` is 2.102 ems. A font from before it draws the 。 alone, an em wide at most. When the site cannot say, as under a CSP, nothing shows.
 
@@ -249,20 +253,20 @@ The longest pair a run of kanji in a text starts with decides its reading.
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `rubyScale` | 0.4 | Ruby size relative to the base characters |
-| `rubyGap` | 0.05 em | Space between the top of the ideographic em box and the ruby |
-| `compressionFloor` | 0.6 | Ruby is squeezed horizontally down to this scale, then overhangs |
-| `maxRubyWidth` | 1.6 em | The widest a ruby may get, overhanging both sides equally |
+| `rubyScale` | 0.4 | Furigana size relative to the base characters |
+| `rubyGap` | 0.05 em | Space between the top of the ideographic em box and the furigana |
+| `compressionFloor` | 0.6 | Furigana is squeezed horizontally down to this scale, then overhangs |
+| `maxRubyWidth` | 1.6 em | The widest a furigana may get, overhanging both sides equally |
 
-The em box comes from the BASE table's `ideo` baseline, and falls back to the typographic ascender. `hhea.ascent` and `usWinAscent` are raised to cover the ruby: from 1160 to 1330 for Source Han Sans JP.
+The em box comes from the BASE table's `ideo` baseline, and falls back to the typographic ascender. `hhea.ascent` and `usWinAscent` are raised to cover the furigana: from 1160 to 1330 for Source Han Sans JP.
 
-Advance widths do not change, so line breaking and justification match the base font. The default line height grows to about 1.6. A smaller `line-height` clips the ruby. This is documented, not worked around.
+Advance widths do not change, so line breaking and justification match the base font. The default line height grows to about 1.6. A smaller `line-height` clips the furigana. This is documented, not worked around.
 
-Kana ruby uses the base font's own kana. Romaji uses its Latin glyphs. Source Han Sans' `ruby` feature only covers five glyphs, so it is not used.
+Kana furigana uses the base font's own kana. Romaji uses its Latin glyphs. Source Han Sans' `ruby` feature only covers five glyphs, so it is not used.
 
-## Ruby scripts
+## Furigana scripts
 
-| `rubyScript` | Ruby text |
+| `furiganaScript` | Furigana text |
 | --- | --- |
 | `hiragana` | The aligned reading |
 | `katakanaOn` | Readings that match one of the kanji's on'yomi in KANJIDIC2, allowing rendaku and sokuon (学 がっ in 学校), in katakana; kun'yomi in hiragana |
@@ -274,8 +278,8 @@ Kana ruby uses the base font's own kana. Romaji uses its Latin glyphs. Source Ha
 
 1. **Load.** It loads the base font, subsetting it first for previews with hb-subset, keeping every layout feature and name. CFF2 variable fonts, WOFF, WOFF2 and collections are refused; TrueType variable fonts are built on, see [Variable fonts](#variable-fonts).
 2. **Check the budget.** It fails if the glyphs would pass 65,535.
-3. **Draw.** HarfBuzz draws the base glyphs. Each planned glyph puts the bases side by side and centers each ruby over its span. Points are rounded once, after the transform.
-4. **Append the glyphs.** CFF fonts keep their charstrings and subroutines as bytes. New charstrings use the shortest line and curve operators, in the Private DICT of their first base. In CID-keyed fonts they take free CIDs, since a subset keeps the original ones. TrueType fonts get composite glyphs, which refer to their bases and ruby scaled and moved, and a long `loca`. `hmtx`, `vmtx`, `maxp`, `post` names and the bounding boxes grow to match. `hdmx` and `LTSH`, which list every glyph, are dropped.
+3. **Draw.** HarfBuzz draws the base glyphs. Each planned glyph puts the bases side by side and centers each furigana over its span. Points are rounded once, after the transform.
+4. **Append the glyphs.** CFF fonts keep their charstrings and subroutines as bytes. New charstrings use the shortest line and curve operators, in the Private DICT of their first base. In CID-keyed fonts they take free CIDs, since a subset keeps the original ones. TrueType fonts get composite glyphs, which refer to their bases and furigana scaled and moved, and a long `loca`. `hmtx`, `vmtx`, `maxp`, `post` names and the bounding boxes grow to match. `hdmx` and `LTSH`, which list every glyph, are dropped.
 5. **Map the variants** in `cmap` format 14, beside the font's own sequences. Empty format 14 subtables are dropped, because browsers reject them.
 6. **Compile the features.** The compiler reads the feature file in the shape `emitFea` writes it, and resolves `uniXXXX` names through the base cmap, so a kanji glyph shared by two codepoints, such as a Kangxi radical's, needs no renaming. A subtable that overflows its 16-bit offsets is split by first glyph, which keeps every rule's meaning.
 7. **Merge.** Lookups are appended to the base font's GSUB, all as Extension lookups; the base font's own point into its original subtables, copied unchanged. A feature the base font already has (such as `ccmp`) is extended, since a language system uses one record per tag. New features are registered in every language system.
@@ -283,10 +287,10 @@ Kana ruby uses the base font's own kana. Romaji uses its Latin glyphs. Source Ha
 
 ### Variable fonts
 
-A TrueType variable font, such as Source Han's, varies its own glyphs. The new composites follow them: a heavier kanji brings its heavier ruby. What the composites cannot vary by themselves is where each component sits, since kana and kanji keep their advances but Latin letters widen with the weight.
+A TrueType variable font, such as Source Han's, varies its own glyphs. The new composites follow them: a heavier kanji brings its heavier furigana. What the composites cannot vary by themselves is where each component sits, since kana and kanji keep their advances but Latin letters widen with the weight.
 
 - The compiler lays each glyph out again at both ends of every axis. The components' moves there go into `gvar`, with a peak at -1 or 1 on that axis. That is exact for a two-master design such as Source Han, whose glyphs vary linearly between ExtraLight and Heavy.
-- A component's scale cannot vary, so each ruby is squeezed as tight as its widest end needs.
+- A component's scale cannot vary, so each furigana is squeezed as tight as its widest end needs.
 - The bases' advances must not vary, so the new glyphs keep a fixed advance. In `HVAR` and `VVAR` each new glyph takes its first base's advance variation, which is none. Side-bearing maps, which would not cover the new glyphs, are dropped.
 - The named instances' PostScript names are renamed after the family (`FurifontSansVF-Bold`), since Source Han's carry the Reserved Font Name. The other names describe the default instance, ExtraLight.
 
@@ -311,28 +315,28 @@ On the static demo site the studio page finds no server and explains how to star
 
 - **core** (vitest): kana and romaji conversion, runs, notation, selection, skipping, defaults, pins, lone kanji, suffixes, protection, preview filtering, and a snapshot of the feature file.
 - **dictionary**: the compiled data plans sensible defaults (今日 きょう, 明日 あした, 出来 でき), reads places (新宿 しんじゅく) and pairs (来ない こ, 下りた お, 行って null).
-- **compiler**: compiles against four committed subsets of Source Han Sans JP: CID-keyed CFF, name-keyed CFF and TrueType without GSUB, and the variable TrueType font. It shapes with harfbuzzjs and checks words, protection, lone kanji, suffixes, selectors, `ss01`, metrics, the WOFF2 and a subset preview; on the variable font, ruby at every weight, romaji kept centered as the letters widen, and instance names. It also checks that `createRubyReader` predicts what HarfBuzz shapes for every run of up to four of the fixture's kanji.
+- **compiler**: compiles against four committed subsets of Source Han Sans JP: CID-keyed CFF, name-keyed CFF and TrueType without GSUB, and the variable TrueType font. It shapes with harfbuzzjs and checks words, protection, lone kanji, suffixes, selectors, `ss01`, metrics, the WOFF2 and a subset preview; on the variable font, furigana at every weight, romaji kept centered as the letters widen, and instance names. It also checks that `createRubyReader` predicts what HarfBuzz shapes for every run of up to four of the fixture's kanji.
 - **cli**: config loading, and a real `buildFont` at the size estimated.
 - **e2e** (Playwright, on Chromium, Firefox and WebKit, with the font as WOFF2):
-  - ruby differs from `ss01`;
-  - a suffix gets ruby at the end of a run, and a prefix-heavy one stays bare inside a run;
+  - furigana differs from `ss01`;
+  - a suffix gets furigana at the end of a run, and a prefix-heavy one stays bare inside a run;
   - VS227 differs from the default, and VS225 matches plain text;
   - selection returns the source text;
-  - ruby is not clipped at `line-height: normal`;
+  - furigana is not clipped at `line-height: normal`;
   - wrapped lines do not overlap;
-  - a variable font's ruby changes with `font-weight` and stays in its line.
+  - a variable font's furigana changes with `font-weight` and stays in its line.
 
   In Chromium, the studio previews, plans, estimates and builds a font, and keeps its settings across reloads.
 
-### Ruby reader and audit
+### Furigana reader and audit
 
-`createRubyReader(plan)` in `@furifont/compiler` reads text the way a font built from the plan shows it, without a font. It splits the text into Han runs, as browsers do. It then applies the `rclt` lookups of `plan.fea` in lookup order, and returns the ruby over the text. It leaves out variation selectors, `salt` and the base font's own lookups. On a full Source Han Sans JP, it gave the same ruby as HarfBuzz for all 411,579 texts tried: every run of the dictionary, and runs joined in twos and threes.
+`createRubyReader(plan)` in `@furifont/compiler` reads text the way a font built from the plan shows it, without a font. It splits the text into Han runs, as browsers do. It then applies the `rclt` lookups of `plan.fea` in lookup order, and returns the furigana over the text. It leaves out variation selectors, `salt` and the base font's own lookups. On a full Source Han Sans JP, it gave the same furigana as HarfBuzz for all 411,579 texts tried: every run of the dictionary, and runs joined in twos and threes.
 
 The dictionary's sample test reads the site's sample texts through it. `pnpm dict:audit` reads every run of the dictionary through a font with every kanji and lists the runs it shows wrong:
 
 - **misread**: a reading none of the run's words has;
-- **partial**: ruby on only some of its kanji;
-- **bare**: no ruby on a common word.
+- **partial**: furigana on only some of its kanji;
+- **bare**: no furigana on a common word.
 
 It then pairs the most common runs (`--words`, 1,000 by default) as running text does, and lists the pairs that show a reading of neither word. Use it to check a change to the planner or the curated lists before shaping anything.
 
@@ -360,8 +364,8 @@ The site's pages, the bookmarklet and the userscript ask for `/fonts/<file>?v=<v
 
 ## Known limits
 
-- A word broken across lines is shaped as two runs, and may lose or change its ruby. In Chromium, `word-break: auto-phrase` keeps phrases together.
-- Inflected forms of verbs with ambiguous kanji (書く, 行く, 来ない) stay bare, because their okurigana is in another run. Selectors can add their ruby, and so can `salt` on a span: the bookmarklet and the userscript do.
+- A word broken across lines is shaped as two runs, and may lose or change its furigana. In Chromium, `word-break: auto-phrase` keeps phrases together.
+- Inflected forms of verbs with ambiguous kanji (書く, 行く, 来ない) stay bare, because their okurigana is in another run. Selectors can add their furigana, and so can `salt` on a span: the bookmarklet and the userscript do.
 - A page that renders its own text nodes (a framework updating text in place) can overwrite or duplicate what the span wrapper split. A reader can turn the wrapper off.
 - An okurigana pair has no context beyond its own kana: 行った stays ambiguous, and a noun written as kanji and kana wins over a verb's stem (降り is ふり, also in 降り口).
 - A rare word that no common word covers, but that is spelled like a place, is read as the place.

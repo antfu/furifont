@@ -46,9 +46,9 @@ const metricRanges = [
   { key: 'compressionFloor', label: 'squeeze', min: 0.3, max: 1, step: 0.05, digits: 2 },
   { key: 'maxRubyWidth', label: 'maxWidth', min: 1, max: 3, step: 0.1, digits: 1 },
 ] as const
-const rubyScript = computed({
-  get: () => config.value.rubyScript ?? 'hiragana',
-  set: value => config.value.rubyScript = value,
+const furiganaScript = computed({
+  get: () => config.value.furiganaScript ?? 'hiragana',
+  set: value => config.value.furiganaScript = value,
 })
 
 const isOn = (source: WordSource): boolean => (config.value.sources ?? WORD_SOURCES).includes(source)
@@ -71,7 +71,7 @@ function toggle(source: WordSource): void {
       </datalist>
     </UiField>
     <UiField :label="$t('customize.options.script')">
-      <UiSegmented v-model="rubyScript" :label="$t('customize.options.script')" :options="scripts" />
+      <UiSegmented v-model="furiganaScript" :label="$t('customize.options.script')" :options="scripts" />
     </UiField>
     <div class="h-px bg-[var(--ff-line)]" />
     <!-- In the planner's order: the sources' words, those filtered out, then skip and take by score. -->

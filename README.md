@@ -23,14 +23,14 @@ Check out the demo and playground on **[furifont.antfu.me](https://furifont.antf
 
 ## How it works
 
-Furifont is compiled from Source Han Sans JP or Source Han Serif JP. A build step reads a dictionary of thousands of words and draws the ruby into new glyphs. For each word, the font holds a ligature: 今日 becomes one glyph with きょう above it. Longer words win (日本語 before 日本), and a kanji with no clear reading stays bare. Details on the [website](https://furifont.antfu.me) and in [docs/design.md](docs/design.md).
+Furifont is compiled from Source Han Sans JP or Source Han Serif JP. A build step reads a dictionary of thousands of words and draws the furigana into new glyphs. For each word, the font holds a ligature: 今日 becomes one glyph with きょう above it. Longer words win (日本語 before 日本), and a kanji with no clear reading stays bare. Details on the [website](https://furifont.antfu.me) and in [docs/design.md](docs/design.md).
 
 > [!WARNING]
 > Furigana might be incorrect, due to the limits of fonts: a font sees one run of kanji at a time, not the sentence around it. Keep that in mind when you read.
 
 ## Download
 
-Each [release](https://github.com/antfu/furifont/releases/latest) has Sans and Serif, in Hiragana and Romaji, Regular as OpenType and WOFF2, and a variable font of every weight from ExtraLight to Heavy (`Furifont Sans VF`), as TrueType and WOFF2, whose ruby follows the weight of the text. Set `line-height` to 1.6 or more so the ruby is not clipped.
+Each [release](https://github.com/antfu/furifont/releases/latest) has Sans and Serif, in Hiragana and Romaji, Regular as OpenType and WOFF2, and a variable font of every weight from ExtraLight to Heavy (`Furifont Sans VF`), as TrueType and WOFF2, whose furigana follows the weight of the text. Set `line-height` to 1.6 or more so the furigana is not clipped.
 
 ## Use on websites
 
@@ -38,7 +38,7 @@ The [website](https://furifont.antfu.me) has a bookmarklet and a [userscript](ht
 
 ## Build your own
 
-Choose another base font, word list, ruby letters or sizes. Needs Node 22.18 or later.
+Choose another base font, word list, furigana letters or sizes. Needs Node 22.18 or later.
 
 ```sh
 npx furifont dev     # Customize: live preview in your browser

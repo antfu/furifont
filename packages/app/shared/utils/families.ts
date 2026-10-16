@@ -13,7 +13,7 @@ export interface Family {
 }
 
 /** The prebuilt fonts, as `PREBUILT` in core lists them. */
-export const FAMILIES: Family[] = PREBUILT.fonts.map(({ family, face, rubyScript }) => ({ family, stem: family.replaceAll(' ', ''), face, script: rubyScript }))
+export const FAMILIES: Family[] = PREBUILT.fonts.map(({ family, face, furiganaScript }) => ({ family, stem: family.replaceAll(' ', ''), face, script: furiganaScript }))
 
 /** Static weights on the release, beside the variable font of every weight that the site serves. */
 export const WEIGHTS = PREBUILT.weights

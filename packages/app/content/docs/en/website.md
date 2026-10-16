@@ -1,6 +1,6 @@
 # Use on your website
 
-Furifont is a normal web font. Load it with `@font-face`, set it on your Japanese text, and the ruby shows. Your HTML does not change: no `<ruby>` tags and no JavaScript.
+Furifont is a normal web font. Load it with `@font-face`, set it on your Japanese text, and the furigana shows. Your HTML does not change: no `<ruby>` tags and no JavaScript.
 
 ## Load the font
 
@@ -41,7 +41,7 @@ To try Furifont without hosting the files, you can load them from this site. The
 ::docs-example{text="今日は日本語の勉強をします。"}
 ::
 
-**Give the lines room.** The ruby is drawn above the kanji, inside the line. With a `line-height` under 1.6, the ruby of one line touches the line above it.
+**Give the lines room.** The furigana is drawn above the kanji, inside the line. With a `line-height` under 1.6, the furigana of one line touches the line above it.
 
 **Keep your Latin font.** Put your own font first. It sets the Latin letters, and the browser takes the kanji and kana from Furifont:
 
@@ -51,7 +51,7 @@ body {
 }
 ```
 
-**Align with other fonts.** Furifont makes its line taller at the top, to make room for the ruby. Next to icons or other fonts, its text can then sit a little low. These descriptors put the kanji in the middle of the line, the way this site does:
+**Align with other fonts.** Furifont makes its line taller at the top, to make room for the furigana. Next to icons or other fonts, its text can then sit a little low. These descriptors put the kanji in the middle of the line, the way this site does:
 
 ```css
 @font-face {
@@ -66,9 +66,9 @@ body {
 
 ## CSS controls
 
-### Turn the ruby off
+### Turn the furigana off
 
-Stylistic set 1 (`ss01`) shows the plain kanji. Use it where ruby gets in the way, such as headings, buttons or tables:
+Stylistic set 1 (`ss01`) shows the plain kanji. Use it where furigana gets in the way, such as headings, buttons or tables:
 
 ```css
 h1, button {
@@ -79,7 +79,7 @@ h1, button {
 ::docs-example{text="今日は日本語の勉強をします。" css="font-feature-settings: 'ss01'"}
 ::
 
-If your page already has `<ruby>` markup, turn Furifont's ruby off inside it, so the text does not get ruby twice:
+If your page already has `<ruby>` markup, turn Furifont's furigana off inside it, so the text does not get furigana twice:
 
 ```css
 ruby {
@@ -89,7 +89,7 @@ ruby {
 
 ### Weight
 
-The variable font has every weight from 250 (ExtraLight) to 900 (Heavy). The ruby follows the weight of the kanji:
+The variable font has every weight from 250 (ExtraLight) to 900 (Heavy). The furigana follows the weight of the kanji:
 
 ```css
 .light { font-weight: 250; }
@@ -104,7 +104,7 @@ The variable font has every weight from 250 (ExtraLight) to 900 (Heavy). The rub
 
 ### Size
 
-The ruby is part of the font, so it scales with `font-size`. Nothing else needs to change.
+The furigana is part of the font, so it scales with `font-size`. Nothing else needs to change.
 
 ### Choose a reading {#choose-a-reading}
 
@@ -122,7 +122,7 @@ Furifont shows the most common reading of each word. To show another one, set `s
 
 The span must hold the whole word, and only that word. `salt` acts on the first kanji of the run of kanji in the span.
 
-`font-feature-settings` replaces the whole list from the parent. To keep the ruby off and choose a reading at the same time, write both in one declaration.
+`font-feature-settings` replaces the whole list from the parent. To keep the furigana off and choose a reading at the same time, write both in one declaration.
 
 To choose a reading in the text itself, use a variation selector. See [Choose a reading](/docs/readings), which also tells where to find the reading numbers of each word.
 

@@ -9,7 +9,7 @@
  */
 import type { Dictionary, DictionaryEntry } from '@furifont/core'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { createFontPlanner, formatDictionary, formatFurigana, fuseDictionary, MANUAL_SOURCES, parseNotation, resolveOptions } from '@furifont/core'
+import { createFontPlanner, formatDictionary, formatFurigana, fuseDictionary, MANUAL_SOURCES, parseNotation, pruneRuns, resolveOptions } from '@furifont/core'
 import { createOkuriganaReader } from '@furifont/helper-web'
 import * as v from 'valibot'
 import { formatPacked, packOkurigana, prunePairs, unpackOkurigana } from '../src/okurigana.ts'
@@ -72,7 +72,7 @@ const entries = jmdict.entries.map(([form, furigana, nf, priority, order, conjug
   return { form, furigana, nf, priority, order, ...(conjugates && { conjugatesReading: true }), ...(level && { jlpt: level }), ...(n && { tatoeba: n }) }
 })
 
-const dictionary = fuseDictionary({
+const fused = fuseDictionary({
   versions: jmdict.sources,
   onyomi: jmdict.onyomi,
   entries,
@@ -81,6 +81,9 @@ const dictionary = fuseDictionary({
   defaults: allOverrides.filter(o => !isBare(o)).map(notationOf),
   bare: allOverrides.filter(isBare).map(notationOf),
 })
+
+// A run its words already read right adds nothing: its parts take over its score and sources.
+const { dictionary, pruned } = pruneRuns(fused)
 
 /** Every character the dictionary writes, and the kana: the font a base font with every kanji would give. */
 function fullCoverage(dictionary: Dictionary): Set<number> {
@@ -98,4 +101,4 @@ const okurigana = prunePairs(pairs, (run, reading) => reader.saltOf(run, reading
 await mkdir(DATA, { recursive: true })
 await writeFile(new URL('dictionary.json', DATA), formatDictionary(dictionary))
 await writeFile(new URL('okurigana.json', DATA), formatPacked(packOkurigana(okurigana)))
-console.log(`Wrote ${Object.keys(dictionary.runs).length} runs, ${Object.keys(dictionary.kanji).length} kanji and ${okurigana.length} of ${pairs.length} okurigana pairs`)
+console.log(`Wrote ${Object.keys(dictionary.runs).length} runs (${pruned.length} dropped, read right by their parts), ${Object.keys(dictionary.kanji).length} kanji and ${okurigana.length} of ${pairs.length} okurigana pairs`)

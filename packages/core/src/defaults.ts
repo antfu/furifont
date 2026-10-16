@@ -9,7 +9,7 @@ export const DEFAULTS = {
   /** What a plan does when a config leaves an option out. */
   plan: {
     family: 'Furifont Sans',
-    rubyScript: 'hiragana',
+    furiganaScript: 'hiragana',
     /** No word is left bare for being common; every word of every source gets ruby. */
     skip: 0,
     isolated: true,
@@ -33,10 +33,10 @@ export const DEFAULTS = {
 export const PREBUILT = {
   /** Each Source Han face in each ruby script. The first is the default family. */
   fonts: [
-    { family: 'Furifont Sans', base: 'Source Han Sans JP', face: 'sans', rubyScript: 'hiragana' },
-    { family: 'Furifont Sans Romaji', base: 'Source Han Sans JP', face: 'sans', rubyScript: 'hepburn' },
-    { family: 'Furifont Serif', base: 'Source Han Serif JP', face: 'serif', rubyScript: 'hiragana' },
-    { family: 'Furifont Serif Romaji', base: 'Source Han Serif JP', face: 'serif', rubyScript: 'hepburn' },
+    { family: 'Furifont Sans', base: 'Source Han Sans JP', face: 'sans', furiganaScript: 'hiragana' },
+    { family: 'Furifont Sans Romaji', base: 'Source Han Sans JP', face: 'sans', furiganaScript: 'hepburn' },
+    { family: 'Furifont Serif', base: 'Source Han Serif JP', face: 'serif', furiganaScript: 'hiragana' },
+    { family: 'Furifont Serif Romaji', base: 'Source Han Serif JP', face: 'serif', furiganaScript: 'hepburn' },
   ],
   /** The static weights of the release, each of the base's weights by name. Bold is the variable font's. */
   weights: [
@@ -53,10 +53,10 @@ export const PREBUILT = {
   /** Options set on every prebuilt font over the defaults above, such as `{ take: 20000 }`. */
   options: { take: 40000 },
 } as const satisfies {
-  fonts: readonly { family: string, base: string, face: 'sans' | 'serif', rubyScript: 'hiragana' | 'hepburn' }[]
+  fonts: readonly { family: string, base: string, face: 'sans' | 'serif', furiganaScript: 'hiragana' | 'hepburn' }[]
   weights: readonly { style: string, weight: number }[]
   variable: { style: string, weights: readonly [number, number] }
-  options: Omit<PlanOptionsInput, 'family' | 'rubyScript'>
+  options: Omit<PlanOptionsInput, 'family' | 'furiganaScript'>
 }
 
 /**
