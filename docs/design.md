@@ -154,6 +154,8 @@ The readings of a pattern are ranked:
 
 The curated list is short and commented. It covers words where the data cannot tell readings apart (出来 でき, not しゅったい) and forms that drop okurigana that running text adds back (支払 しはら, for 支払い).
 
+Okurigana pairs have their own curated list, `raw/okurigana.overrides.jsonc`: a pair such as `上[うえ]に` replaces the generated pair with the same key, and a longer generated key still wins over a shorter one, so 入って needs its own entry. `pnpm dict:override` writes an entry with kana after its kanji there.
+
 ### Lone kanji
 
 A kanji alone in its run has no context at all, so it is annotated only when one reading has at least `isolatedMinShare` (default 0.8) of the evidence.

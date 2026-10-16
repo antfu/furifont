@@ -38,5 +38,17 @@
   "凪[なぎ]",
   // 再掲載 is read さいけいさい; the font left 載 without a reading.
   // reported by ささ 12169a85-50db-44dc-a1ad-57a218f8a0f0
-  "再[さい]掲[けい]載[さい]"
+  "再[さい]掲[けい]載[さい]",
+  // 合字 is a ligature; it ranks too low to be in the prebuilt set.
+  "合[ごう]字[じ]",
+  // 上側 is うわがわ in dictionaries; the font showed うわかわ, the first-listed form. うえがわ is common in speech but not a dictionary reading.
+  "上[うわ]側[がわ]",
+  // 関数 ranks too low to be in the prebuilt set.
+  "関[かん]数[すう]",
+  // 親要素 (parent element) ranks too low to be in the prebuilt set.
+  "親[おや]要[よう]素[そ]",
+  // 実装 (implementation) ranks too low to be in the prebuilt set.
+  "実[じっ]装[そう]",
+  // Alone, 編 is へん (編集, 前編); あ comes only from 編む, whose okurigana a font cannot see.
+  "編[へん]"
 ]

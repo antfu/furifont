@@ -20,7 +20,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
 import { parseNotation } from '@furifont/core'
-import { DATASETS, formOf, notationOf, overridesFile, rawFile, readAllOverrides } from './raw.ts'
+import { DATASETS, formOf, notationOf, overridesFile, parsePair, rawFile, readAllOverrides } from './raw.ts'
 
 const { positionals: [entry, ...extra], values: args } = parseArgs({
   allowPositionals: true,
@@ -49,18 +49,22 @@ if (entry.includes('"') || entry.includes('\\'))
 if (args.report && !args.by)
   console.warn('No --by: crediting the reporter as anonymous.')
 
+// An entry with kana after its kanji is an okurigana pair: `上[うえ]に`, or `上が` to leave it to the font.
+const pair = parsePair(entry)
 const bare = !entry.includes('[')
-const form = bare
-  ? entry
-  : (() => {
-      try {
-        return parseNotation(entry).form
-      }
-      catch (error) {
-        return fail(`"${entry}" is not inline notation like 今日[きょう]: ${error instanceof Error ? error.message : error}`)
-      }
-    })()
-if (!HAN_ONLY.test(form))
+const form = pair
+  ? pair[0]
+  : bare
+    ? entry
+    : (() => {
+        try {
+          return parseNotation(entry).form
+        }
+        catch (error) {
+          return fail(`"${entry}" is not inline notation like 今日[きょう]: ${error instanceof Error ? error.message : error}`)
+        }
+      })()
+if (!pair && !HAN_ONLY.test(form))
   fail(`"${form}" is not a run of kanji: ${bare ? 'give kanji only for a bare run' : 'put the reading of every kanji in brackets, and leave okurigana out'}.`)
 
 /** The datasets that already hold `form` as a word of their own, in the order that reads best. */
@@ -83,8 +87,8 @@ async function holding(): Promise<Dataset[]> {
   return found
 }
 
-let source = args.source as Dataset | undefined
-if (source && !DATASETS.includes(source))
+let source = (pair ? 'okurigana' : args.source) as Dataset | 'okurigana' | undefined
+if (source && source !== 'okurigana' && !DATASETS.includes(source))
   fail(`--source must be one of ${DATASETS.join(', ')}.`)
 if (!source) {
   const [first, ...others] = await holding()
@@ -106,6 +110,8 @@ else if (args.level || args.uses) {
   fail('--level is for jlpt entries and --uses for tatoeba entries only.')
 }
 
+if (pair && args.source && args.source !== 'okurigana')
+  fail('An okurigana pair goes to okurigana only.')
 const file = overridesFile(source)
 const text = await readFile(file, 'utf8').catch((error: NodeJS.ErrnoException) => error.code === 'ENOENT'
   ? `// Curated overrides of ${source}, in inline notation. Add entries with \`pnpm dict:override\`.\n[\n]\n`

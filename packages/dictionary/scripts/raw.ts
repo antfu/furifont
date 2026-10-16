@@ -28,7 +28,7 @@ export type Override = string | [string, number]
 const OverridesSchema = v.array(v.union([v.string(), v.tuple([v.string(), v.pipe(v.number(), v.integer(), v.minValue(1))])]))
 
 export const rawFile = (name: string): URL => new URL(`${name}.json`, RAW)
-export const overridesFile = (name: Dataset): URL => new URL(`${name}.overrides.jsonc`, RAW)
+export const overridesFile = (name: Dataset | 'okurigana'): URL => new URL(`${name}.overrides.jsonc`, RAW)
 
 /** Where the string starting at `at` ends, past its closing quote. */
 function stringEnd(text: string, at: number): number {
@@ -61,7 +61,7 @@ export const formOf = (entry: Override): string => notationOf(entry).replace(/\[
 /** A bare entry has no reading in brackets. */
 export const isBare = (entry: Override): boolean => !notationOf(entry).includes('[')
 
-async function readOverrides(name: Dataset): Promise<Override[]> {
+async function readOverrides(name: Dataset | 'okurigana'): Promise<Override[]> {
   let text: string
   try {
     text = await readFile(overridesFile(name), 'utf8')
@@ -72,6 +72,31 @@ async function readOverrides(name: Dataset): Promise<Override[]> {
     throw error
   }
   return v.parse(OverridesSchema, JSON.parse(stripJsonc(text)))
+}
+
+const PAIR = /^((?:\p{sc=Han}+\[[^\]]+\])+)([^\p{sc=Han}[\]].*)$/u
+const BARE_PAIR = /^\p{sc=Han}+[^\p{sc=Han}[\]].*$/u
+
+/**
+ * An okurigana override as a pair: `上[うえ]に` reads 上 as うえ before に, and `上が`,
+ * with no reading, leaves it to the font. The key is the kanji and the kana, as in raw/okurigana.json.
+ */
+export function parsePair(entry: string): [key: string, reading: string | null] | undefined {
+  const pinned = PAIR.exec(entry)
+  if (pinned)
+    return [pinned[1]!.replace(/\[[^\]]*\]/g, '') + pinned[2], [...pinned[1]!.matchAll(/\[([^\]]+)\]/g)].map(m => m[1]).join('')]
+  const bare = BARE_PAIR.exec(entry)
+  return bare ? [bare[0], null] : undefined
+}
+
+/** The pairs of raw/okurigana.overrides.jsonc, which replace the generated ones. */
+export async function readPairOverrides(): Promise<[key: string, reading: string | null][]> {
+  return (await readOverrides('okurigana')).map((e) => {
+    const pair = parsePair(notationOf(e))
+    if (!pair)
+      throw new Error(`"${notationOf(e)}" in okurigana.overrides.jsonc is not a pair like 上[うえ]に.`)
+    return pair
+  })
 }
 
 export async function readAllOverrides(): Promise<Record<Dataset, Override[]>> {

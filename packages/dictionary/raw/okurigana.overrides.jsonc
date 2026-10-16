@@ -1,0 +1,28 @@
+// Curated okurigana pairs: a run of kanji with the kana after it, read as one
+// word. A pair here replaces the generated pair of raw/okurigana.json with the
+// same key. `上[うえ]に` reads 上 as うえ before に; `上が`, with no reading, leaves
+// it to the font. Add entries with `pnpm dict:override`.
+[
+  // 上に is うえに; the pairs hold only 上から, 上では and 上は for うえ.
+  "上[うえ]に",
+  // 上の is うえの, as in 上の階.
+  "上[うえ]の",
+  // 別の is べつの; the pairs hold 別に and 別と, not 別の.
+  "別[べつ]の",
+  // はいって; いって is rare outside 気に入って. The generated pair is left to the font.
+  "入[はい]って",
+  // はいった, as in 入った.
+  "入[はい]った",
+  // 開く is あく (a door opens) or ひらく (open a file, a menu); the generated pair leaves it to the font, and ひらく is the one a screen and a program use.
+  "開[ひら]く",
+  // 編む is あむ; the pairs have no entry for 編 before む.
+  "編[あ]む",
+  // 編む is あむ; the pairs have no entry for 編 before み.
+  "編[あ]み",
+  // 編む is あむ; the pairs have no entry for 編 before ま.
+  "編[あ]ま",
+  // 編む is あむ; the pairs have no entry for 編 before ん.
+  "編[あ]ん",
+  // 編む is あむ; the pairs have no entry for 編 before め.
+  "編[あ]め"
+]

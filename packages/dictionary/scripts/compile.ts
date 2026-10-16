@@ -13,7 +13,7 @@ import { createFontPlanner, formatDictionary, formatFurigana, fuseDictionary, MA
 import { createOkuriganaReader } from '@furifont/helper-web'
 import * as v from 'valibot'
 import { formatPacked, packOkurigana, prunePairs, unpackOkurigana } from '../src/okurigana.ts'
-import { isBare, notationOf, numberOf, rawFile, readAllOverrides } from './raw.ts'
+import { isBare, notationOf, numberOf, rawFile, readAllOverrides, readPairOverrides } from './raw.ts'
 
 const DATA = new URL('../data/', import.meta.url)
 
@@ -95,7 +95,8 @@ function fullCoverage(dictionary: Dictionary): Set<number> {
 // The reading lists of the font the default options build, which the site serves.
 const { ivs } = createFontPlanner(dictionary)(resolveOptions(), fullCoverage(dictionary)).report
 const reader = createOkuriganaReader({ pairs: {}, readings: ivs.kanji, words: ivs.words, lone: ivs.lone })
-const pairs = unpackOkurigana(packed)
+// A curated pair replaces the generated one of its key.
+const pairs = [...new Map([...unpackOkurigana(packed), ...await readPairOverrides()])]
 const okurigana = prunePairs(pairs, (run, reading) => reader.saltOf(run, reading) > 0)
 
 await mkdir(DATA, { recursive: true })
