@@ -95,7 +95,7 @@ function install(family: string): State {
     if (!reader)
       return
     // A kanji before hiragana, apart from code and what a reader edits.
-    const texts = textsIn(roots).filter(text => /\p{sc=Han}\p{sc=Hiragana}/u.test(text.nodeValue ?? '') && !text.parentElement!.closest('script,style,textarea,noscript,[contenteditable]:not([contenteditable=false]),[data-furifont-reading]'))
+    const texts = textsIn(roots).filter(text => /\p{sc=Han}\p{sc=Hiragana}/u.test(text.nodeValue ?? '') && !text.parentElement!.closest('script,style,textarea,noscript,ruby,[contenteditable]:not([contenteditable=false]),[data-furifont-reading]'))
     for (const text of texts) {
       // From the end, so the offsets before stay true.
       for (const { at, length, reading, salt } of reader.find(text.nodeValue ?? '').reverse()) {
@@ -119,8 +119,8 @@ function install(family: string): State {
       // `salt` n is the nth reading: the font counts up to 15 of them.
       const salts = Array.from({ length: 15 }, (_, i) => `[data-furifont-salt="${i + 1}"]{font-feature-settings:"salt" ${i + 1}!important}`).join('')
       const fonts = stacks.map((stack, i) => `[data-furifont="${i}"]{font-family:"${state.family}",${stack}!important}`).join('')
-      // Ruby needs a line height of about 1.6.
-      sheet.replaceSync(`${fonts}[data-furifont-tight]{line-height:normal!important}${salts}`)
+      // Ruby needs a line height of about 1.6. Text the page already sets in ruby gets the plain kanji of `ss01`.
+      sheet.replaceSync(`${fonts}[data-furifont-tight]{line-height:normal!important}ruby,ruby *{font-feature-settings:"ss01"!important}${salts}`)
     },
     okurigana: (config?: Okurigana): void => {
       const request = ++latest
