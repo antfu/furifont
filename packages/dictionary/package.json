@@ -1,7 +1,7 @@
 {
   "name": "@furifont/dictionary",
   "type": "module",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "JMdict, JMnedict and hand-kept word lists fused by the Han runs a font sees, compiled for Furifont",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "CC-BY-SA-4.0",

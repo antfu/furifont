@@ -1,7 +1,7 @@
 {
   "name": "@furifont/monorepo",
   "type": "module",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "private": true,
   "packageManager": "pnpm@12.11.2",
   "description": "A Japanese font that shows furigana without changing the text",
