@@ -47,6 +47,20 @@ describe('planner', () => {
     expect(Object.keys(plan({ skip: 4, take: 1 }).report.ivs.words)).toEqual(['今日'])
   })
 
+  it('fits `take: \'max\'` to the glyphs the base font has room for', () => {
+    const added = (p: Plan) => p.glyphs.length + p.variants.length + 1
+    const everyWord = plan()
+    const patterns = everyWord.report.stats.patterns
+    // Room for every word: all of them, as with no `take`.
+    expect(planFont(resolve({ take: 'max' }), coverage, undefined, added(everyWord.plan)).report.stats.patterns).toBe(patterns)
+    // Less room, so fewer words, and a plan that fits.
+    const tight = planFont(resolve({ take: 'max' }), coverage, undefined, added(plan({ take: 3 }).plan))
+    expect(tight.report.stats.patterns).toBeLessThan(patterns)
+    expect(added(tight.plan)).toBeLessThanOrEqual(added(plan({ take: 3 }).plan))
+    // No glyph budget, no fit.
+    expect(() => planFont(resolve({ take: 'max' }), coverage)).toThrow('glyph budget')
+  })
+
   it('selects tagged words that have no frequency bucket by their lists', () => {
     const entries = [...sources.entries, { form: '奉書', furigana: '0:ほう;1:しょ', nf: 0, priority: 'spec1', order: 0 }]
     const planner = createFontPlanner(fuseDictionary({ ...sources, entries }))

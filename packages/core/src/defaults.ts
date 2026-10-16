@@ -29,6 +29,9 @@ export const DEFAULTS = {
   },
 } as const
 
+/** Glyph IDs are 16 bits: a font holds at most this many glyphs. */
+export const GLYPH_LIMIT = 65535
+
 /** The prebuilt fonts, which each release carries; the site serves their variable WOFF2s. */
 export const PREBUILT = {
   /** Each Source Han face in each ruby script. The first is the default family. */
@@ -51,7 +54,7 @@ export const PREBUILT = {
     weights: [250, 900],
   },
   /** Options set on every prebuilt font over the defaults above, such as `{ take: 20000 }`. */
-  options: { take: 40000 },
+  options: { take: 'max' },
 } as const satisfies {
   fonts: readonly { family: string, base: string, face: 'sans' | 'serif', furiganaScript: 'hiragana' | 'hepburn' }[]
   weights: readonly { style: string, weight: number }[]

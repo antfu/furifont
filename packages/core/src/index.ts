@@ -1,4 +1,4 @@
-export { DEFAULTS, PREBUILT, VERSION_PROBE } from './defaults'
+export { DEFAULTS, GLYPH_LIMIT, PREBUILT, VERSION_PROBE } from './defaults'
 export type { DictionaryEntry, DictionarySources, HanRun, RubySpan } from './dictionary'
 export { formatNotation, hanRuns, isHan, parseFurigana, parseNotation } from './dictionary'
 export { formatFurigana, fuseDictionary } from './fuse'

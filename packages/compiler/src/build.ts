@@ -4,7 +4,7 @@ import type { FontNames } from './names'
 import type { Outline } from './outline'
 import type { Sfnt } from './sfnt'
 import type { SubsetWasm } from './subset'
-import { VERSION_PROBE } from '@furifont/core'
+import { GLYPH_LIMIT, VERSION_PROBE } from '@furifont/core'
 import * as hb from 'harfbuzzjs'
 import { tagAt, view } from './binary'
 import { Cff } from './cff'
@@ -19,7 +19,6 @@ import { readSfnt, writeSfnt } from './sfnt'
 import { subsetFont } from './subset'
 import { appendAdvanceMap, appendGlyphVariations } from './variations'
 
-const MAX_GLYPHS = 65535
 const PROBE_NAME = 'furifont.version'
 /** Per-glyph tables a new glyph count would invalidate; all optional. */
 const PER_GLYPH_TABLES = ['hdmx', 'LTSH']
@@ -109,8 +108,8 @@ async function openBase({ plan, base, subsetWasm }: CompileOptions): Promise<{ s
   const baseCount = view(sfnt.tables.get('maxp')!).getUint16(4)
   // The plan's glyphs, and the version probe.
   const added = plan.glyphs.length + plan.variants.length + 1
-  if (baseCount + added > MAX_GLYPHS)
-    throw new Error(`${baseCount} base glyphs plus ${added} new ones exceed ${MAX_GLYPHS}: lower nfMax`)
+  if (baseCount + added > GLYPH_LIMIT)
+    throw new Error(`${baseCount} base glyphs plus ${added} new ones exceed ${GLYPH_LIMIT}: lower take`)
   return { sfnt, face, upm: face.upem, baseCount }
 }
 

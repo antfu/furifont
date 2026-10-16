@@ -15,7 +15,7 @@ const skip = computed({
   set: value => config.value.skip = value,
 })
 const words = computed({
-  get: () => config.value.take ?? maxWords.value + STEP,
+  get: () => typeof config.value.take === 'number' ? config.value.take : maxWords.value + STEP,
   set: value => config.value.take = value > maxWords.value ? undefined : value,
 })
 const annotated = computed(() => report.value && report.value.stats.patterns - report.value.stats.places)

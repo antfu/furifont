@@ -24,5 +24,7 @@
   // 編む is あむ; the pairs have no entry for 編 before ん.
   "編[あ]ん",
   // 編む is あむ; the pairs have no entry for 編 before め.
-  "編[あ]め"
+  "編[あ]め",
+  // お疲れ様です is おつかれさまです; the generated pair reads 様です as ようです.
+  "様[さま]です"
 ]

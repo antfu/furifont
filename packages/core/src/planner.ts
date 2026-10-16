@@ -279,8 +279,8 @@ function selectWords(index: DictionaryIndex, ctx: PlanContext): Selection {
     rest: [],
   }
   const after = byScore.slice(ctx.options.skip).filter(item => item.word).map(item => item.text)
-  // No `take` means every word: slice(undefined) would hand the whole list to the rest too.
-  const take = ctx.options.take ?? after.length
+  // No `take` means every word: slice(undefined) would hand the whole list to the rest too. `'max'` is a number by now: `resolveTake` fits it.
+  const take = typeof ctx.options.take === 'number' ? ctx.options.take : after.length
   buckets.take = after.slice(0, take)
   buckets.rest = after.slice(take)
   const taken = new Set(buckets.take)
@@ -605,10 +605,14 @@ interface LoneGlyph {
 }
 
 export interface FontPlanner {
-  (options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult
+  /** `glyphBudget` is how many new glyphs the base font has room for; `take: 'max'` needs it. */
+  (options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string, glyphBudget?: number): PlanResult
   /** The words of the dictionary by what the font does with them, for the options. */
-  wordBuckets: (options: PlanOptions, coverage: ReadonlySet<number>) => WordBuckets
+  wordBuckets: (options: PlanOptions, coverage: ReadonlySet<number>, glyphBudget?: number) => WordBuckets
 }
+
+/** Words a `take: 'max'` search may leave unused: the glyphs of a hundred rare words are not worth another pass. */
+const FIT_TOLERANCE = 100
 
 /**
  * Indexes the compiled dictionary once, then plans fonts from it. Every
@@ -642,8 +646,52 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
     return last.analysis
   }
 
+  /** What a plan adds to the base font: its glyphs, its variants and the version probe, as the compiler counts them. */
+  function addedGlyphs(options: PlanOptions, coverage: ReadonlySet<number>): number {
+    const { plan } = planFont(options, coverage)
+    return plan.glyphs.length + plan.variants.length + 1
+  }
+
+  /** The most words, by `take`, whose glyphs fit `glyphBudget`; `undefined` when every word fits. Bisection: glyphs only grow with the words. */
+  function searchTake(options: PlanOptions, coverage: ReadonlySet<number>, glyphBudget: number): number | undefined {
+    const all = { ...options, take: undefined }
+    if (addedGlyphs(all, coverage) <= glyphBudget)
+      return undefined
+    let [fit, over] = [0, analysisFor(all, coverage).buckets.take.length]
+    // The tolerance applies once some words fit: a small dictionary is searched to the word.
+    while (over - fit > (fit ? FIT_TOLERANCE : 1)) {
+      const mid = Math.floor((fit + over) / 2)
+      if (addedGlyphs({ ...options, take: mid }, coverage) <= glyphBudget)
+        fit = mid
+      else
+        over = mid
+    }
+    if (fit === 0)
+      throw new Error(`the lone kanji and rules alone need more than ${glyphBudget} glyphs: no word fits`)
+    return fit
+  }
+
+  /** The `take: 'max'` fits that were searched, by the options they were searched for. */
+  const fits = new Map<string, number | undefined>()
+
+  /**
+   * The options with `take: 'max'` made a number. Always judged on the whole
+   * font, so a preview shows the words the build has.
+   */
+  function resolveTake(options: PlanOptions, coverage: ReadonlySet<number>, glyphBudget: number | undefined): PlanOptions {
+    if (options.take !== 'max')
+      return options
+    if (glyphBudget === undefined)
+      throw new Error(`take 'max' needs the glyph budget of the base font`)
+    const key = JSON.stringify({ ...options, take: glyphBudget })
+    if (!fits.has(key))
+      fits.set(key, searchTake(options, coverage, glyphBudget))
+    return { ...options, take: fits.get(key) }
+  }
+
   /** Plans a font; with `previewText`, keeps only what that text can trigger. */
-  function planFont(options: PlanOptions, coverage: ReadonlySet<number>, previewText?: string): PlanResult {
+  function planFont(unresolved: PlanOptions, coverage: ReadonlySet<number>, previewText?: string, glyphBudget?: number): PlanResult {
+    const options = resolveTake(unresolved, coverage, glyphBudget)
     const { patterns, buckets, isolated, kanjiReadings, protectedRuns, glyphs, rules, ligatures, singles, variants, variantReadings, alternates, ivsWords, lone, suffixes, finalSuffixes } = analysisFor(options, coverage)
 
     const sample = previewText === undefined ? undefined : new Set(codepoints(previewText))
@@ -716,8 +764,8 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
   }
 
   /** The words of the dictionary by what the font does with them, for the options. */
-  function wordBuckets(options: PlanOptions, coverage: ReadonlySet<number>): WordBuckets {
-    return analysisFor(options, coverage).buckets
+  function wordBuckets(options: PlanOptions, coverage: ReadonlySet<number>, glyphBudget?: number): WordBuckets {
+    return analysisFor(resolveTake(options, coverage, glyphBudget), coverage).buckets
   }
 
   return Object.assign(planFont, { wordBuckets })

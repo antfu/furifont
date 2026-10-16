@@ -9,7 +9,7 @@
 import process from 'node:process'
 import { parseArgs } from 'node:util'
 import { createRubyReader } from '@furifont/compiler'
-import { createFontPlanner, formatNotation, parseFurigana, PREBUILT, resolveOptions, SCORE } from '@furifont/core'
+import { createFontPlanner, formatNotation, GLYPH_LIMIT, parseFurigana, PREBUILT, resolveOptions, SCORE } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
 import { formOf, isBare, notationOf, readAllOverrides } from './raw.ts'
 
@@ -31,15 +31,23 @@ const coverage = new Set([
   ...Object.entries(dictionary.kanji).flatMap(([text, readings]) => [text, ...Object.keys(readings)]),
   ...runs,
 ].flatMap(text => [...text].map(c => c.codePointAt(0)!)))
-const { plan } = createFontPlanner(dictionary)(resolveOptions(), coverage)
+const planner = createFontPlanner(dictionary)
+const { plan } = planner(resolveOptions(), coverage)
 const read = createRubyReader(plan)
+
+/** Source Han Sans JP VF, the base with the most glyphs of the prebuilt fonts: its room is the tightest the prebuilt `take: 'max'` fits. */
+const SOURCE_HAN_GLYPHS = 17_944
+const { take } = PREBUILT.options
+/** The words the prebuilt fonts take: the first `take`, or as many as the glyphs allow. */
+const prebuilt = take === 'max'
+  ? new Set(planner.wordBuckets(resolveOptions({ take }), coverage, GLYPH_LIMIT - SOURCE_HAN_GLYPHS).take)
+  : undefined
 
 /** Each multi-kanji run's place when the words are ordered by their top score, as the planner orders them. */
 const ranked = Object.entries(dictionary.runs)
   .map(([text, readings]) => ({ text, score: Math.max(...Object.values(readings).map(([score]) => score)) }))
   .sort((a, b) => b.score - a.score)
 const rankOf = new Map(ranked.map(({ text }, i) => [text, i + 1]))
-const { take } = PREBUILT.options
 
 const results = runs.map((text) => {
   const table = [...text].length === 1 ? dictionary.kanji[text] : dictionary.runs[text]
@@ -54,7 +62,7 @@ const results = runs.map((text) => {
     shown: shown.length ? formatNotation(text, shown) : undefined,
     readings,
     /** Place among all words by score, and whether the prebuilt fonts reach it; absent for a lone kanji or a non-run. */
-    rank: rankOf.has(text) ? { rank: rankOf.get(text)!, of: ranked.length, take, prebuilt: rankOf.get(text)! <= take } : undefined,
+    rank: rankOf.has(text) ? { rank: rankOf.get(text)!, of: ranked.length, take, prebuilt: prebuilt ? prebuilt.has(text) : rankOf.get(text)! <= Number(take) } : undefined,
     override: overrides.filter(o => !isBare(o.entry) && formOf(o.entry) === text).map(o => `${notationOf(o.entry)} (${o.dataset})`),
     bare: overrides.some(o => isBare(o.entry) && formOf(o.entry) === text),
   }
@@ -69,7 +77,7 @@ else {
     `  font shows: ${shown ?? '(bare: no furigana)'}`,
     readings.length ? '  dictionary:' : `  dictionary: ${[...text].length > 1 ? 'not a run of its own, so the font reads it by parts' : 'none'}`,
     ...readings.map(r => `    ${r.reading}  score ${r.score}${r.common ? ' (common)' : ''}`),
-    ...(rank ? [`  rank: ${rank.rank} of ${rank.of}, ${rank.prebuilt ? 'within' : 'out of'} the prebuilt target of ${rank.take}`] : []),
+    ...(rank ? [`  rank: ${rank.rank} of ${rank.of}, ${rank.prebuilt ? 'within' : 'out of'} the prebuilt fonts (take ${rank.take})`] : []),
     ...override.map(n => `  override: ${n}`),
     ...(bare ? ['  bare form: kept bare on purpose when alone in a run'] : []),
   ].join('\n')).join('\n\n')}\n`)

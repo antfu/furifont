@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path'
 import process from 'node:process'
 import { BASE_FONTS, compileFont, readFontInfo, toWoff2 } from '@furifont/compiler'
 import { brotli, subsetWasm } from '@furifont/compiler/node'
-import { createFontPlanner } from '@furifont/core'
+import { createFontPlanner, GLYPH_LIMIT } from '@furifont/core'
 import { loadDictionary } from '@furifont/dictionary'
 import pkg from '../package.json' with { type: 'json' }
 import { fetchBaseFont } from './base-fonts'
@@ -35,33 +35,37 @@ function resolveBase(base: string, cwd: string): Promise<string> {
 
 let dictionary: Promise<Dictionary> | undefined
 let planner: Promise<ReturnType<typeof createFontPlanner>> | undefined
-const coverages = new Map<string, Promise<Set<number>>>()
+const coverages = new Map<string, Promise<{ coverage: Set<number>, glyphBudget: number }>>()
 
 /** The bundled dictionary, loaded once. */
 export function getDictionary(): Promise<Dictionary> {
   return dictionary ??= loadDictionary()
 }
 
-/** The planner, and the base font's path with the codepoints it draws. */
-async function plannerFor(config: FurifontConfig, cwd: string): Promise<{ plan: ReturnType<typeof createFontPlanner>, base: string, coverage: Set<number> }> {
+/** The planner, and the base font's path with the codepoints it draws and the glyphs it has room for. */
+async function plannerFor(config: FurifontConfig, cwd: string): Promise<{ plan: ReturnType<typeof createFontPlanner>, base: string, coverage: Set<number>, glyphBudget: number }> {
   planner ??= getDictionary().then(createFontPlanner)
   const base = await resolveBase(config.base, cwd)
-  let coverage = coverages.get(base)
-  if (!coverage)
-    coverages.set(base, coverage = readFile(base).then(font => new Set(readFontInfo(font).codepoints)))
-  return { plan: await planner, base, coverage: await coverage }
+  let info = coverages.get(base)
+  if (!info) {
+    coverages.set(base, info = readFile(base).then((font) => {
+      const { codepoints, glyphCount } = readFontInfo(font)
+      return { coverage: new Set(codepoints), glyphBudget: GLYPH_LIMIT - glyphCount }
+    }))
+  }
+  return { plan: await planner, base, ...await info }
 }
 
 /** Plans a font for `config`; with `previewText`, only what that text needs. */
 export async function planWithBase(config: FurifontConfig, cwd: string, previewText?: string): Promise<PlanResult & { base: string }> {
-  const { plan, base, coverage } = await plannerFor(config, cwd)
-  return { ...plan(config, coverage, previewText), base }
+  const { plan, base, coverage, glyphBudget } = await plannerFor(config, cwd)
+  return { ...plan(config, coverage, previewText, glyphBudget), base }
 }
 
 /** Every word of the dictionary, most common first, as `config` skips, takes or leaves it. */
 export async function bucketWords(config: FurifontConfig, cwd: string): Promise<WordBuckets> {
-  const { plan, coverage } = await plannerFor(config, cwd)
-  return plan.wordBuckets(config, coverage)
+  const { plan, coverage, glyphBudget } = await plannerFor(config, cwd)
+  return plan.wordBuckets(config, coverage, glyphBudget)
 }
 
 /** `<Family>-<Style>`, or a variable font's `<Family>`: its one file has every style. */

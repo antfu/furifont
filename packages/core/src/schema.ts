@@ -49,8 +49,8 @@ export const PlanOptionsSchema = v.object({
   sources: v.optional(v.array(v.picklist(WORD_SOURCES)), () => [...WORD_SOURCES]),
   /** The most common words left bare, by score: a reader knows them. Lone kanji count too. */
   skip: v.optional(Count, DEFAULTS.plan.skip),
-  /** How many words get ruby after those skipped, by score; all of them when left out. */
-  take: v.optional(v.pipe(Count, v.minValue(1))),
+  /** How many words get ruby after those skipped, by score; all of them when left out. `'max'` takes as many as the base font's glyph budget holds. */
+  take: v.optional(v.union([v.pipe(Count, v.minValue(1)), v.literal('max')])),
   /** Words on the JLPT lists of this level and every easier one stay bare. */
   skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate a kanji alone in its run, or one no word claims after another kanji (a suffix); when off, only selectors give them ruby. */
