@@ -19,28 +19,15 @@ const files = ['OFL.txt', 'DATA-LICENSE.md', ...PREBUILT.fonts.flatMap(({ family
   return [`${stem}.woff2`, `${stem}.ivs.json`]
 })]
 
-// The release workflow attaches the fonts a few minutes after the tag, and the
-// site's build can start first, so a 404 is waited out before it is an error.
-const RETRY_MS = 15_000
-const RETRY_LIMIT = 40
-
-async function download(url: string) {
-  for (let attempt = 1; ; attempt++) {
-    const response = await fetch(url)
-    if (response.ok)
-      return response
-    if (response.status !== 404 || attempt >= RETRY_LIMIT)
-      throw new Error(`${url}: ${response.status} ${response.statusText}. The release workflow attaches the fonts a few minutes after the tag.`)
-    await new Promise(resolve => setTimeout(resolve, RETRY_MS))
-  }
-}
-
 await mkdir(outDir, { recursive: true })
 await Promise.all(files.map(async (file) => {
   const path = join(outDir, file)
   if (await access(path).then(() => true, () => false))
     return
-  const response = await download(`https://github.com/antfu/furifont/releases/download/${tag}/${file}`)
+  const url = `https://github.com/antfu/furifont/releases/download/${tag}/${file}`
+  const response = await fetch(url)
+  if (!response.ok)
+    throw new Error(`${url}: ${response.status} ${response.statusText}. The release workflow attaches the fonts a few minutes after the tag.`)
   // Written beside, then moved, so an interrupted download never looks complete.
   await writeFile(`${path}.part`, new Uint8Array(await response.arrayBuffer()))
   await rename(`${path}.part`, path)
