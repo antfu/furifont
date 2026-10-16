@@ -37,7 +37,7 @@ export default defineConfig({
     // The foreground color, for a border around a filled (`bg-inverse`) element, or a focus that must stand out.
     'border-inverse': 'border-[var(--ff-fg)]',
     'label': 'font-mono text-[11px] lh-1.45 uppercase tracking-[0.12em] color-muted',
-    'input': 'w-full rounded-none border border-base bg-transparent px-3 py-2 text-sm color-base outline-none transition-colors placeholder:color-faint focus:border-inverse',
+    'input': 'w-full rounded-none border border-base bg-transparent px-3 py-2 text-sm color-base no-ruby outline-none transition-colors placeholder:color-faint focus:border-inverse',
     'btn': 'inline-flex h-9 items-center justify-center gap-2 border px-4 text-sm font-medium transition-colors duration-150 select-none disabled:cursor-not-allowed disabled:opacity-40',
     'btn-solid': 'btn border-inverse bg-inverse color-inverse hover:opacity-85',
     'btn-outline': 'btn border-strong color-base hover:border-inverse hover:bg-inverse hover:color-inverse',
