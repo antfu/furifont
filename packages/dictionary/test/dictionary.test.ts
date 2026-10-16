@@ -24,7 +24,7 @@ describe('compiled dictionary', () => {
 
   it('merges readings of the same kana under the alignment that splits them most', () => {
     expect(Object.keys(dictionary.runs['倉本']!)).toEqual(['0:くら;1:もと'])
-    expect(sourcesOf(dictionary.runs['倉本']!['0:くら;1:もと'])).toEqual(['jmdict', 'place', 'jr-stations'])
+    expect(sourcesOf(dictionary.runs['倉本']!['0:くら;1:もと'])).toEqual(['jmdict', 'place', 'jr-stations', 'japan-post'])
   })
 
   it('ranks the readings of a run, the default first', () => {
@@ -77,6 +77,9 @@ describe('compiled dictionary', () => {
     expect(sourcesOf(dictionary.runs['立直']?.['0:りー;1:ち'])).toEqual(['mahjong-yaku'])
     expect(sourcesOf(dictionary.runs['阿蘇']?.['0:あ;1:そ'])).toEqual(['place', 'jr-stations'])
     expect(dictionary.runs['阿鼻叫喚']?.['0:あ;1:び;2:きょう;3:かん']).toBeDefined()
+    // Names several places share keep the reading most of them use: 一宮 is いっく only in Kochi.
+    expect(sourcesOf(dictionary.runs['一宮']?.['0-1:いちのみや'])).toEqual(['japan-post'])
+    expect(sourcesOf(dictionary.runs['四宮']?.['0-1:しのみや'])).toEqual(['japan-post'])
     for (const name of MANUAL_SOURCES) {
       const lacking = without(name)
       expect(report.stats.patterns - lacking.stats.patterns, name).toBeGreaterThan(0)

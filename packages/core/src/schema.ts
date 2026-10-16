@@ -3,7 +3,7 @@ import { DEFAULTS } from './defaults'
 
 export const RUBY_SCRIPTS = ['hiragana', 'katakanaOn', 'hepburn'] as const
 /** The dictionary's manually maintained sources. */
-export const MANUAL_SOURCES = ['mahjong-yaku', 'jr-stations', 'yojijukugo'] as const
+export const MANUAL_SOURCES = ['mahjong-yaku', 'jr-stations', 'yojijukugo', 'japan-post'] as const
 export type ManualSource = typeof MANUAL_SOURCES[number]
 /**
  * The sources a plan takes words from: any JMdict word; JMdict's priority

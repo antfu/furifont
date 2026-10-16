@@ -267,6 +267,10 @@
         "yojijukugo": {
           "name": "Four-character idioms",
           "hint": "JMdict: yojijukugo, such as 阿鼻叫喚. Furifont uses them where no common word matches the text."
+        },
+        "japan-post": {
+          "name": "Municipalities and towns",
+          "hint": "Names of municipalities and towns, such as 一宮, from Japan Post's postal code data. Furifont uses them where no common word matches the text."
         }
       },
       "isolated": "Ruby on single kanji",

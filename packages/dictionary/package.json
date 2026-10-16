@@ -28,7 +28,7 @@
     "prepack": "turbo run build --filter=@furifont/dictionary",
     "compile": "node scripts/compile.ts",
     "update": "node scripts/update.ts",
-    "update:manual": "node scripts/jr-stations.ts && node scripts/yojijukugo.ts",
+    "update:manual": "node scripts/manual/jr-stations.ts && node scripts/manual/yojijukugo.ts && node scripts/manual/japan-post.ts",
     "audit": "node scripts/audit.ts",
     "lookup": "node scripts/lookup.ts",
     "override": "node scripts/override.ts"

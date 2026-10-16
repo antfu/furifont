@@ -51,7 +51,7 @@ The repository is a pnpm monorepo. Each package has one job:
 JMdict + JMnedict + JmdictFurigana + KANJIDIC2 + JLPT lists + Tatoeba sentences
         | dict:update (maintainers, network)
         v
-packages/dictionary/raw/{jmdict,places,okurigana,jlpt,tatoeba}.json + raw/{mahjong-yaku,jr-stations,yojijukugo}.json + raw/*.overrides.jsonc (committed, one entry per line)
+packages/dictionary/raw/{jmdict,places,okurigana,jlpt,tatoeba}.json + raw/{mahjong-yaku,jr-stations,yojijukugo,japan-post}.json + raw/*.overrides.jsonc (committed, one entry per line)
         | fuseDictionary, in the dictionary's build
         v
 packages/dictionary/data/{dictionary,okurigana}.json (published, not committed)

@@ -33,5 +33,7 @@
   "白[しら]浪[なみ]",
   // The shogun is read みなもとのよりとも, with の after the clan name 源.
   // reported by anonymous 8c2df88c-4638-4d31-b9c8-905e90635e98
-  "源[みなもとの]頼[より]朝[とも]"
+  "源[みなもとの]頼[より]朝[とも]",
+  // Alone, 凪 is なぎ (a calm; also a given name); JMdict has only な, from 凪ぐ.
+  "凪[なぎ]"
 ]
