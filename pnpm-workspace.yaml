@@ -34,8 +34,8 @@ minimumReleaseAgeExclude:
   - '@unocss/webpack@66.11.0'
   - unocss@66.11.0
   - '@devframes/vite@1.2.5'
-  - '@vitest/mocker@5.0.4'
-  - '@vitest/spy@5.0.4'
+  - '@vitest/mocker@5.0.5'
+  - '@vitest/spy@5.0.5'
   - '@vue/compiler-core@3.5.44'
   - '@vue/compiler-dom@3.5.44'
   - '@vue/compiler-sfc@3.5.44'
@@ -46,7 +46,7 @@ minimumReleaseAgeExclude:
   - '@vue/server-renderer@3.5.44'
   - '@vue/shared@3.5.44'
   - devframe@1.2.5
-  - vitest@5.0.4
+  - vitest@5.0.5
   - vue@3.5.44
 
 trustPolicy: no-downgrade
@@ -129,7 +129,7 @@ catalogs:
     vite: ^8.3.4
   frontend:
     '@comark/nuxt': ^0.7.0
-    '@devframes/vite': ^1.2.4
+    '@devframes/vite': ^1.2.5
     '@iconify-json/ph': ^1.2.2
     '@nuxt/kit': ^4.6.1
     '@unocss/nuxt': ^66.11.0
@@ -152,6 +152,6 @@ catalogs:
     storybook: ^10.6.2
   testing:
     '@playwright/test': 1.63.0
-    vitest: ^5.0.4
+    vitest: ^5.0.5
   types:
     '@types/node': ^26.6.5

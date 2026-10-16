@@ -15,7 +15,10 @@ jobs:
       id-token: write
 
   fonts:
+    needs: release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -31,7 +34,8 @@ jobs:
           key: source-han-jp-vf
       # The tag's commit time stamps the fonts, so the same tag builds the same bytes.
       - run: SOURCE_DATE_EPOCH=$(git log -1 --format=%ct) pnpm fonts
-      - uses: actions/upload-artifact@v4
-        with:
-          name: fonts
-          path: dist/fonts
+      # Everything in one archive, for the site's "Download all" button.
+      - run: cd dist/fonts && zip --quiet ../Furifont.zip *
+      - run: gh release upload "$GITHUB_REF_NAME" dist/fonts/* dist/Furifont.zip --clobber --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
