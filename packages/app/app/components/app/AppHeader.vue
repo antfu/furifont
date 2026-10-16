@@ -33,6 +33,7 @@ const siteTarget = __TARGET_DEVFRAME__ ? '_blank' : undefined
         </NuxtLink>
       </div>
       <div class="ml-auto flex items-center gap-1">
+        <a :href="RELEASE_URL" target="_blank" rel="noopener" class="focus-ring hidden px-1 py-1 font-mono text-xs color-muted transition-colors hover:color-base sm:block">v{{ VERSION }}</a>
         <AppLanguageSelect />
         <a :href="REPOSITORY" target="_blank" rel="noopener" class="btn-ghost focus-ring hidden w-9 px-0 sm:inline-flex" :aria-label="$t('nav.github')">
           <span class="i-ph-github-logo" />

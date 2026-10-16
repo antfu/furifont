@@ -23,7 +23,7 @@ onMounted(() => {
     <UiSection index="03" :title="$t('sections.selectors')">
       <DemoSelectors />
     </UiSection>
-    <p class="flex items-center gap-2 border-t border-base px-6 py-3 text-center text-xs color-muted bg-amber:5">
+    <p class="flex items-center gap-2 border-t border-base px-6 py-3 text-xs color-muted bg-amber:5">
       <span class="i-ph-warning shrink-0 text-base text-amber" aria-hidden="true" />
       <span>
         {{ $t('notice') }}
@@ -32,6 +32,10 @@ onMounted(() => {
     </p>
     <UiSection id="downloads" index="04" :title="$t('sections.download')">
       <DemoDownloads />
+      <template #aside>
+        <div class="flex-auto" />
+        <a :href="RELEASE_URL" target="_blank" rel="noopener" class="focus-ring self-start font-mono text-xs underline underline-offset-3 color-muted hover:color-inherit">v{{ VERSION }}</a>
+      </template>
     </UiSection>
     <UiSection id="any-page" index="05" :title="$t('sections.anyPage')">
       <DemoAnyPage />

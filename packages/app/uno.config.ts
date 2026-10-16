@@ -42,7 +42,7 @@ export default defineConfig({
       '[&_h1]:(mb-8 text-4xl font-semibold tracking-[-0.03em])',
       '[&_h2]:(mb-4 mt-12 text-xl font-semibold)',
       '[&_h3]:(mb-3 mt-8 font-semibold)',
-      '[&_p]:(my-4 max-w-[70ch])',
+      '[&_p]:my-4',
       '[&_ul]:(my-4 list-disc pl-6) [&_ol]:(my-4 list-decimal pl-6) [&_li]:(my-1 max-w-[66ch])',
       '[&_a]:(underline underline-offset-3) [&_a:hover]:color-muted',
       '[&_code]:(bg-hover px-1 font-mono text-[0.9em])',

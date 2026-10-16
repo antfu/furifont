@@ -30,7 +30,7 @@ body {
 :lang(ja) body {
     font-family: var(--ff-font), ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: var(--ff-features);
-    line-height: 1.8;
+    line-height: 2;
 }
 ::selection {
     background: var(--ff-fg);

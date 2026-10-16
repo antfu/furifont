@@ -26,6 +26,9 @@ export const REPOSITORY = 'https://github.com/antfu/furifont'
 /** The demo site: other pages load the fonts from here. */
 export const SITE = 'https://furifont.antfu.me'
 
+/** The release page of the version the site serves. */
+export const RELEASE_URL = `${REPOSITORY}/releases/tag/v${VERSION}`
+
 export function releaseUrl(file: string): string {
   return `${REPOSITORY}/releases/latest/download/${file}`
 }
