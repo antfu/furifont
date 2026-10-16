@@ -149,7 +149,8 @@ async function openElsewhere(page: Page, lang: string, csp?: string): Promise<vo
     headers: csp ? { 'content-security-policy': csp } : {},
     body: `<!doctype html><html lang="${lang}"><meta charset="utf-8">
       <body style="font: 20px/1.2 'Page Font', sans-serif"><p id="kanji">日本の市場</p><p id="latin">Market</p><p id="verb">来ない、来ます、来る、今日では、出入り</p>
-      <p id="mixed">日本 Market <span id="icon" style="font-family: 'Google Symbols'">search</span></p><pre id="code">日本</pre>`,
+      <p id="mixed">日本 Market <span id="icon" style="font-family: 'Google Symbols'">search</span></p><pre id="code">日本</pre>
+      <p><ruby id="ruby">来ない<rt>こない</rt></ruby></p>`,
   }))
   await page.goto('https://elsewhere.test/')
 }
@@ -217,6 +218,10 @@ test('sets another site in Furifont from the bookmarklet, and a second click tur
   expect(await glyphsBySource(page, 'mixed')).toEqual({ web: 1, system: 14 })
   expect((await styleOf(page, 'icon')).fontFamily).toBe('"Google Symbols"')
   expect((await styleOf(page, 'code')).fontFamily).toBe('monospace')
+  // The page's own ruby keeps its kanji plain, and gets no okurigana reading on top.
+  expect(await page.evaluate(() => getComputedStyle(document.getElementById('ruby')!).fontFeatureSettings)).toBe('"ss01"')
+  await expect.poll(async () => (await readVerbs(page)).salts).toEqual(await verbSalts())
+  expect(await page.locator('#ruby span').count()).toBe(0)
 
   await page.evaluate(() => document.body.insertAdjacentHTML('beforeend', '<p id="later">東京</p>'))
   await expect.poll(async () => (await styleOf(page, 'later')).lineHeight).toBe('normal')
