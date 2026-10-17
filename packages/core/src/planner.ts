@@ -9,11 +9,11 @@ import { isOnyomi, toHepburn, toKatakana } from './kana'
 import { JLPT_LEVELS, SCORE, sourceBit, weightOf } from './schema'
 import { pickSuffixes } from './suffixes'
 
-/** VS225: shows the kanji before it without ruby. */
+/** VS241: shows the kanji before it without ruby. */
 export const SELECTOR_SUPPRESS = 0xE01E0
-/** VS226: reading 1 of the kanji (or word) before it; VS227 reading 2, and so on. */
+/** VS242: reading 1 of the kanji (or word) before it; VS243 reading 2, and so on. */
 export const SELECTOR_FIRST_READING = 0xE01E1
-/** The IVD leaves VS225..VS240 unregistered: one to suppress, fifteen readings. */
+/** The IVD leaves VS241..VS256 unregistered: one to suppress, fifteen readings. */
 export const MAX_READINGS = 15
 /** A lone kanji's reading needs this share of the evidence to be offered through a selector. */
 const MIN_ALTERNATE_SHARE = 0.02
@@ -67,7 +67,7 @@ export interface PlanReport {
     rules: number
   }
   /**
-   * The lists variation selectors index into, VS226 being the first entry,
+   * The lists variation selectors index into, VS242 being the first entry,
    * and `salt` 1 the same entry through `font-feature-settings`.
    * Words list their readings in inline notation, the default first. `lone`
    * is the reading a kanji alone in its run shows without a selector.
@@ -485,7 +485,7 @@ interface VariantReading {
 function createVariants(): { name: (kanji: string, n: number) => string, all: () => Variant[] } {
   const variants = new Map<string, Variant>()
   return {
-    /** `kanji` written with VS225 + `n`: n = 0 drops the ruby, n >= 1 picks reading n. */
+    /** `kanji` written with VS241 + `n`: n = 0 drops the ruby, n >= 1 picks reading n. */
     name(kanji: string, n: number): string {
       const base = kanji.codePointAt(0)!
       const name = `${glyphName(base)}.vs${n}`
