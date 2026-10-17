@@ -1,5 +1,5 @@
 export interface ReadingReference {
-  /** Kanji to its readings; VS226 picks the first. */
+  /** Kanji to its readings; VS242 picks the first. */
   kanji: Record<string, string[]>
   /** Word to its readings in inline notation; the first is the default. */
   words: Record<string, string[]>

@@ -85,11 +85,11 @@
     }
   },
   "selectors": {
-    "body": "Some words have more than one common reading. Furifont shows the most common one. To choose another, put a variation selector (an invisible character) right after the first kanji. VS226 gives reading 1, VS227 gives reading 2, and so on. VS225 removes the furigana.",
+    "body": "Some words have more than one common reading. Furifont shows the most common one. To choose another, put a variation selector (an invisible character) right after the first kanji. VS242 gives reading 1, VS243 gives reading 2, and so on. VS241 removes the furigana.",
     "lookUp": "Look up readings",
     "default": "Default",
-    "reading2": "Reading 2 (VS227)",
-    "none": "No furigana (VS225)"
+    "reading2": "Reading 2 (VS243)",
+    "none": "No furigana (VS241)"
   },
   "downloads": {
     "all": "Download all as zip",
@@ -124,7 +124,7 @@
   "reference": {
     "eyebrow": "Reference",
     "title": "Pick a reading",
-    "body": "Furifont shows the most common reading of a word. To show another reading, put a variation selector (an invisible character) right after the first kanji of the word. VS226 gives reading 1, VS227 gives reading 2, and so on. After a single kanji, the selector chooses the reading of that kanji. VS225 shows the kanji with no furigana.",
+    "body": "Furifont shows the most common reading of a word. To show another reading, put a variation selector (an invisible character) right after the first kanji of the word. VS242 gives reading 1, VS243 gives reading 2, and so on. After a single kanji, the selector chooses the reading of that kanji. VS241 shows the kanji with no furigana.",
     "search": "Search a word or kanji: 市場, 今日, 生",
     "searchLabel": "Search readings",
     "hint": "Click a reading to copy the word with its selector.",

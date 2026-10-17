@@ -8,12 +8,12 @@ A variation selector is an invisible character. It stays in the text, so it work
 
 | Selector | Code point | Result |
 | --- | --- | --- |
-| VS225 | U+E01E0 | No furigana |
-| VS226 | U+E01E1 | Reading 1, the default |
-| VS227 | U+E01E2 | Reading 2 |
-| VS228 | U+E01E3 | Reading 3 |
+| VS241 | U+E01E0 | No furigana |
+| VS242 | U+E01E1 | Reading 1, the default |
+| VS243 | U+E01E2 | Reading 2 |
+| VS244 | U+E01E3 | Reading 3 |
 | … | … | … |
-| VS240 | U+E01EF | Reading 15 |
+| VS256 | U+E01EF | Reading 15 |
 
 After the first kanji of a word, the selector chooses the reading of the word. After a kanji that is alone, it chooses the reading of that kanji.
 
@@ -39,7 +39,7 @@ Each release also has the lists as data: `FurifontSansVF.ivs.json` and the same 
 
 You cannot type a variation selector on a keyboard. Copy it from the [reference](/reference), or write it as an escape:
 
-| Where | How to write 市 + VS227 + 場 |
+| Where | How to write 市 + VS243 + 場 |
 | --- | --- |
 | HTML | `市&#xE01E2;場` |
 | JavaScript | `'市\u{E01E2}場'` |
@@ -55,4 +55,4 @@ A selector changes the text. Search and copy see an extra character, and some to
 <span style="font-feature-settings: 'salt' 2">市場</span>
 ```
 
-`'salt' 2` does what VS227 does. See [Use on your website](/docs/website#choose-a-reading).
+`'salt' 2` does what VS243 does. See [Use on your website](/docs/website#choose-a-reading).
