@@ -39,3 +39,10 @@ jobs:
       - run: gh release upload "$GITHUB_REF_NAME" dist/fonts/* dist/Furifont.zip --clobber --repo "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ github.token }}
+      # Vercel skips the release commit, as its fonts are not attached yet: this commit deploys them.
+      - run: |
+          git fetch --depth=1 origin main
+          git checkout FETCH_HEAD
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit --allow-empty --message "chore: deploy $GITHUB_REF_NAME"
+          git push origin HEAD:main

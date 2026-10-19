@@ -80,6 +80,6 @@ The tag then makes CI:
 
 - publish the npm packages;
 - build all eight fonts, stamped with the version and the tag's commit time, and attach them to the GitHub Release;
-- redeploy the site through the `VERCEL_DEPLOY_HOOK` secret.
+- push an empty `chore: deploy v<version>` commit to `main`, which deploys the site.
 
-Vercel deploys the site from `main` on every push. Its build downloads the variable WOFF2s and their `.ivs.json` from the release of the version in `package.json` (`pnpm fonts:fetch`), so its build of the release commit fails until CI has attached them and redeploys. `pnpm dev` downloads them the same way.
+Vercel deploys the site from `main` on every push. Its build downloads the variable WOFF2s and their `.ivs.json` from the release of the version in `package.json` (`pnpm fonts:fetch`). They are not attached yet when the release commit lands, so Vercel skips that commit (`ignoreCommand`) and builds CI's deploy commit instead. `pnpm dev` downloads them the same way.

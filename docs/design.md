@@ -350,11 +350,11 @@ The tag runs `release.yml`:
 
 - npm publishing and the changelog, through `sxzz/workflows`;
 - all eight fonts, Regular as OpenType and WOFF2 and the variable fonts as TrueType and WOFF2, built from the tagged code and attached to the GitHub Release with the OFL and the data license;
-- a redeploy of the site, through a Vercel deploy hook.
+- an empty `chore: deploy v<version>` commit pushed to `main`, which deploys the site.
 
 Each font carries the version it was released with: `0.1.2` is `head.fontRevision` 0.102 and the name `Version 0.102`, so an operating system that caches installed fonts by version takes a new one. Its `head.modified` is the tag's commit time (`SOURCE_DATE_EPOCH`), so the same tag builds the same bytes. A font built with the CLI carries Furifont's version, or the config's `version`.
 
-The site is deployed by Vercel (`vercel.json`) on every push to `main`, at https://furifont.antfu.me. Its build compiles no font: `scripts/fetch-fonts.ts` downloads the variable WOFF2s and their `.ivs.json` from the release of the version in `package.json`, and the site serves them at `/fonts`. Vercel's build of the release commit runs before CI has attached the fonts and fails, leaving the last deploy up; the deploy hook builds it again once they are there.
+The site is deployed by Vercel (`vercel.json`) on every push to `main`, at https://furifont.antfu.me. Its build compiles no font: `scripts/fetch-fonts.ts` downloads the variable WOFF2s and their `.ivs.json` from the release of the version in `package.json`, and the site serves them at `/fonts`. The release commit lands before CI has attached the fonts, so Vercel skips it (`ignoreCommand` in `vercel.json`), leaving the last deploy up; CI's deploy commit, pushed once they are there, builds the new version.
 
 The site's pages, the bookmarklet and the userscript ask for `/fonts/<file>?v=<version>`, which the site serves as immutable: a font and its `.ivs.json` change together, with the version. Without `?v=` a browser checks the file on every load.
 

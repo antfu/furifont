@@ -4,6 +4,7 @@
   "build": { "env": { "ENABLE_EXPERIMENTAL_COREPACK": "1" } },
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm fonts:fetch && pnpm build",
+  "ignoreCommand": "git log -1 --format=%s | grep -q '^chore: release v'",
   "headers": [
     {
       "source": "/fonts/(.*)",
