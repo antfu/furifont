@@ -1,4 +1,5 @@
 import type { Rule } from './planner'
+import type { KanaRomaji } from './romaji'
 
 interface Substitution {
   input: string
@@ -21,6 +22,7 @@ export interface FeaInput {
   /** Variant glyphs back to their kanji: the default when no rule picked a reading, or ruby is off. */
   variantsOff: Substitution[]
   rubyOff: { glyph: string, bases: string[] }[]
+  kana: Omit<KanaRomaji, 'glyphs' | 'codepoints'>
 }
 
 /**
@@ -48,6 +50,31 @@ function chainRule(rule: Rule): string {
 }
 
 const glyphClass = (substitutions: Substitution[]): string => `[${substitutions.map(s => s.input).join(' ')}]`
+
+/** Romaji over kana, after the kanji's lookups, which never see a kana: the digraphs, then the syllables context changes, then the rest. */
+function kanaLookups({ digraphs, contextual, singles }: FeaInput['kana']): { lookups: string[], rclt: string[] } {
+  const lookups: string[] = []
+  for (const [lookup, subs] of Map.groupBy(contextual, c => c.lookup))
+    lookups.push(block('lookup', lookup, subs.map(s => `sub ${s.input} by ${s.output};`)))
+  const rclt: string[] = []
+  if (digraphs.length) {
+    lookups.push(block('lookup', 'kana_digraphs', digraphs.map(d => `sub ${d.components.join(' ')} by ${d.glyph};`)))
+    rclt.push('lookup kana_digraphs;')
+  }
+  if (contextual.length) {
+    // Rules of one glyph after another first, which the compiler packs glyph-keyed; then those of a class.
+    const glyphs = contextual.filter(c => c.next.length === 1)
+    const classes = contextual.filter(c => c.next.length > 1)
+    const rule = (c: FeaInput['kana']['contextual'][number]): string => `sub ${c.input}' lookup ${c.lookup} ${c.next.length > 1 ? `[${c.next.join(' ')}]` : c.next[0]};`
+    lookups.push(block('lookup', 'kana_context', [...glyphs.map(rule), ...glyphs.length && classes.length ? ['subtable;'] : [], ...classes.map(rule)]))
+    rclt.push('lookup kana_context;')
+  }
+  if (singles.length) {
+    lookups.push(...singleLookup('kana', singles))
+    rclt.push('lookup kana;')
+  }
+  return { lookups, rclt }
+}
 
 /** The chain rules, longest first, then the suffix and lone-kanji class rules. */
 function mainRules(input: FeaInput): string[] {
@@ -102,6 +129,8 @@ export function emitFea(input: FeaInput): string {
   if (main.length)
     out.push(block('lookup', 'furigana', main))
   out.push(...singleLookup('variant_readings', input.variantReadings), ...singleLookup('variants_off', input.variantsOff))
+  const kana = kanaLookups(input.kana)
+  out.push(...kana.lookups)
 
   const singles = input.rubyOff.filter(r => r.bases.length === 1)
   const ligatures = input.rubyOff.filter(r => r.bases.length > 1)
@@ -114,7 +143,7 @@ export function emitFea(input: FeaInput): string {
     out.push(block('lookup', 'ruby_off_ligatures', ligatures.map(r => `sub ${r.glyph} by ${r.bases.join(' ')};`)))
     off.push('lookup ruby_off_ligatures;')
   }
-  const rclt = [main.length && 'lookup furigana;', input.variantReadings.length && 'lookup variant_readings;'].filter(l => typeof l === 'string')
+  const rclt = [main.length && 'lookup furigana;', input.variantReadings.length && 'lookup variant_readings;', ...kana.rclt].filter(l => typeof l === 'string')
   if (rclt.length)
     out.push(block('feature', 'rclt', rclt))
   if (input.variantsOff.length)

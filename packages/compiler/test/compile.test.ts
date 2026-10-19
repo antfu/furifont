@@ -248,6 +248,30 @@ describe.each([
   })
 })
 
+describe.each(['SourceHanSansJP-Subset.otf', 'SourceHanSansJP-VF-Subset.ttf'])('romaji over kana on %s', (file) => {
+  let built: Built
+
+  beforeAll(async () => {
+    built = await build(file)
+  })
+
+  it('annotates kana a syllable at a time, っ by the consonant it doubles', () => {
+    expect(read(built, 'きょう')).toEqual(['きょ:kyo', 'う:u'])
+    expect(read(built, 'がっこう')).toEqual(['が:ga', 'っ:k', 'こ:ko', 'う:u'])
+    expect(read(built, 'コンヒ')).toEqual(['コ:ko', 'ン:n', 'ヒ:hi'])
+  })
+
+  it('turns romaji off with ss01, and with the option', async () => {
+    expect(read(built, 'きょう', [new hb.Feature('ss01')])).toEqual(['き', 'ょ', 'う'])
+    // Kana no rule names keep the base font's glyph names: `read` shows those.
+    expect(read(await build(file, undefined, { kanaRomaji: false }), 'きょう').filter(g => g.includes(':'))).toEqual([])
+  })
+
+  it('leaves the kanji\'s rules alone', () => {
+    expect(read(built, '今日')).toEqual(['今日:きょう'])
+  })
+})
+
 describe('a live preview', () => {
   const preview = (text: string): Promise<Built> => build('SourceHanSansJP-Subset.otf', text)
 

@@ -60,13 +60,13 @@ export function createGlyphRegistry(render: RenderRuby): GlyphRegistry {
 }
 
 export interface SingleLookups {
-  /** The lookup that turns `input` into `output`: the nth distinct output of an input lives in `rb_<n>`. */
+  /** The lookup that turns `input` into `output`: the nth distinct output of an input lives in `<prefix>_<n>`. */
   lookupFor: (input: string, output: string) => string
   all: () => { lookup: string, input: string, output: string }[]
 }
 
 /** Single substitutions, packed so each lookup maps an input glyph at most once. */
-export function createSingleLookups(): SingleLookups {
+export function createSingleLookups(prefix = 'rb'): SingleLookups {
   const byInput = new Map<string, Map<string, number>>()
   return {
     lookupFor(input, output) {
@@ -76,8 +76,8 @@ export function createSingleLookups(): SingleLookups {
       let slot = outputs.get(output)
       if (!slot)
         outputs.set(output, slot = outputs.size + 1)
-      return `rb_${slot}`
+      return `${prefix}_${slot}`
     },
-    all: () => [...byInput].flatMap(([input, outputs]) => [...outputs].map(([output, slot]) => ({ lookup: `rb_${slot}`, input, output }))),
+    all: () => [...byInput].flatMap(([input, outputs]) => [...outputs].map(([output, slot]) => ({ lookup: `${prefix}_${slot}`, input, output }))),
   }
 }

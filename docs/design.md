@@ -10,7 +10,7 @@ Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-fo
 
 ## Goals
 
-- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and a variable font of every weight, from Source Han Sans JP and Source Han Serif JP, with hiragana or Hepburn romaji furigana. Katakana for on'yomi is a build option.
+- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and a variable font of every weight, from Source Han Sans JP and Source Han Serif JP, with hiragana or Hepburn romaji furigana, and romaji over kana. Katakana for on'yomi is a build option, and so is turning the romaji over kana off.
 - A build anyone can run with another base font, word list or options.
 - A local studio, served by Devframe, to tune, preview and build.
 - A static demo site that loads the prebuilt fonts.
@@ -19,7 +19,6 @@ Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-fo
 ## Out of scope
 
 - Personal names. From JMnedict, only stations and places are read.
-- Furigana on kana. Only kanji are annotated.
 - Vertical writing. The base font's `vert` feature is kept, but furigana glyphs are drawn for horizontal text only.
 - Latin, digits, Chinese and Korean text, which are left as they are.
 
@@ -200,6 +199,7 @@ Each glyph is keyed by what it draws: one or more base characters plus furigana 
 | `alternates` | `salt` | `salt` n picks the nth reading of a kanji, before `furigana` sees it |
 | `variant_readings` | `rclt` | A selector no word claimed picks the kanji's own reading |
 | `variants_off` | `ccmp` | Variant glyphs left over go back to plain kanji, for example when `rclt` is off |
+| `kana_digraphs`, `kana_context`, `kana` | `rclt` | Romaji over kana: digraphs, then っ, ん and ー by the kana after them, then single kana (nested `kana_*` hold the contextual glyphs) |
 | `ruby_off`, `ruby_off_ligatures` | `ss01` | Furigana glyphs back to their bases |
 
 The order of these lookups matters more than their features. Shapers apply lookups in lookup-list order, so the fallbacks only see what `furigana` left.
@@ -273,6 +273,18 @@ Kana furigana uses the base font's own kana. Romaji uses its Latin glyphs. Sourc
 | `hiragana` | The aligned reading |
 | `katakanaOn` | Readings that match one of the kanji's on'yomi in KANJIDIC2, allowing rendaku and sokuon (学 がっ in 学校), in katakana; kun'yomi in hiragana |
 | `hepburn` | Modified Hepburn with macrons (kyō, tōkyō), n before b/m/p (shinbun). A trailing っ doubles the next segment's consonant, so 学校 is gak + kō. |
+
+### Romaji over kana
+
+`kanaRomaji` (on by default, in every script) puts Hepburn romaji over hiragana and katakana, a syllable at a time. A kana run is shaped apart from the kanji, as a run of kanji is, so the rules never see a kanji and only see the kana of their own run:
+
+- A yōon or loanword digraph is one glyph: きゃ kya, ティ ti.
+- っ shows the consonant it doubles (っか k, っちゃ t), and nothing before a vowel or at the end of a run.
+- ん is n, and n' before a vowel or y.
+- ー lengthens the syllable before it with a macron (コー kō) and stays bare itself.
+- Long vowels written in kana stay as written (おう ou), since without the word おもう and おう look alike; は and へ are ha and he, since a font cannot tell a particle.
+
+These glyphs are not in `@han`, so they never make a kanji less alone, and `ss01` turns them off with the furigana. They cost about 600 glyphs of the budget `take: 'max'` fills.
 
 ## Compiler
 

@@ -1,5 +1,112 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`planner > kana romaji > writes a stable feature file 1`] = `
+"languagesystem DFLT dflt;
+
+lookup kana_1 useExtension {
+  sub uni304D by uni304D.rb.1;
+  sub uni306E by uni306E.rb.1;
+  sub uni3083 by uni3083.rb.1;
+  sub uni304D_uni3083.rb.1 by uni304D_uni3083.rb.2;
+  sub uni30B3 by uni30B3.rb.1;
+  sub uni30C6 by uni30C6.rb.1;
+  sub uni30D2 by uni30D2.rb.1;
+  sub uni30A3 by uni30A3.rb.1;
+  sub uni30C6_uni30A3.rb.1 by uni30C6_uni30A3.rb.2;
+  sub uni3063 by uni3063.rb.1;
+} kana_1;
+
+lookup kana_2 useExtension {
+  sub uni3063 by uni3063.rb.2;
+} kana_2;
+
+lookup kana_3 useExtension {
+  sub uni3063 by uni3063.rb.3;
+} kana_3;
+
+lookup kana_4 useExtension {
+  sub uni3063 by uni3063.rb.4;
+} kana_4;
+
+lookup kana_5 useExtension {
+  sub uni3063 by uni3063.rb.5;
+} kana_5;
+
+lookup kana_digraphs useExtension {
+  sub uni304D uni3083 by uni304D_uni3083.rb.1;
+  sub uni30C6 uni30A3 by uni30C6_uni30A3.rb.1;
+} kana_digraphs;
+
+lookup kana_context useExtension {
+  sub uni304D' lookup kana_1 uni30FC;
+  sub uni306E' lookup kana_1 uni30FC;
+  sub uni3083' lookup kana_1 uni30FC;
+  sub uni304D_uni3083.rb.1' lookup kana_1 uni30FC;
+  sub uni30B3' lookup kana_1 uni30FC;
+  sub uni30C6' lookup kana_1 uni30FC;
+  sub uni30D2' lookup kana_1 uni30FC;
+  sub uni30A3' lookup kana_1 uni30FC;
+  sub uni30C6_uni30A3.rb.1' lookup kana_1 uni30FC;
+  sub uni3063' lookup kana_2 uni306E;
+  sub uni3063' lookup kana_3 uni3083;
+  sub uni3063' lookup kana_5 uni30D2;
+  subtable;
+  sub uni3063' lookup kana_1 [uni304D uni304D_uni3083.rb.1 uni30B3];
+  sub uni3063' lookup kana_4 [uni30C6 uni30C6_uni30A3.rb.1];
+} kana_context;
+
+lookup kana useExtension {
+  sub uni304D by uni304D.rb.2;
+  sub uni306E by uni306E.rb.2;
+  sub uni3083 by uni3083.rb.2;
+  sub uni30B3 by uni30B3.rb.2;
+  sub uni30C6 by uni30C6.rb.2;
+  sub uni30D2 by uni30D2.rb.2;
+  sub uni30A3 by uni30A3.rb.2;
+} kana;
+
+lookup ruby_off useExtension {
+  sub uni304D.rb.1 by uni304D;
+  sub uni306E.rb.1 by uni306E;
+  sub uni3083.rb.1 by uni3083;
+  sub uni30B3.rb.1 by uni30B3;
+  sub uni30C6.rb.1 by uni30C6;
+  sub uni30D2.rb.1 by uni30D2;
+  sub uni30A3.rb.1 by uni30A3;
+  sub uni3063.rb.1 by uni3063;
+  sub uni3063.rb.2 by uni3063;
+  sub uni3063.rb.3 by uni3063;
+  sub uni3063.rb.4 by uni3063;
+  sub uni3063.rb.5 by uni3063;
+  sub uni304D.rb.2 by uni304D;
+  sub uni306E.rb.2 by uni306E;
+  sub uni3083.rb.2 by uni3083;
+  sub uni30B3.rb.2 by uni30B3;
+  sub uni30C6.rb.2 by uni30C6;
+  sub uni30D2.rb.2 by uni30D2;
+  sub uni30A3.rb.2 by uni30A3;
+} ruby_off;
+
+lookup ruby_off_ligatures useExtension {
+  sub uni304D_uni3083.rb.1 by uni304D uni3083;
+  sub uni304D_uni3083.rb.2 by uni304D uni3083;
+  sub uni30C6_uni30A3.rb.1 by uni30C6 uni30A3;
+  sub uni30C6_uni30A3.rb.2 by uni30C6 uni30A3;
+} ruby_off_ligatures;
+
+feature rclt {
+  lookup kana_digraphs;
+  lookup kana_context;
+  lookup kana;
+} rclt;
+
+feature ss01 {
+  lookup ruby_off;
+  lookup ruby_off_ligatures;
+} ss01;
+"
+`;
+
 exports[`planner > writes a stable feature file 1`] = `
 "languagesystem DFLT dflt;
 

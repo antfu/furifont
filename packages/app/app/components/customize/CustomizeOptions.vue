@@ -30,6 +30,10 @@ const isolated = computed({
   get: () => config.value.isolated ?? DEFAULTS.plan.isolated,
   set: value => config.value.isolated = value,
 })
+const kanaRomaji = computed({
+  get: () => config.value.kanaRomaji ?? DEFAULTS.plan.kanaRomaji,
+  set: value => config.value.kanaRomaji = value,
+})
 const share = computed({
   get: () => config.value.isolatedMinShare ?? DEFAULTS.plan.isolatedMinShare,
   set: value => config.value.isolatedMinShare = value,
@@ -73,6 +77,9 @@ function toggle(source: WordSource): void {
     <UiField :label="$t('customize.options.script')">
       <UiSegmented v-model="furiganaScript" :label="$t('customize.options.script')" :options="scripts" />
     </UiField>
+    <UiToggle v-model="kanaRomaji">
+      {{ $t('customize.options.kanaRomaji') }}
+    </UiToggle>
     <div class="h-px bg-[var(--ff-line)]" />
     <!-- In the planner's order: the sources' words, those filtered out, then skip and take by score. -->
     <fieldset class="flex flex-col gap-2">
