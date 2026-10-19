@@ -716,7 +716,7 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
     ])
     const keptGlyphs = glyphs.all().filter(g => keptNames.has(g.name))
     const han = [...coverage].filter(cp => inSample([cp]) && isHan(String.fromCodePoint(cp))).sort((a, b) => a - b)
-    const { glyphs: kanaGlyphs, codepoints: kanaCodepoints, ...kana } = options.kanaRomaji
+    const { glyphs: kanaGlyphs, codepoints: kanaCodepoints, ...kana } = options.kanaRomaji && options.furiganaScript === 'hepburn'
       ? planKanaRomaji((kana, romaji) => inSample(codepoints(kana)) && codepoints(kana + romaji).every(cp => coverage.has(cp)))
       : { glyphs: [], codepoints: [], digraphs: [], contextual: [], singles: [] }
     const allGlyphs = [...keptGlyphs, ...kanaGlyphs]

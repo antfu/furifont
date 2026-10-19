@@ -77,7 +77,7 @@ function toggle(source: WordSource): void {
     <UiField :label="$t('customize.options.script')">
       <UiSegmented v-model="furiganaScript" :label="$t('customize.options.script')" :options="scripts" />
     </UiField>
-    <UiToggle v-model="kanaRomaji">
+    <UiToggle v-if="furiganaScript === 'hepburn'" v-model="kanaRomaji">
       {{ $t('customize.options.kanaRomaji') }}
     </UiToggle>
     <div class="h-px bg-[var(--ff-line)]" />

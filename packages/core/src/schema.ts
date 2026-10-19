@@ -55,7 +55,7 @@ export const PlanOptionsSchema = v.object({
   skipJlpt: v.optional(v.picklist(JLPT_LEVELS)),
   /** Annotate a kanji alone in its run, or one no word claims after another kanji (a suffix); when off, only selectors give them ruby. */
   isolated: v.optional(v.boolean(), DEFAULTS.plan.isolated),
-  /** Romaji over hiragana and katakana, whatever script the kanji's ruby is in. */
+  /** Romaji over hiragana and katakana, when the kanji's ruby is romaji too (`hepburn`). */
   kanaRomaji: v.optional(v.boolean(), DEFAULTS.plan.kanaRomaji),
   /** A kanji alone in its run is annotated only when one reading has this share of the evidence. */
   isolatedMinShare: v.optional(v.pipe(v.number(), v.minValue(0.5), v.maxValue(1)), DEFAULTS.plan.isolatedMinShare),

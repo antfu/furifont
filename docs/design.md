@@ -10,7 +10,7 @@ Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-fo
 
 ## Goals
 
-- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and a variable font of every weight, from Source Han Sans JP and Source Han Serif JP, with hiragana or Hepburn romaji furigana, and romaji over kana. Katakana for on'yomi is a build option, and so is turning the romaji over kana off.
+- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and a variable font of every weight, from Source Han Sans JP and Source Han Serif JP, with hiragana or Hepburn romaji furigana; the romaji fonts put romaji over kana too. Katakana for on'yomi is a build option, and so is turning the romaji over kana off.
 - A build anyone can run with another base font, word list or options.
 - A local studio, served by Devframe, to tune, preview and build.
 - A static demo site that loads the prebuilt fonts.
@@ -276,7 +276,7 @@ Kana furigana uses the base font's own kana. Romaji uses its Latin glyphs. Sourc
 
 ### Romaji over kana
 
-`kanaRomaji` (on by default, in every script) puts Hepburn romaji over hiragana and katakana, a syllable at a time. A kana run is shaped apart from the kanji, as a run of kanji is, so the rules never see a kanji and only see the kana of their own run:
+`kanaRomaji` (on by default, and only with `furiganaScript: 'hepburn'`) puts Hepburn romaji over hiragana and katakana, a syllable at a time. A kana run is shaped apart from the kanji, as a run of kanji is, so the rules never see a kanji and only see the kana of their own run:
 
 - A yōon or loanword digraph is one glyph: きゃ kya, ティ ti.
 - っ shows the consonant it doubles (っか k, っちゃ t), and nothing before a vowel or at the end of a run.

@@ -252,7 +252,7 @@ describe.each(['SourceHanSansJP-Subset.otf', 'SourceHanSansJP-VF-Subset.ttf'])('
   let built: Built
 
   beforeAll(async () => {
-    built = await build(file)
+    built = await build(file, undefined, { furiganaScript: 'hepburn' })
   })
 
   it('annotates kana a syllable at a time, っ by the consonant it doubles', () => {
@@ -261,14 +261,16 @@ describe.each(['SourceHanSansJP-Subset.otf', 'SourceHanSansJP-VF-Subset.ttf'])('
     expect(read(built, 'コンヒ')).toEqual(['コ:ko', 'ン:n', 'ヒ:hi'])
   })
 
-  it('turns romaji off with ss01, and with the option', async () => {
+  it('turns romaji off with ss01, with the option, and with kanji ruby in kana', async () => {
     expect(read(built, 'きょう', [new hb.Feature('ss01')])).toEqual(['き', 'ょ', 'う'])
     // Kana no rule names keep the base font's glyph names: `read` shows those.
-    expect(read(await build(file, undefined, { kanaRomaji: false }), 'きょう').filter(g => g.includes(':'))).toEqual([])
+    const annotated = async (options: PlanOptionsInput) => read(await build(file, undefined, options), 'きょう').filter(g => g.includes(':'))
+    expect(await annotated({ furiganaScript: 'hepburn', kanaRomaji: false })).toEqual([])
+    expect(await annotated({ furiganaScript: 'hiragana' })).toEqual([])
   })
 
   it('leaves the kanji\'s rules alone', () => {
-    expect(read(built, '今日')).toEqual(['今日:きょう'])
+    expect(read(built, '今日')).toEqual(['今日:kyō'])
   })
 })
 

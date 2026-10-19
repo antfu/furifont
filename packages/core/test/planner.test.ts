@@ -278,7 +278,7 @@ describe('planner', () => {
 
   describe('kana romaji', () => {
     const withLong = new Set([...coverage, ...[...'ーāīēァィゥェォ'].map(c => c.codePointAt(0)!)])
-    const kana = (text: string, cover = withLong) => planFont(resolve({ kanaRomaji: true }), cover, text).plan
+    const kana = (text: string, cover = withLong) => planFont(resolve({ furiganaScript: 'hepburn', kanaRomaji: true }), cover, text).plan
 
     it('annotates kana a syllable at a time', () => {
       expect(drawn(kana('ひらがなカタカナ'))).toEqual(expect.arrayContaining(['ひ:hi', 'ら:ra', 'が:ga', 'な:na', 'カ:ka', 'タ:ta', 'ナ:na']))
@@ -297,15 +297,17 @@ describe('planner', () => {
       expect(drawn(kana('コーヒー', coverage))).toEqual(['コ:ko', 'ヒ:hi'])
     })
 
-    it('turns off with ss01, and with the option', () => {
+    it('turns off with ss01, with the option, and with kanji ruby in kana', () => {
       expect(kana('きゃ').fea).toMatch(/feature ss01 \{[^}]*lookup ruby_off_ligatures;/)
-      expect(planFont(resolve(), withLong, 'かなカナ').plan.glyphs).toEqual([])
+      expect(planFont(resolve({ furiganaScript: 'hepburn' }), withLong, 'かなカナ').plan.glyphs).toEqual([])
+      expect(planFont(resolve({ furiganaScript: 'hiragana', kanaRomaji: true }), withLong, 'かなカナ').plan.glyphs).toEqual([])
+      expect(planFont(resolve({ furiganaScript: 'katakanaOn', kanaRomaji: true }), withLong, 'かなカナ').plan.glyphs).toEqual([])
     })
 
     it('stays out of the kanji\'s class and lookups', () => {
       const p = kana('日本のテレビ')
       expect(p.fea).not.toMatch(/@han = \[[^\]]*uni306E/)
-      expect(drawn(p)).toEqual(expect.arrayContaining(['日:に', '本:ほん', 'の:no', 'テ:te', 'レ:re', 'ビ:bi']))
+      expect(drawn(p)).toEqual(expect.arrayContaining(['日:ni', '本:hon', 'の:no', 'テ:te', 'レ:re', 'ビ:bi']))
     })
 
     it('writes a stable feature file', () => {
