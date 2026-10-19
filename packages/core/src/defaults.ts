@@ -14,6 +14,7 @@ export const DEFAULTS = {
     skip: 0,
     isolated: true,
     isolatedMinShare: 0.8,
+    kanaRomaji: true,
     /** Sizes in em, relative to the base font. */
     metrics: {
       rubyScale: 0.5,

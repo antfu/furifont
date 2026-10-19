@@ -156,7 +156,8 @@ function syllables(kana: string): Syllable[] {
   return out
 }
 
-function doubled(next: string): string {
+/** The consonant a っ before the romaji `next` doubles (k before ka, t before cha), or none before a vowel. */
+export function doubled(next: string): string {
   if (next.startsWith('ch'))
     return 't'
   return /^[^aeiou\W]/.test(next) ? next[0]! : ''
@@ -166,6 +167,62 @@ function doubled(next: string): string {
 function lengthen(out: string, kana: string): string | undefined {
   if ((kana === 'う' && /[ou]$/.test(out)) || (kana === 'お' && out.endsWith('o')))
     return out.slice(0, -1) + (out.endsWith('u') ? 'ū' : 'ō')
+}
+
+/** Katakana digraphs of loanwords, in hiragana, that `syllables` does not build. */
+const LOANWORD_DIGRAPHS: Record<string, string> = {
+  てぃ: 'ti',
+  でぃ: 'di',
+  とぅ: 'tu',
+  どぅ: 'du',
+  てゅ: 'tyu',
+  でゅ: 'dyu',
+  ふぁ: 'fa',
+  ふぃ: 'fi',
+  ふぇ: 'fe',
+  ふぉ: 'fo',
+  ふゅ: 'fyu',
+  うぃ: 'wi',
+  うぇ: 'we',
+  うぉ: 'wo',
+  ゔぁ: 'va',
+  ゔぃ: 'vi',
+  ゔぇ: 've',
+  ゔぉ: 'vo',
+  ゔゅ: 'vyu',
+  しぇ: 'she',
+  じぇ: 'je',
+  ちぇ: 'che',
+  つぁ: 'tsa',
+  つぃ: 'tsi',
+  つぇ: 'tse',
+  つぉ: 'tso',
+  いぇ: 'ye',
+  くぁ: 'kwa',
+  ぐぁ: 'gwa',
+  すぃ: 'si',
+  ずぃ: 'zi',
+}
+
+/**
+ * Every syllable a bare kana run is read in, hiragana and katakana: each kana
+ * (but っ, whose romaji is the next consonant), the yōon digraphs (きゃ kya)
+ * and, in katakana, the digraphs of loanwords (ティ ti).
+ */
+export function kanaSyllables(): Syllable[] {
+  const singles = Object.entries({ ...ROMAJI, ん: 'n', ゕ: 'ka', ゖ: 'ke' }).map(([kana, romaji]) => ({ kana, romaji }))
+  const yoon = Object.keys(ROMAJI).flatMap(c => Object.keys(YOON).map(small => syllables(c + small))).filter(s => s.length === 1).map(s => s[0]!)
+  const hiragana = [...singles, ...yoon]
+  const loanwords = Object.entries(LOANWORD_DIGRAPHS).map(([kana, romaji]) => ({ kana: toKatakana(kana), romaji }))
+  return [...hiragana, ...hiragana.map(s => ({ ...s, kana: toKatakana(s.kana) })), ...loanwords]
+}
+
+const MACRONS: Record<string, string> = { a: 'ā', i: 'ī', u: 'ū', e: 'ē', o: 'ō' }
+
+/** The syllable lengthened by ー: kō for コー. */
+export function withMacron(romaji: string): string | undefined {
+  const macron = MACRONS[romaji.at(-1) ?? '']
+  return macron && romaji.slice(0, -1) + macron
 }
 
 /**

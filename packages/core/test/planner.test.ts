@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { createFontPlanner, fuseDictionary, resolveOptions, WORD_SOURCES } from '../src'
 import { coverage, dictionary, sources } from './fixture'
 
-/** Every source but JMdict's other words: these tests are about which words the lists select, so unranked words stay out. */
+/** Every source but JMdict's other words: these tests are about which words the lists select, so unranked words stay out. Kana romaji too, but in its own tests. */
 const LISTED = WORD_SOURCES.filter(s => s !== 'jmdict')
-const resolve = (options: PlanOptionsInput = {}) => resolveOptions({ sources: LISTED, ...options })
+const resolve = (options: PlanOptionsInput = {}) => resolveOptions({ sources: LISTED, kanaRomaji: false, ...options })
 const without = (source: typeof LISTED[number]) => LISTED.filter(s => s !== source)
 
 const planFont = createFontPlanner(dictionary)
@@ -274,5 +274,44 @@ describe('planner', () => {
 
   it('writes a stable feature file', () => {
     expect(plan().plan.fea).toMatchSnapshot()
+  })
+
+  describe('kana romaji', () => {
+    const withLong = new Set([...coverage, ...[...'ーāīēァィゥェォ'].map(c => c.codePointAt(0)!)])
+    const kana = (text: string, cover = withLong) => planFont(resolve({ furiganaScript: 'hepburn', kanaRomaji: true }), cover, text).plan
+
+    it('annotates kana a syllable at a time', () => {
+      expect(drawn(kana('ひらがなカタカナ'))).toEqual(expect.arrayContaining(['ひ:hi', 'ら:ra', 'が:ga', 'な:na', 'カ:ka', 'タ:ta', 'ナ:na']))
+      expect(drawn(kana('きょうしゅくティ'))).toEqual(expect.arrayContaining(['きょ:kyo', 'う:u', 'しゅ:shu', 'く:ku', 'ティ:ti']))
+    })
+
+    it('reads っ, ん and ー by the kana around them', () => {
+      const p = kana('がっこうコーヒーきんえん')
+      expect(drawn(p)).toEqual(expect.arrayContaining(['っ:k', 'コ:kō', 'ヒ:hī', 'ん:n\'', 'ん:n']))
+      expect(p.fea).toMatch(/sub uni3063' lookup kana_\d+ \[[^\]]*uni3053[^\]]*\];/)
+      expect(p.fea).toMatch(/sub uni30B3' lookup kana_\d+ uni30FC;/)
+      expect(p.codepoints).toContain(0x30FC)
+    })
+
+    it('keeps out what the font cannot draw', () => {
+      expect(drawn(kana('コーヒー', coverage))).toEqual(['コ:ko', 'ヒ:hi'])
+    })
+
+    it('turns off with ss01, with the option, and with kanji ruby in kana', () => {
+      expect(kana('きゃ').fea).toMatch(/feature ss01 \{[^}]*lookup ruby_off_ligatures;/)
+      expect(planFont(resolve({ furiganaScript: 'hepburn' }), withLong, 'かなカナ').plan.glyphs).toEqual([])
+      expect(planFont(resolve({ furiganaScript: 'hiragana', kanaRomaji: true }), withLong, 'かなカナ').plan.glyphs).toEqual([])
+      expect(planFont(resolve({ furiganaScript: 'katakanaOn', kanaRomaji: true }), withLong, 'かなカナ').plan.glyphs).toEqual([])
+    })
+
+    it('stays out of the kanji\'s class and lookups', () => {
+      const p = kana('日本のテレビ')
+      expect(p.fea).not.toMatch(/@han = \[[^\]]*uni306E/)
+      expect(drawn(p)).toEqual(expect.arrayContaining(['日:ni', '本:hon', 'の:no', 'テ:te', 'レ:re', 'ビ:bi']))
+    })
+
+    it('writes a stable feature file', () => {
+      expect(kana('きゃっきゃコーヒーのティー').fea).toMatchSnapshot()
+    })
   })
 })

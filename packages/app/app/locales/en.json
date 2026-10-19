@@ -276,6 +276,7 @@
           "hint": "Names of municipalities and towns, such as 一宮, from Japan Post's postal code data. Furifont uses them where no common word matches the text."
         }
       },
+      "kanaRomaji": "Romaji over hiragana and katakana",
       "isolated": "Furigana on single kanji",
       "share": "Single kanji: how sure",
       "shareHint": "A single kanji gets furigana only when one reading makes up at least this share of its uses in the dictionary. Use a number from 0.5 to 1. A higher number gives furigana to fewer kanji.",

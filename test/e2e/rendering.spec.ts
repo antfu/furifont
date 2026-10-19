@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { VERSION_PROBE } from '@furifont/core'
 import { expect, test } from '@playwright/test'
-import { TEST_FONT, TEST_OTF, TEST_READINGS, TEST_VARIABLE_FONT, WOFF2_PAGE } from './setup'
+import { TEST_FONT, TEST_OTF, TEST_READINGS, TEST_ROMAJI_FONT, TEST_VARIABLE_FONT, WOFF2_PAGE } from './setup'
 
 const ORIGIN = 'https://furifont.test'
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
@@ -34,6 +34,26 @@ const shot = (page: Page, selector: string): Promise<Buffer> => page.locator(sel
 test('draws ruby that ss01 turns off', async ({ page }) => {
   await show(page, '<p id="on">日本</p><p id="off" class="off">日本</p>')
   expect(await shot(page, '#on')).not.toEqual(await shot(page, '#off'))
+})
+
+/** The first `ems` characters of `selector`, ruby included. */
+async function shotEms(page: Page, selector: string, ems: number): Promise<Buffer> {
+  const box = (await page.locator(selector).boundingBox())!
+  return page.screenshot({ clip: { x: box.x, y: box.y, width: ems * 40, height: box.height } })
+}
+
+test('puts romaji over kana by the kana of its run, beside the kanji\'s, and ss01 turns it off', async ({ page }) => {
+  await show(page, `
+    <p id="on">かな</p><p id="off" class="off">かな</p>
+    <p id="kya">きゃ</p><p id="kia">きあ</p>
+    <p id="kk">っか</p><p id="ks">っさ</p>
+    <p id="word">日本の</p><p id="kanji">日本</p>`, TEST_ROMAJI_FONT)
+  expect(await shot(page, '#on')).not.toEqual(await shot(page, '#off'))
+  // kya spans both kana, so き alone does not show ki.
+  expect(await shotEms(page, '#kya', 1)).not.toEqual(await shotEms(page, '#kia', 1))
+  // っ shows the consonant it doubles.
+  expect(await shotEms(page, '#kk', 1)).not.toEqual(await shotEms(page, '#ks', 1))
+  expect(await shotEms(page, '#word', 2)).toEqual(await shotEms(page, '#kanji', 2))
 })
 
 test('reads a kanji no word claims after another kanji as a suffix, before a kanji only if it seldom starts words', async ({ page }) => {

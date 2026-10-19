@@ -6,6 +6,7 @@ import { formatNotation, getOrCreate, hanRuns, isHan, parseFurigana, parseNotati
 import { emitFea } from './fea'
 import { codepoints, createGlyphRegistry, createSingleLookups, glyphName, isGrouped } from './glyphs'
 import { isOnyomi, toHepburn, toKatakana } from './kana'
+import { planKanaRomaji } from './romaji'
 import { JLPT_LEVELS, SCORE, sourceBit, weightOf } from './schema'
 import { pickSuffixes } from './suffixes'
 
@@ -722,6 +723,10 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
     ])
     const keptGlyphs = glyphs.all().filter(g => keptNames.has(g.name))
     const han = [...coverage].filter(cp => inSample([cp]) && isHan(String.fromCodePoint(cp))).sort((a, b) => a - b)
+    const { glyphs: kanaGlyphs, codepoints: kanaCodepoints, ...kana } = options.kanaRomaji && options.furiganaScript === 'hepburn'
+      ? planKanaRomaji((kana, romaji) => inSample(codepoints(kana)) && codepoints(kana + romaji).every(cp => coverage.has(cp)))
+      : { glyphs: [], codepoints: [], digraphs: [], contextual: [], singles: [] }
+    const allGlyphs = [...keptGlyphs, ...kanaGlyphs]
 
     const fea = emitFea({
       hanClass: [...han.map(glyphName), ...keptVariants.map(v => v.name), ...keptGlyphs.map(g => g.name)],
@@ -733,9 +738,10 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
       variantReadings: keptVariantReadings.map(v => ({ input: v.input, output: v.glyph.name })),
       alternates: keptAlternates,
       variantsOff: keptVariants.map(v => ({ input: v.name, output: glyphName(v.base) })),
-      rubyOff: keptGlyphs.map(g => ({ glyph: g.name, bases: g.bases.map(glyphName) })),
+      rubyOff: allGlyphs.map(g => ({ glyph: g.name, bases: g.bases.map(glyphName) })),
+      kana,
     })
-    const named = new Set([...han, ...keptVariants.map(v => v.base), ...keptGlyphs.flatMap(g => g.bases)])
+    const named = new Set([...han, ...keptVariants.map(v => v.base), ...keptGlyphs.flatMap(g => g.bases), ...kanaCodepoints])
 
     return {
       plan: {
@@ -747,9 +753,9 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
         metrics: options.metrics,
         codepoints: [...named].sort((a, b) => a - b),
         variants: keptVariants,
-        glyphs: keptGlyphs,
+        glyphs: allGlyphs,
         fea,
-        subset: sample && [...new Set([...sample, ...keptGlyphs.flatMap(g => g.ruby.flatMap(r => codepoints(r.text)))])].filter(cp => !keptVariants.some(v => v.selector === cp)).sort((a, b) => a - b),
+        subset: sample && [...new Set([...sample, ...allGlyphs.flatMap(g => g.ruby.flatMap(r => codepoints(r.text)))])].filter(cp => !keptVariants.some(v => v.selector === cp)).sort((a, b) => a - b),
         smoke: sample ? [] : smokeChecks(patterns, lone, glyphs),
       },
       report: {
@@ -762,7 +768,7 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
           suffixes: suffixes.length,
           protectedAnnotated: [...protectedRuns.values()].filter(Boolean).length,
           protectedBare: [...protectedRuns.values()].filter(s => !s).length,
-          glyphs: keptGlyphs.length,
+          glyphs: allGlyphs.length,
           rules: keptRules.length,
         },
         ivs: { kanji: Object.fromEntries(kanjiReadings), words: ivsWords, lone: Object.fromEntries(isolated), salt: keptAlternates.length > 0 },
