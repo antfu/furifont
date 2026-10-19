@@ -112,6 +112,7 @@ export default defineEventHandler(async (event) => {
 // @connect      ${new URL(SITE).host}
 // ==/UserScript==
 
+/* eslint-disable */
 (() => {
 ${engine}
 ;(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, Furifont.toggleFurifont, ${JSON.stringify(fonts)}, ${JSON.stringify(SITE_PAIRS_URL)}, ${JSON.stringify({ version: VERSION, href: `${SITE}/furifont.user.js` })}, ${JSON.stringify(TOASTS)}, ${JSON.stringify(MENUS)}, ${detectLocale})
