@@ -36,7 +36,7 @@ for (const style of [...PREBUILT.weights.map(w => w.style), variable.style]) {
   await Promise.all(PREBUILT.fonts.map(async ({ base, family, furiganaScript }) => {
     // The variable family is named apart, as Source Han's is, so it can be installed beside the static ones.
     const name = style === variable.style ? `${family} ${variable.style}` : family
-    const label = `${name} ${style}`
+    const label = style === variable.style ? name : `${name} ${style}`
     const config = v.parse(FurifontConfigSchema, { ...PREBUILT.options, family: name, furiganaScript, base: `${base} ${style}` })
     const begun = performance.now()
     console.log(`[start] ${label} (${furiganaScript}, base ${config.base})`)

@@ -50,5 +50,69 @@
   // 実装 (implementation) ranks too low to be in the prebuilt set.
   "実[じっ]装[そう]",
   // Alone, 編 is へん (編集, 前編); あ comes only from 編む, whose okurigana a font cannot see.
-  "編[へん]"
+  "編[へん]",
+  // あおやま (Aoyama, the surname and place) is far more common than せいざん.
+  // reported by anonymous ce8c10c5-de07-4028-bb81-c290b7f0149a
+  "青[あお]山[やま]",
+  // 行 is い, おこな, ぎょう or ゆ by its okurigana, which a font cannot see.
+  // reported by anonymous 73bacebb-b9f8-4a14-ae9e-7ec3272ff9fd
+  // reported by anonymous cf8a1126-6d02-4370-8f8f-9840123af677
+  // reported by anonymous 7673fc47-ab9d-48ac-9f79-881281e8ee83
+  // reported by anonymous b07cdc6a-7eb2-4c10-a470-07fa0cf54f4d
+  "行",
+  // かな and かめい are both common and the okurigana does not tell them apart; 送り仮名 is おくりがな.
+  // reported by 山下純司 c5638be5-66e8-48dd-bdaa-5be136faab2e
+  // reported by anonymous 180738e7-2945-4f22-a7a5-e6743be597ae
+  // reported by anonymous 6043fced-0c26-4b49-b981-1f81bb51054f
+  // reported by anonymous bad2d58f-a880-492f-9382-6ef4bef97a7a
+  // reported by anonymous 8e6cc4ae-0cdf-4b27-a5ed-6540d2056092
+  "仮名",
+  // 枝垂れ is しだれ: the れ is okurigana, so the kanji read し and だ.
+  // reported by momosu 226ad245-7b96-4964-a432-9f1a30b59344
+  "枝[し]垂[だ]",
+  // A lone 裡 is うち (夢の裡に).
+  // reported by momosu 226ad245-7b96-4964-a432-9f1a30b59344
+  "裡[うち]",
+  // A lone 糧 is かて (心の糧).
+  // reported by 1201o df875bcd-c1d6-4541-9caf-4c18bc5c2779
+  "糧[かて]",
+  // 太郎冠者 (kyogen role) is たろうかじゃ.
+  // reported by Mafuyu db88ae0b-39e9-4ef0-9089-0c933796a0f7
+  "太[た]郎[ろう]冠[か]者[じゃ]",
+  // 今日庵 (Urasenke tea house) is こんにちあん.
+  // reported by Mafuyu 309d8cea-c3b2-444c-ad55-afc110a27781
+  "今[こん]日[にち]庵[あん]",
+  // 今日性 is こんにちせい.
+  // reported by Mafuyu 8a996236-0807-418a-ace5-3f83d0ed5c26
+  "今[こん]日[にち]性[せい]",
+  // 攫う is さらう; つか is rare.
+  // reported by momosu 226ad245-7b96-4964-a432-9f1a30b59344
+  "攫[さら]",
+  // 嗚呼 is ああ.
+  // reported by momosu 226ad245-7b96-4964-a432-9f1a30b59344
+  "嗚[あ]呼[あ]",
+  // 眼差し is まなざし.
+  // reported by 1201o df875bcd-c1d6-4541-9caf-4c18bc5c2779
+  "眼[まな]差[ざ]",
+  // 最推し (a fan's favourite) is さいおし.
+  // reported by 1201o df875bcd-c1d6-4541-9caf-4c18bc5c2779
+  "最[さい]推[お]",
+  // 何回目 is なんかいめ.
+  // reported by 1201o df875bcd-c1d6-4541-9caf-4c18bc5c2779
+  "何[なん]回[かい]目[め]",
+  // 鬼遣らい is おにやらい (the exorcism rite).
+  // reported by Mafuyu 44af4ee0-5563-4936-8848-aa241355bc58
+  "鬼[おに]遣[や]",
+  // 今日主義 is こんにちしゅぎ (Daijisen).
+  // reported by Mafuyu 775ebe1f-bc5f-4c73-b397-2df0ee981d97
+  "今[こん]日[にち]主[しゅ]義[ぎ]",
+  // 今日新聞 (Beppu newspaper) is こんにちしんぶん.
+  // reported by Mafuyu 99898e09-fee9-43d8-b2ef-35f9d1af614b
+  "今[こん]日[にち]新[しん]聞[ぶん]",
+  // 今日只今 is こんにちただいま (Weblio).
+  // reported by Mafuyu 83e73648-d757-4564-b509-5fbe6ce9c823
+  "今[こん]日[にち]只[ただ]今[いま]",
+  // 今日唯今 is こんにちただいま (Weblio).
+  // reported by Mafuyu faea8d32-c478-4652-a8ce-4dcc0d0c296b
+  "今[こん]日[にち]唯[ただ]今[いま]"
 ]

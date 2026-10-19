@@ -22,7 +22,7 @@ i18n.locale.value = 'en'
           furifont
         </div>
         <div class="flex flex-col gap-6">
-          <span class="label text-sm">振り仮名 / furigana</span>
+          <span class="label text-sm">ふりがな / furigana</span>
           <h1 class="display text-[64px] font-semibold">
             {{ $t('hero.title1') }}<br>{{ $t('hero.title2') }}
           </h1>

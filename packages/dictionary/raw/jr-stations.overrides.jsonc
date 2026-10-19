@@ -1,0 +1,6 @@
+// Curated overrides of jr-stations, in inline notation. Add entries with `pnpm dict:override`.
+[
+  // 放出駅 (Osaka) is read はなてんえき; 放出 alone is ほうしゅつ.
+  // reported by anonymous abb27177-f332-43de-84cc-8e064f67b939
+  "放[はな]出[てん]駅[えき]"
+]

@@ -316,9 +316,16 @@ function addWordEvidence(patterns: Patterns, add: AddEvidence): void {
 /** Last in each list: readings a selector helper may need for verbs too rare to rank. */
 function addRareVerbEvidence(inflecting: DictionaryIndex['inflecting'], ctx: PlanContext, add: AddEvidence): void {
   for (const [kanji, rubies] of inflecting) {
-    for (const ruby of [...rubies].filter(ruby => !ctx.removed.has(kanji) && ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] })))
+    for (const ruby of [...rubies].filter(ruby => ctx.renderable({ text: kanji, spans: [{ start: 0, end: 1, ruby }] })))
       add(kanji, ruby, 1e-9)
   }
+}
+
+/** What a lone kanji with a leading reading of that share becomes: left bare, shown with it, or neither. */
+function loneChoice(kanji: string, share: number, lonePins: Map<string, string>, skippedKanji: Set<string>, isolated: Map<string, string>, ctx: PlanContext): 'skip' | 'isolate' | undefined {
+  if (!lonePins.has(kanji) && skippedKanji.has(kanji))
+    return 'skip'
+  return share >= ctx.options.isolatedMinShare && ctx.options.isolated && !isolated.has(kanji) ? 'isolate' : undefined
 }
 
 /**
@@ -340,14 +347,14 @@ function chooseLoneKanji(index: DictionaryIndex, { patterns, lonePins, skippedKa
   for (const [kanji, ruby] of lonePins)
     add(kanji, ruby, 1)
   for (const [kanji, readings] of index.singles) {
-    if (ctx.removed.has(kanji))
-      continue
     const ranked = loneReadings(kanji, readings, ctx).filter(r => r.share >= MIN_ALTERNATE_SHARE)
     const top = ranked[0]
-    if (top && !lonePins.has(kanji) && skippedKanji.has(kanji))
+    // A kanji left bare still offers its readings by selector, which okurigana (行い おこな) use; it shows none alone.
+    const choice = top && !ctx.removed.has(kanji) ? loneChoice(kanji, top.share, lonePins, skippedKanji, isolated, ctx) : undefined
+    if (choice === 'skip')
       skipped.add(kanji)
-    else if (top && top.share >= ctx.options.isolatedMinShare && ctx.options.isolated && !isolated.has(kanji))
-      isolated.set(kanji, top.ruby)
+    else if (choice === 'isolate')
+      isolated.set(kanji, top!.ruby)
     for (const r of ranked)
       add(kanji, r.ruby, r.weight)
   }
@@ -424,7 +431,7 @@ type Known = Map<string, (string | undefined)[] | null>
 function findMisreadRuns(index: DictionaryIndex, patterns: Patterns, kanjiReadings: Map<string, string[]>, suffixes: Suffixes, skipped: Set<string>, ctx: PlanContext): Map<string, RubySpan[] | null> {
   const known: Known = new Map([...patterns].map(([text, readings]) => [text, assignment(readings[0]!.spans, length(text))]))
   const protectedRuns = new Map<string, RubySpan[] | null>()
-  for (const text of [...ctx.removed].filter(t => length(t) > 1)) {
+  for (const text of [...ctx.removed].filter(t => length(t) > 1 && ctx.covered(t))) {
     known.set(text, null)
     protectedRuns.set(text, null)
   }

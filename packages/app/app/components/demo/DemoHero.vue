@@ -10,7 +10,7 @@ const { reader } = useOkurigana(family)
 <template>
   <div class="grid lg:grid-cols-2">
     <div class="flex flex-col gap-8 border-base px-6 py-16 lg:border-r lg:py-24">
-      <span class="label">振り仮名 / furigana</span>
+      <span class="label">ふりがな / furigana</span>
       <h1 class="display hero-title font-semibold">
         {{ $t('hero.title1') }}<br>{{ $t('hero.title2') }}
       </h1>
