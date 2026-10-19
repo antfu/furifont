@@ -81,7 +81,7 @@ The first prototype, a hand-built font with a dozen words shaped in Chromium, Fi
 
 1. **Fonts never see okurigana.** Browsers itemize text by Unicode script before shaping, and 漢字 (Han) and かな (Hiragana) are different scripts. A rule such as "食 followed by べ" never matches in any browser, although HarfBuzz matches it when given the whole string. The planned stems derived from parts of speech (書 + [かきくけこ]) were dropped. Rules work on **Han runs** instead: maximal sequences of kanji, which is all a font is ever shown.
 2. **`rclt` can be turned off.** `font-feature-settings: "rclt" 0` disables it in all three browsers. `ss01` stays as the documented switch, because apps such as Word expose stylistic sets.
-3. **Selectors must be variation sequences.** A kanji followed by a variation selector is split off its run unless the font maps that sequence in `cmap` format 14. A rule matching 市 + VS227 + 場 then never sees 場. Each sequence now maps to its own glyph (see [Selectors](#selectors)).
+3. **Selectors must be variation sequences.** A kanji followed by a variation selector is split off its run unless the font maps that sequence in `cmap` format 14. A rule matching 市 + VS243 + 場 then never sees 場. Each sequence now maps to its own glyph (see [Selectors](#selectors)).
 4. **The newspaper ranking misleads.** JMdict's `nf` buckets belong to a written form. Ranking by them gives 今日 こんにち and 昨日 さくじつ, the newspaper readings. JMdict's own order gives きょう and きのう. The ranking in [Defaults](#defaults) follows from this.
 
 ## Rule planning
@@ -208,20 +208,20 @@ The main lookup has a `subtable;` break every 600 rules, plus one before the cla
 
 ## Selectors
 
-Each sequence of kanji + variation selector in VS225..VS240 is mapped in `cmap` format 14 to an **empty placeholder glyph** with the kanji's advance. These selectors sit at the end of the IVD range, where nothing is registered, and Source Han Sans' own sequences use VS17 and up.
+Each sequence of kanji + variation selector in VS241..VS256 is mapped in `cmap` format 14 to an **empty placeholder glyph** with the kanji's advance. These selectors sit at the end of the IVD range, where nothing is registered, and Source Han Sans' own sequences use VS17 and up.
 
 | Selector | Meaning |
 | --- | --- |
-| VS225 (U+E01E0) | No furigana on this kanji |
-| VS226 + n (U+E01E1 + n) | Reading n + 1 |
+| VS241 (U+E01E0) | No furigana on this kanji |
+| VS242 + n (U+E01E1 + n) | Reading n + 1 |
 
-After the first kanji of a pattern with several readings, a selector picks the word's reading: 市 + VS227 + 場 is しじょう. After any other kanji, the selector picks that kanji's own reading. Each kanji's readings are ordered by evidence.
+After the first kanji of a pattern with several readings, a selector picks the word's reading: 市 + VS243 + 場 is しじょう. After any other kanji, the selector picks that kanji's own reading. Each kanji's readings are ordered by evidence.
 
 The rules always replace a placeholder: with a furigana glyph, or with the plain kanji through `variants_off`. Placeholders therefore cost nothing in outlines. The reading lists ship as `<font>.ivs.json`, with the reading each lone kanji shows by default (`lone`), and on the demo's reference page.
 
 ### Salt
 
-A selector is a character in the text, and it shows up in copy and paste. Markup can carry the same choice with `font-feature-settings: "salt" n`, on a span around a run of kanji: `salt` n does what selector n (VS225 + n) does after the run's first kanji. An alternate substitution (GSUB type 3) maps each such kanji to its selector glyphs, and a chain rule applies it only to a kanji that no other Han glyph precedes, so a word's second kanji is left alone. The word rules and the kanji's own readings then see the choice as a glyph, exactly as for a selector: 今日 with `salt` 2 is こん, にち, and 日 alone is にち. The lookup comes before `furigana` in the lookup list. It is a full-build feature: a preview leaves it out, and `ivs.salt` in `.ivs.json` says whether the font has it. The compiler reads `sub X from [...]` for it.
+A selector is a character in the text, and it shows up in copy and paste. Markup can carry the same choice with `font-feature-settings: "salt" n`, on a span around a run of kanji: `salt` n does what selector n (VS241 + n) does after the run's first kanji. An alternate substitution (GSUB type 3) maps each such kanji to its selector glyphs, and a chain rule applies it only to a kanji that no other Han glyph precedes, so a word's second kanji is left alone. The word rules and the kanji's own readings then see the choice as a glyph, exactly as for a selector: 今日 with `salt` 2 is こん, にち, and 日 alone is にち. The lookup comes before `furigana` in the lookup list. It is a full-build feature: a preview leaves it out, and `ivs.salt` in `.ivs.json` says whether the font has it. The compiler reads `sub X from [...]` for it.
 
 ## Web pages
 
@@ -322,7 +322,7 @@ On the static demo site the studio page finds no server and explains how to star
 - **e2e** (Playwright, on Chromium, Firefox and WebKit, with the font as WOFF2):
   - furigana differs from `ss01`;
   - a suffix gets furigana at the end of a run, and a prefix-heavy one stays bare inside a run;
-  - VS227 differs from the default, and VS225 matches plain text;
+  - VS243 differs from the default, and VS241 matches plain text;
   - selection returns the source text;
   - furigana is not clipped at `line-height: normal`;
   - wrapped lines do not overlap;
