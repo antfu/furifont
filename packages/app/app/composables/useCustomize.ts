@@ -124,6 +124,8 @@ function createCustomize() {
   const estimate = reactive<EstimateState>({ loading: false })
   const build = reactive<BuildProgress>({ running: false, files: [] })
   const savedTo = ref<string>()
+  /** The connection is gone, so the server can neither print a code nor take one. */
+  const disconnected = ref(false)
 
   let client: DevframeRpcClient | undefined
   let rpc: DevframeScopedClientRpc<typeof STUDIO_ID> | undefined
@@ -197,24 +199,33 @@ function createCustomize() {
     try {
       const { connectDevframe } = await import('devframe/client')
       // Served by `furifont dev` Customize sits next to the app; under `nuxt dev`, on the bridge's mount.
-      client = await connectDevframe(import.meta.dev ? { baseURL: devCustomizeBase } : undefined)
+      // The locked page asks for the code, so devframe's native prompt is off.
+      client = await connectDevframe({ simpleAuth: false, baseURL: import.meta.dev ? devCustomizeBase : undefined })
       rpc = client.scope(STUDIO_ID).rpc
     }
     catch {
       status.value = 'unavailable'
       return
     }
-    if (await client.ensureTrusted(1500).catch(() => false))
-      await start()
-    else
+    if (!await client.ensureTrusted(1500).catch(() => false)) {
       status.value = 'locked'
+      // devframe never reconnects, and the auth calls would wait on a closed socket forever.
+      const track = (): void => {
+        disconnected.value = client!.status === 'disconnected' || client!.status === 'error'
+      }
+      client.events.on('connection:status', track)
+      track()
+      // The server prints its code only when asked. A slow magic link may still land, so trust is awaited either way.
+      if (!disconnected.value)
+        client.requestAuthCode()
+      await client.ensureTrusted(0)
+    }
+    await start()
   }
 
+  /** Whether the server took the code; trust then starts Customize. */
   async function unlock(code: string): Promise<boolean> {
-    if (!client || !await client.requestTrustWithCode(code))
-      return false
-    await start()
-    return true
+    return !disconnected.value && !!await client!.requestTrustWithCode(code)
   }
 
   async function start(): Promise<void> {
@@ -280,7 +291,7 @@ function createCustomize() {
       document.fonts.delete(face)
   })
 
-  return { status, state, config, report, text, preview, estimate, build, savedTo, unlock, runBuild, save, reset, search, sample, toggleWord }
+  return { status, state, config, report, text, preview, estimate, build, savedTo, disconnected, unlock, runBuild, save, reset, search, sample, toggleWord }
 }
 
 export type Customize = ReturnType<typeof createCustomize>

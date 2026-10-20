@@ -50,12 +50,19 @@ cli
   .option('--open', 'Open the studio in a browser', { default: true })
   .option('--auth', 'Ask for the one-time code printed here; --no-auth only on a machine you trust', { default: true })
   .action(async (flags: { port?: number, host: string, open: boolean, auth: boolean }) => {
-    const [{ createDevServer }, { default: devframe }] = await Promise.all([import('devframe/adapters/dev'), import('./devframe')])
+    const [{ createDevServer }, { createInteractiveAuth }, { default: devframe }] = await Promise.all([
+      import('devframe/adapters/dev'),
+      import('devframe/recipes/interactive-auth'),
+      import('./devframe'),
+    ])
     await createDevServer(devframe, {
       host: flags.host,
       port: flags.port ? Number(flags.port) : undefined,
       openBrowser: flags.open && STUDIO_PAGE,
-      auth: flags.auth ? undefined : false,
+      // The printed link opens the studio, the only page that takes its code.
+      // eslint-disable-next-line slop/no-chained-type-assertions -- `createDevServer` hands `auth` to the instance, which takes a factory too, but its type leaves that out.
+      auth: flags.auth && ((ctx: Parameters<typeof createInteractiveAuth>[0]) =>
+        createInteractiveAuth(ctx, { serverUrl: () => `${ctx.host.resolveOrigin()}/${STUDIO_PAGE}` })) as unknown as ReturnType<typeof createInteractiveAuth>,
       // Off loopback the one-time code printed below still guards the studio.
       allowedOrigins: flags.host === 'localhost' ? undefined : false,
       onReady: ({ origin }) => console.log(`Furifont studio: ${origin}/${STUDIO_PAGE}`),

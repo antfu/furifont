@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { unlock } = useCustomize()
+const { disconnected, unlock } = useCustomize()
 const code = ref('')
 const failed = ref(false)
 const busy = ref(false)
@@ -23,7 +23,12 @@ async function submit(): Promise<void> {
       </template>
     </i18n-t>
     <input v-model="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" :aria-label="$t('customize.auth.code')" class="input text-center font-mono text-xl tracking-[0.5em]">
-    <p v-if="failed" class="text-sm">
+    <i18n-t v-if="disconnected" keypath="customize.auth.disconnected" tag="p" class="text-sm">
+      <template #command>
+        <code class="font-mono">furifont dev</code>
+      </template>
+    </i18n-t>
+    <p v-else-if="failed" class="text-sm">
       {{ $t('customize.auth.failed') }}
     </p>
     <button type="submit" class="btn-solid focus-ring" :disabled="busy || code.trim().length !== 6">
