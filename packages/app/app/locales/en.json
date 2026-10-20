@@ -200,6 +200,7 @@
       "body": "{command} showed a six-digit code in your terminal (the window where you started it).",
       "code": "Code",
       "failed": "That code did not work. Check the terminal and try again.",
+      "disconnected": "The connection to {command} was lost. Check that it is still running, then reload this page.",
       "unlock": "Unlock"
     },
     "sections": {

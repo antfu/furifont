@@ -27,19 +27,29 @@ let cwd: string
 let studio: ChildProcess
 let url: string
 
-test.beforeAll(async () => {
-  cwd = await mkdtemp(join(tmpdir(), 'furifont-studio-'))
-  await writeFile(join(cwd, 'furifont.config.json'), JSON.stringify({ base: FIXTURE_FONT }))
+/** Starts `furifont dev` in `cwd`, resolving its studio URL; `output` keeps what it prints. */
+async function startStudio(flags: string[], env?: NodeJS.ProcessEnv): Promise<{ studio: ChildProcess, url: string, output: () => string }> {
   const port = await freePort()
-  studio = spawn(process.execPath, [CLI, 'dev', '--no-open', '--no-auth', '--port', String(port)], { cwd })
-  url = await new Promise((resolve, reject) => {
-    studio.stdout!.on('data', (chunk: Buffer) => {
-      const match = /Furifont studio: (\S+)/.exec(String(chunk))
+  const child = spawn(process.execPath, [CLI, 'dev', '--no-open', '--port', String(port), ...flags], { cwd, env: { ...process.env, ...env } })
+  let output = ''
+  const origin = await new Promise<string>((resolve, reject) => {
+    child.stdout!.on('data', (chunk: Buffer) => {
+      output += String(chunk)
+      const match = /Furifont studio: (\S+)/.exec(output)
       if (match)
         resolve(match[1]!)
     })
-    studio.on('exit', code => reject(new Error(`furifont dev exited with ${code}`)))
+    child.on('exit', code => reject(new Error(`furifont dev exited with ${code}`)))
   })
+  return { studio: child, url: origin, output: () => output }
+}
+
+test.beforeAll(async () => {
+  cwd = await mkdtemp(join(tmpdir(), 'furifont-studio-'))
+  await writeFile(join(cwd, 'furifont.config.json'), JSON.stringify({ base: FIXTURE_FONT }))
+  const started = await startStudio(['--no-auth'])
+  studio = started.studio
+  url = started.url
 })
 
 test.afterAll(async () => {
@@ -101,6 +111,23 @@ test('previews, plans and builds a font in the formats chosen', async ({ page })
   const download = await page.request.get(new URL((await otf.getAttribute('href'))!, url).href)
   expect(download.ok()).toBe(true)
   expect((await download.body()).subarray(0, 4).toString()).toBe('OTTO')
+})
+
+test('prints a code when the studio asks for one, with a link to the studio, and unlocks with it', async ({ page }) => {
+  // Its own home, so no token from an earlier run trusts the browser.
+  const locked = await startStudio([], { HOME: cwd })
+  try {
+    await page.goto(locked.url)
+    await expect(page.getByRole('heading', { name: 'Enter the code from your terminal' })).toBeVisible()
+    await expect.poll(locked.output).toMatch(/\/customize#devframe_otp=\d{6}/)
+    const [, code] = /devframe_otp=(\d{6})/.exec(locked.output())!
+    await page.getByLabel('Code').fill(code!)
+    await page.getByRole('button', { name: 'Unlock' }).click()
+    await expect(page.getByRole('heading', { name: 'Customize' })).toBeVisible()
+  }
+  finally {
+    locked.studio.kill()
+  }
 })
 
 test('estimates the size, keeps settings across reloads, and resets them but not the words', async ({ page }) => {
