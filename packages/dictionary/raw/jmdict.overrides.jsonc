@@ -114,5 +114,8 @@
   "今[こん]日[にち]只[ただ]今[いま]",
   // 今日唯今 is こんにちただいま (Weblio).
   // reported by Mafuyu faea8d32-c478-4652-a8ce-4dcc0d0c296b
-  "今[こん]日[にち]唯[ただ]今[いま]"
+  "今[こん]日[にち]唯[ただ]今[いま]",
+  // 無題 is read むだい; the word fell outside the prebuilt fonts, so only だい showed.
+  // reported by anonymous d4ae0364-639c-4847-a2e0-6210336cfc3a
+  "無[む]題[だい]"
 ]

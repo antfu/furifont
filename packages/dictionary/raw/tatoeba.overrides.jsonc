@@ -1,0 +1,6 @@
+// Curated overrides of tatoeba, in inline notation. Add entries with `pnpm dict:override`.
+[
+  // A common word, but JMdict leaves it untagged, so the prebuilt fonts ran out of glyphs before it and showed only だい.
+  // reported by anonymous d4ae0364-639c-4847-a2e0-6210336cfc3a
+  ["無[む]題[だい]", 3]
+]
