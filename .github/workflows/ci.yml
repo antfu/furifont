@@ -30,6 +30,7 @@ jobs:
       - run: pnpm build
       - run: pnpm typecheck
       - run: pnpm knip
+      - run: pnpm i18n:check
       - run: pnpm test
 
   e2e:

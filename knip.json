@@ -6,7 +6,7 @@
     "@antfu/skills"
   ],
   "workspaces": {
-    ".": {},
+    ".": { "entry": ["x18n.config.ts"] },
     "packages/*": {},
     "packages/app": {
       "storybook": true,

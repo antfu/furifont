@@ -11,9 +11,7 @@
     "github": "GitHub repository",
     "light": "Switch to light",
     "dark": "Switch to dark",
-    "language": "Language",
-    "rubyOff": "Hide the furigana",
-    "rubyOn": "Show the furigana"
+    "language": "Language"
   },
   "footer": {
     "fonts": "The fonts use the {license}. They come from Source Han Sans and Source Han Serif.",

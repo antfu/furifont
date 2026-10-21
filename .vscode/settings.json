@@ -48,5 +48,7 @@
   "cSpell.words": [
     "furifont",
     "okurigana"
-  ]
+  ],
+  "x18n.annotations": true,
+  "x18n.displayLocale": "ja"
 }

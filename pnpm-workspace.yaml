@@ -48,6 +48,11 @@ minimumReleaseAgeExclude:
   - devframe@1.2.5
   - vitest@5.0.5
   - vue@3.5.44
+  - '@x18n/builtins@0.0.3'
+  - '@x18n/cli@0.0.3'
+  - '@x18n/core@0.0.3'
+  - '@x18n/node@0.0.3'
+  - '@x18n/ui@0.0.3'
 
 trustPolicy: no-downgrade
 # Releases older than 180 days may predate provenance (Nuxt's toolchain still needs semver 6).
@@ -114,6 +119,7 @@ catalogs:
     skills: ^1.7.2
   cli:
     '@antfu/eslint-config': ^9.5.1
+    '@x18n/cli': ^0.0.3
     bumpp: ^12.3.0
     eslint: ^10.12.0
     eslint-plugin-slop: ^0.1.3

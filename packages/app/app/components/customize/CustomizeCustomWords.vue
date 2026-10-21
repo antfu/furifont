@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 const { config, toggleWord } = useCustomize()
+const { t } = useI18n()
 const notation = ref('')
 
 const lists = computed(() => [
-  { key: 'add' as const, label: 'customize.custom.added' as const, items: config.value.words?.add ?? [] },
-  { key: 'pin' as const, label: 'customize.custom.pinned' as const, items: config.value.words?.pin ?? [] },
-  { key: 'remove' as const, label: 'customize.custom.removed' as const, items: config.value.words?.remove ?? [] },
+  { key: 'add' as const, label: t('customize.custom.added', { count: (config.value.words?.add ?? []).length }), items: config.value.words?.add ?? [] },
+  { key: 'pin' as const, label: t('customize.custom.pinned', { count: (config.value.words?.pin ?? []).length }), items: config.value.words?.pin ?? [] },
+  { key: 'remove' as const, label: t('customize.custom.removed', { count: (config.value.words?.remove ?? []).length }), items: config.value.words?.remove ?? [] },
 ])
 
 function add(): void {
@@ -25,7 +28,7 @@ function add(): void {
       </button>
     </form>
     <div v-for="list in lists" :key="list.key" class="flex flex-col gap-2 no-ruby">
-      <span class="label">{{ $t(list.label, { count: list.items.length }) }}</span>
+      <span class="label">{{ list.label }}</span>
       <div class="flex flex-wrap gap-2">
         <button
           v-for="item in list.items"

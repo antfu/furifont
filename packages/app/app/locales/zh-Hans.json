@@ -11,9 +11,7 @@
     "github": "GitHub 仓库",
     "light": "切换到浅色",
     "dark": "切换到深色",
-    "language": "语言",
-    "rubyOff": "隐藏振假名",
-    "rubyOn": "显示振假名"
+    "language": "语言"
   },
   "footer": {
     "fonts": "字体采用{license}，源自 Source Han Sans 和 Source Han Serif。",

@@ -1,12 +1,19 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 const { dark, toggle } = useDarkMode()
 
-const links: { to: string, label: `nav.${'demo' | 'docs' | 'customize' | 'report'}`, class?: string }[] = [{ to: '/', label: 'nav.demo' }]
-if (__TARGET_WEBSITE__)
-  links.push({ to: '/docs', label: 'nav.docs' })
-links.push({ to: '/customize', label: 'nav.customize' })
-// Phones have no room for it: the footer and the notice link there too.
-links.push({ to: '/report', label: 'nav.report', class: 'hidden sm:block' })
+const { t } = useI18n()
+
+const links = computed(() => {
+  const list: { to: string, label: string, class?: string }[] = [{ to: '/', label: t('nav.demo') }]
+  if (__TARGET_WEBSITE__)
+    list.push({ to: '/docs', label: t('nav.docs') })
+  list.push({ to: '/customize', label: t('nav.customize') })
+  // Phones have no room for it: the footer and the notice link there too.
+  list.push({ to: '/report', label: t('nav.report'), class: 'hidden sm:block' })
+  return list
+})
 // The devframe keeps running in its own tab.
 const siteTarget = __TARGET_DEVFRAME__ ? '_blank' : undefined
 </script>
@@ -29,7 +36,7 @@ const siteTarget = __TARGET_DEVFRAME__ ? '_blank' : undefined
           class="focus-ring whitespace-nowrap px-1 py-1 font-mono text-xs uppercase tracking-[0.04em] color-muted transition-colors hover:color-base sm:px-2 sm:tracking-[0.12em]"
           active-class="!color-base"
         >
-          {{ $t(link.label) }}
+          {{ link.label }}
         </NuxtLink>
       </div>
       <div class="ml-auto flex items-center gap-1">
