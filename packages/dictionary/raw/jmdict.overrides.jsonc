@@ -117,5 +117,23 @@
   "今[こん]日[にち]唯[ただ]今[いま]",
   // 無題 is read むだい; the word fell outside the prebuilt fonts, so only だい showed.
   // reported by anonymous d4ae0364-639c-4847-a2e0-6210336cfc3a
-  "無[む]題[だい]"
+  "無[む]題[だい]",
+  // 可哀想 is read かわいそう.
+  // reported by anonymous 71dd7451-52ab-4fb8-9e12-9be08863a0fb
+  "可[か]哀[わい]想[そう]",
+  // 鬼事 is read おにごと (a Noh piece with a demon, or tag).
+  // reported by anonymous 2a3c145c-6c4e-4d38-a432-44c52228dce7
+  "鬼[おに]事[ごと]",
+  // 男士 is read だんし, as in 刀剣男士; the font showed only し.
+  // reported by 1105o 03d136a1-5c0b-42df-9f1b-9907b4fd7b3e
+  "男[だん]士[し]",
+  // 安宅 is あたか, あたぎ, あたけ or あんたく by place; the font showed たく.
+  // reported by 1105o 03d136a1-5c0b-42df-9f1b-9907b4fd7b3e
+  "安宅",
+  // 揺籠 is read ゆりかご, a spelling of 揺り籠 without the okurigana.
+  // reported by 1105o efc5e908-d46c-48dc-84c9-a686149b63b7
+  "揺[ゆり]籠[かご]",
+  // 有難う is ありがとう, the common use; 有難い keeps ありがた through its own pairs.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がと]"
 ]

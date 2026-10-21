@@ -148,6 +148,7 @@
     "shown": "Reading shown (optional)",
     "context": "Sentence (optional)",
     "preview": "Preview",
+    "kanaTip": "A browser shapes kanji and kana separately, so a font cannot see the kana after a kanji. A reading that depends on okurigana needs JavaScript to patch it. Elsewhere it depends on the app's text rendering engine, some may not display correctly.",
     "remove": "Remove {word}",
     "add": "Add another word",
     "environment": "Environment",

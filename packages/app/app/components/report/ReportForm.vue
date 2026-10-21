@@ -6,12 +6,10 @@ const REPORT_URL = import.meta.dev ? '/api/report' : `${SITE}/api/report`
 
 const { t, locale } = useI18n()
 // What the visitor sees now: the typeface and ruby they chose on the site.
-const { family: shownFamily, ruby } = useFontSettings()
-const previewStyle = computed(() => ({
-  fontFamily: `"${shownFamily.value.family}", sans-serif`,
-  lineHeight: LINE_HEIGHT,
-  fontFeatureSettings: ruby.value ? 'normal' : '"ss01"',
-}))
+const { family: shownFamily, ruby, okurigana } = useFontSettings()
+const { reader } = useOkurigana(shownFamily)
+/** Kana in a word: the font cannot see them after a kanji, so its reading may need JavaScript. */
+const KANA = /[\p{Script=Hiragana}\p{Script=Katakana}]/u
 
 const blankWord = () => ({ word: '', expected: '', shown: '', context: '' })
 const words = ref([blankWord()])
@@ -81,10 +79,17 @@ function again(): void {
           <UiField :label="$t('report.shown')">
             <input v-model="item.shown" maxlength="64" lang="ja" placeholder="しじょう" class="input">
           </UiField>
+
+          <p v-if="KANA.test(item.word)" role="note" class="flex items-start gap-2 text-xs color-muted lh-1.625 sm:col-span-3">
+            <span class="i-ph-info mt-0.5 shrink-0" aria-hidden="true" />
+            {{ $t('report.kanaTip') }}
+          </p>
+
           <div class="flex items-end gap-2 sm:col-span-3">
             <UiField :label="$t('report.context')" class="flex-1">
               <input v-model="item.context" maxlength="200" lang="ja" placeholder="駅前の市場で魚を買った。" class="input">
             </UiField>
+
             <button
               v-if="words.length > 1"
               type="button"
@@ -98,12 +103,8 @@ function again(): void {
         </div>
         <div class="flex flex-col gap-2 border-t border-base p-6 sm:border-l sm:border-t-0">
           <span class="label">{{ $t('report.preview') }}</span>
-          <p lang="ja" class="break-words text-3xl" :style="previewStyle" aria-live="polite">
-            {{ item.word || '市場' }}
-          </p>
-          <p v-if="item.context" lang="ja" class="break-words text-base" :style="previewStyle">
-            {{ item.context }}
-          </p>
+          <FuriText :text="item.word || '市場'" :family="shownFamily.family" :ruby :size="30" :editable="false" :okurigana="okurigana ? reader : undefined" aria-live="polite" />
+          <FuriText v-if="item.context" :text="item.context" :family="shownFamily.family" :ruby :size="16" :editable="false" :okurigana="okurigana ? reader : undefined" />
         </div>
       </div>
       <div class="px-6 py-3">

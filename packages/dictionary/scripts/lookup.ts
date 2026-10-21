@@ -2,10 +2,14 @@
  * Says what a font with the default options shows for words, and what the
  * dictionary holds for them: the tool for checking a reader's report. Text is
  * split into runs of Han characters, as a browser shapes it, and each run is
- * read on its own. Build the packages first.
+ * read on its own. A run followed by hiragana is also looked up in the
+ * okurigana pairs, which the bookmarklet, the userscript and the playground
+ * apply: 偽り is read いつわ there, whatever the font shows for 偽. Build the
+ * packages first.
  *
  *   node scripts/lookup.ts <word>... [--json]
  */
+import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { parseArgs } from 'node:util'
 import { createRubyReader } from '@furifont/compiler'
@@ -49,6 +53,26 @@ const ranked = Object.entries(dictionary.runs)
   .sort((a, b) => b.score - a.score)
 const rankOf = new Map(ranked.map(({ text }, i) => [text, i + 1]))
 
+/** The pairs the pages read, as the dictionary's build leaves them: the readings an okurigana picks, by run of kanji. */
+const pairs = JSON.parse(await readFile(new URL('../data/okurigana.json', import.meta.url), 'utf8')) as Record<string, Record<string, string[]>>
+
+/** A run of kanji and the hiragana after it, as a page reads them. */
+const OKURIGANA_RUN = /(?<![\p{Script=Han}〆])([\p{Script=Han}〆]+)(?=\p{Script=Hiragana})/gu
+
+/** What a page reads for each run before hiragana: the longest okurigana the text starts with decides, and none (or a pair that reads two ways) leaves it to the font. */
+const okurigana = words.flatMap(word => [...word.matchAll(OKURIGANA_RUN)].map((match) => {
+  const run = match[1]!
+  const index = match.index
+  const after = word.slice(index + run.length).match(/^\p{Script=Hiragana}*/u)![0]
+  const group = pairs[run] ?? {}
+  for (let kept = after.length; kept > 0; kept--) {
+    const found = Object.entries(group).find(([, list]) => list.includes(after.slice(0, kept)))
+    if (found)
+      return { word, run, after, okurigana: after.slice(0, kept), reading: found[0] || undefined }
+  }
+  return { word, run, after, okurigana: undefined, reading: undefined }
+}))
+
 const results = runs.map((text) => {
   const table = [...text].length === 1 ? dictionary.kanji[text] : dictionary.runs[text]
   const spansOf = (key: string) => [...text].length === 1 ? [{ start: 0, end: 1, ruby: key }] : parseFurigana(key)
@@ -69,7 +93,7 @@ const results = runs.map((text) => {
 })
 
 if (args.json) {
-  process.stdout.write(`${JSON.stringify(results, null, 2)}\n`)
+  process.stdout.write(`${JSON.stringify({ runs: results, okurigana }, null, 2)}\n`)
 }
 else {
   process.stdout.write(`${results.map(({ text, shown, readings, rank, override, bare }) => [
@@ -80,5 +104,9 @@ else {
     ...(rank ? [`  rank: ${rank.rank} of ${rank.of}, ${rank.prebuilt ? 'within' : 'out of'} the prebuilt fonts (take ${rank.take})`] : []),
     ...override.map(n => `  override: ${n}`),
     ...(bare ? ['  bare form: kept bare on purpose when alone in a run'] : []),
-  ].join('\n')).join('\n\n')}\n`)
+  ].join('\n')).join('\n\n')}\n${okurigana.length
+    ? `\n${okurigana.map(({ word, run, after, okurigana: kana, reading }) => `${word}: okurigana pairs ${kana
+      ? reading ? `read ${run}[${reading}] before ${kana}` : `hold ${run}${kana} as ambiguous: the font decides`
+      : `have no key for ${run} before ${after}: the font decides`}`).join('\n')}\n`
+    : ''}`)
 }

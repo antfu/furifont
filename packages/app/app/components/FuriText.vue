@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { OkuriganaReader } from '@furifont/helper-web'
 
-const { family = FAMILIES[0]!.family, ruby = true, size = 32, weight = 400, okurigana } = defineProps<{
+const { family = FAMILIES[0]!.family, ruby = true, size = 32, weight = 400, okurigana, editable = true } = defineProps<{
   family?: string
   /** Off turns on `ss01`, the font's own switch back to plain glyphs. */
   ruby?: boolean
@@ -10,6 +10,8 @@ const { family = FAMILIES[0]!.family, ruby = true, size = 32, weight = 400, okur
   weight?: number
   /** Reads kanji by the okurigana after them: a span with `salt` where the font cannot see it. */
   okurigana?: OkuriganaReader
+  /** Off draws the text as a preview: nobody types in it. */
+  editable?: boolean
 }>()
 /** Editable in place: bound, edits flow back; unbound, they stay local. */
 const text = defineModel<string>('text', { required: true })
@@ -137,12 +139,13 @@ onBeforeUnmount(() => clearTimeout(timer))
   <p
     ref="el"
     lang="ja"
-    contenteditable="plaintext-only"
+    :contenteditable="editable ? 'plaintext-only' : undefined"
     spellcheck="false"
-    role="textbox"
-    aria-multiline="true"
-    :aria-label="$t('editable')"
-    class="cursor-text whitespace-pre-wrap break-words outline-1 outline-transparent outline-offset-4 transition-[outline-color] hover:outline-dashed hover:outline-[var(--ff-line)] focus:outline-dashed focus:outline-[var(--ff-fg)]"
+    :role="editable ? 'textbox' : undefined"
+    :aria-multiline="editable ? 'true' : undefined"
+    :aria-label="editable ? $t('editable') : undefined"
+    class="whitespace-pre-wrap break-words"
+    :class="editable && 'cursor-text outline-1 outline-transparent outline-offset-4 transition-[outline-color] hover:outline-dashed hover:outline-[var(--ff-line)] focus:outline-dashed focus:outline-[var(--ff-fg)]'"
     :style="style"
     @input="onInput"
     @compositionstart="onCompositionStart"

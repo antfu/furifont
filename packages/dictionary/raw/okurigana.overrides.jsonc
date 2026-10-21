@@ -26,5 +26,44 @@
   // 編む is あむ; the pairs have no entry for 編 before め.
   "編[あ]め",
   // お疲れ様です is おつかれさまです; the generated pair reads 様です as ようです.
-  "様[さま]です"
+  "様[さま]です",
+  // 運の is うんの (運の尽き, 運の良い); 運ぶ is the only はこ word and has its own pairs.
+  // reported by 1105o 03d136a1-5c0b-42df-9f1b-9907b4fd7b3e
+  "運[うん]の",
+  // 給え is the imperative たまえ; the pairs have 給 only before っ, わ and う.
+  // reported by 1105o efc5e908-d46c-48dc-84c9-a686149b63b7
+  "給[たま]え",
+  // 軋む is read きしむ.
+  // reported by anonymous f6552745-7b72-40a4-b51a-d5f87a958ec9
+  "軋[きし]む",
+  // 踠く is read もがく.
+  // reported by 1105o efc5e908-d46c-48dc-84c9-a686149b63b7
+  "踠[もが]く",
+  // 有り難う is ありがとう; 難う only occurs in it, and the font reads 難 as むずか.
+  // reported by Mafuyu eada5984-97a5-41dc-acf8-c0958841d606
+  "難[がと]う",
+  // 有難い is ありがたい; 有難 reads ありがと for 有難う.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がた]い",
+  // 有難い is ありがたい; 有難 reads ありがと for 有難う.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がた]く",
+  // 有難い is ありがたい; 有難 reads ありがと for 有難う.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がた]かっ",
+  // 有難い is ありがたい; 有難 reads ありがと for 有難う.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がた]さ",
+  // 有難い is ありがたい; 有難 reads ありがと for 有難う.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がた]そう",
+  // 有難い is ありがたい; 有難 reads ありがと for 有難う.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がた]み",
+  // 有難い is ありがたい; 有難 reads ありがと for 有難う.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がた]げ",
+  // 有難い is ありがたい; 有難 reads ありがと for 有難う.
+  // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
+  "有[あり]難[がた]ければ"
 ]
