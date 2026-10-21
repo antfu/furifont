@@ -1,7 +1,7 @@
 {
   "name": "furifont",
   "type": "module",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Build Japanese fonts that show furigana by themselves, from the command line or a local studio",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",

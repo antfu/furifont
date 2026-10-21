@@ -1,7 +1,7 @@
 {
   "name": "@furifont/compiler",
   "type": "module",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Compile a Furifont plan into a font",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",

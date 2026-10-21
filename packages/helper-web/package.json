@@ -1,7 +1,7 @@
 {
   "name": "@furifont/helper-web",
   "type": "module",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Set the Japanese text of any web page in Furifont, leaving Latin, icon and code fonts alone",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",
