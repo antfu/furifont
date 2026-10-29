@@ -65,5 +65,11 @@
   "有[あり]難[がた]げ",
   // 有難い is ありがたい; 有難 reads ありがと for 有難う.
   // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
-  "有[あり]難[がた]ければ"
+  "有[あり]難[がた]ければ",
+  // 一ノ is いち in names such as 一ノ瀬 and 一ノ関.
+  // reported by anonymous 12e68e7a-86fd-47ae-a38d-000511db6331
+  "一[いち]ノ",
+  // 出し is だし (中出し, 見出し).
+  // reported by anonymous 3dc91006-5d7a-451f-a9b5-2786260dbbf0
+  "出[だ]し"
 ]

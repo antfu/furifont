@@ -135,5 +135,24 @@
   "揺[ゆり]籠[かご]",
   // 有難う is ありがとう, the common use; 有難い keeps ありがた through its own pairs.
   // reported by Mafuyu 46b7fefa-61f1-43fe-b322-d2790e0fa70c
-  "有[あり]難[がと]"
+  "有[あり]難[がと]",
+  // あちら, あなた, かなた and おちかた are all valid readings and context decides; おちかた is the rarest, so leave it bare.
+  // reported by anonymous 939136fd-b074-4795-bfab-d19efe92a1ee
+  // reported by anonymous e2a185a7-e353-4abf-a8f4-f0b872cd5cc6
+  "彼方",
+  // 東大 is overwhelmingly the University of Tokyo (とうだい); ひがしおお is a rare surname.
+  // reported by anonymous a2ac175f-6d45-46ab-b752-5d5112ec3650
+  "東[とう]大[だい]",
+  // 税込 alone is read ぜいこみ (税込み).
+  // reported by anonymous 5133fb74-4b26-46ec-9829-7107880888f3
+  "税[ぜい]込[こみ]",
+  // 鈎 is a variant of 鉤 (hook), read かぎ.
+  // reported by anonymous 35177001-909f-4d14-b4f2-4db5d5b75cad
+  "鈎[かぎ]",
+  // 焔 is the flame kanji, read ほのお (also ほむら).
+  // reported by anonymous d3102b08-0de2-447a-b3ac-d84e199bc66f
+  "焔[ほのお]",
+  // 六年 is ろくねん (六年生).
+  // reported by anonymous 09c18334-dc79-4451-99a3-9f5cd4b3be30
+  "六[ろく]年[ねん]"
 ]

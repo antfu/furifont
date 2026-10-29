@@ -28,5 +28,8 @@
   "四[し]天[てん]王[のう]寺[じ]前[まえ]夕[ゆう]陽[ひ]",
   // 米津玄師 (the musician) is よねづけんし.
   // reported by anonymous 56d5c45a-3d8c-4403-b66b-0ab3ae9f5423
-  "米[よね]津[づ]玄[けん]師[し]"
+  "米[よね]津[づ]玄[けん]師[し]",
+  // 中出 is also a surname, so leave it bare (なかで, なかだ and なかいで all occur).
+  // reported by anonymous 3dc91006-5d7a-451f-a9b5-2786260dbbf0
+  "中出"
 ]
