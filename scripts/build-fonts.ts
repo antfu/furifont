@@ -1,7 +1,7 @@
 /**
  * Builds the prebuilt fonts the release carries: hiragana and romaji ruby on
  * Source Han Sans JP and Source Han Serif JP, each as Regular and a variable
- * font of every weight, OpenType and WOFF2.
+ * font of every weight, and a vertical variable font, OpenType and WOFF2.
  *
  *   node scripts/build-fonts.ts [outDir]   (default: dist/fonts)
  */
@@ -22,8 +22,8 @@ await copyFile(new URL('../OFL.txt', import.meta.url), join(outDir, 'OFL.txt'))
 await copyFile(new URL('../packages/dictionary/LICENSE.md', import.meta.url), join(outDir, 'DATA-LICENSE.md'))
 
 // What is built, and how, is in PREBUILT: the families, weights and options.
-const { variable } = PREBUILT
-const total = (PREBUILT.weights.length + 1) * PREBUILT.fonts.length
+const { variable, vertical } = PREBUILT
+const total = (PREBUILT.weights.length + 2) * PREBUILT.fonts.length
 const started = performance.now()
 let finished = 0
 let totalBytes = 0
@@ -32,12 +32,18 @@ const seconds = (since: number): string => `${((performance.now() - since) / 100
 const size = (bytes: number): string => bytes >= 1048576 ? `${(bytes / 1048576).toFixed(2)} MB` : `${(bytes / 1024).toFixed(1)} KB`
 
 console.log(`Building ${total} fonts into ${outDir}`)
-for (const style of [...PREBUILT.weights.map(w => w.style), variable.style]) {
-  await Promise.all(PREBUILT.fonts.map(async ({ base, family, furiganaScript }) => {
+const builds = [
+  ...[...PREBUILT.weights.map(w => w.style), variable.style].map(style => ({ style, orientation: 'horizontal' as const })),
+  // Vertical text has the variable font only.
+  { style: variable.style, orientation: 'vertical' as const },
+]
+for (const { style, orientation } of builds) {
+  await Promise.all(PREBUILT.fonts.map(async ({ base, family: horizontal, furiganaScript }) => {
+    const family = orientation === 'vertical' ? `${horizontal} ${vertical.suffix}` : horizontal
     // The variable family is named apart, as Source Han's is, so it can be installed beside the static ones.
     const name = style === variable.style ? `${family} ${variable.style}` : family
     const label = style === variable.style ? name : `${name} ${style}`
-    const config = v.parse(FurifontConfigSchema, { ...PREBUILT.options, family: name, furiganaScript, base: `${base} ${style}` })
+    const config = v.parse(FurifontConfigSchema, { ...PREBUILT.options, family: name, furiganaScript, orientation, base: `${base} ${style}` })
     const begun = performance.now()
     console.log(`[start] ${label} (${furiganaScript}, base ${config.base})`)
     let step = ''

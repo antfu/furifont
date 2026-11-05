@@ -1,7 +1,7 @@
 import type { FurifontConfigInput } from './config'
 import { relative } from 'node:path'
 import process from 'node:process'
-import { FURIGANA_SCRIPTS } from '@furifont/core'
+import { FURIGANA_SCRIPTS, ORIENTATIONS } from '@furifont/core'
 import { cac } from 'cac'
 import * as v from 'valibot'
 import pkg from '../package.json' with { type: 'json' }
@@ -18,15 +18,17 @@ cli
   .option('--base <font>', 'A font to download, such as "Source Han Serif JP Bold", or a font file')
   .option('--family <name>', 'Font family name')
   .option('--script <script>', `Furigana script: ${FURIGANA_SCRIPTS.join(', ')}`)
+  .option('--orientation <orientation>', `Text the ruby is drawn for: ${ORIENTATIONS.join(', ')}`)
   .option('--take <words>', 'Annotate this many words, the most common first, or "max" for as many as the base font has glyphs for')
   .option('--formats <list>', `Fonts to write, comma-separated: ${FONT_FORMATS.join(', ')}`)
   .option('--out <dir>', 'Output directory', { default: 'fonts' })
-  .action(async (flags: { config: string, base?: string, family?: string, script?: string, take?: number | string, formats?: string, out: string }) => {
+  .action(async (flags: { config: string, base?: string, family?: string, script?: string, orientation?: string, take?: number | string, formats?: string, out: string }) => {
     const cwd = process.cwd()
     const overrides: FurifontConfigInput = {
       ...(flags.base && { base: flags.base }),
       ...(flags.family && { family: flags.family }),
       ...(flags.script && { furiganaScript: v.parse(v.picklist(FURIGANA_SCRIPTS), flags.script) }),
+      ...(flags.orientation && { orientation: v.parse(v.picklist(ORIENTATIONS), flags.orientation) }),
       ...(flags.take && { take: flags.take === 'max' ? 'max' as const : Number(flags.take) }),
       ...(flags.formats && { formats: v.parse(v.array(v.picklist(FONT_FORMATS)), flags.formats.split(',')) }),
     }
