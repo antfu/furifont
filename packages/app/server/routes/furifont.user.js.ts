@@ -120,13 +120,15 @@ function start(
   const isOn = (): boolean => !!window.furifont?.family && !window.furifont.sheet.disabled
   const onPage = (): typeof fonts[number] | undefined => fonts.find(f => f.family === window.furifont?.family)
 
-  // The corner button, unless the reader hid it; every change shows on it.
+  // The floating button, unless the reader hid it, on pages Furifont applies to; every change shows on it.
   let corner: ReturnType<typeof showPanel> | undefined
+  let floating = manager.getValue('button', 'on') !== 'off'
   const state = (): PanelState => ({ on: isOn(), mode: site.mode ?? 'auto', family: (isOn() ? onPage() : undefined)?.family ?? saved().family, okurigana })
   const refresh = (): void => {
-    corner?.update(state())
+    syncCorner()
     registerOkurigana()
     registerSite()
+    registerButton()
   }
   // `toggle` flips the family on the page; a font that fails to load turns back off after it.
   const run = (font: typeof fonts[number], check = false): void => {
@@ -182,47 +184,42 @@ function start(
   function registerSite(): void {
     manager.registerMenuCommand(modes[site.mode ?? 'auto'], () => setMode(site.mode === 'on' ? 'off' : site.mode === 'off' ? 'auto' : 'on'), { id: 'site', autoClose: false })
   }
-  const showCorner = (): void => {
-    corner = manager.getValue('button', 'on') === 'off'
-      ? undefined
-      : panel({
-          labels: panels[locale],
-          families: fonts.map(f => f.family),
-          state: state(),
-          onChange: (change) => {
-            if (change.on !== undefined)
-              turn(change.on)
-            if (change.mode)
-              setMode(change.mode)
-            if (change.family)
-              setFamily(change.family)
-            if (change.okurigana !== undefined)
-              setOkurigana(change.okurigana)
-          },
-          onHide: () => {
-            manager.setValue('button', 'off')
-            hideCorner()
-          },
-        })
-    registerButton()
+  /** A page is one for Furifont when it is Japanese, Furifont is on, or the reader keeps the site on. */
+  const applies = (): boolean => isJapanese() || isOn() || site.mode === 'on'
+  const setFloating = (value: boolean): void => {
+    floating = value
+    manager.setValue('button', floating ? 'on' : 'off')
+    refresh()
   }
-  function hideCorner(): void {
-    corner?.remove()
-    corner = undefined
-    registerButton()
+  function syncCorner(): void {
+    if (floating && applies()) {
+      corner ??= panel({
+        labels: panels[locale],
+        families: fonts.map(f => f.family),
+        state: state(),
+        onChange: (change) => {
+          if (change.on !== undefined)
+            turn(change.on)
+          if (change.mode)
+            setMode(change.mode)
+          if (change.family)
+            setFamily(change.family)
+          if (change.okurigana !== undefined)
+            setOkurigana(change.okurigana)
+        },
+        onHide: () => setFloating(false),
+      })
+      corner.update(state())
+    }
+    else {
+      corner?.remove()
+      corner = undefined
+    }
   }
   function registerButton(): void {
-    manager.registerMenuCommand(corner ? menu.buttonOn : menu.buttonOff, () => {
-      manager.setValue('button', corner ? 'off' : 'on')
-      if (corner)
-        hideCorner()
-      else
-        showCorner()
-    }, { id: 'button', autoClose: false })
+    manager.registerMenuCommand(floating ? menu.buttonOn : menu.buttonOff, () => setFloating(!floating), { id: 'button', autoClose: false })
   }
-  registerOkurigana()
-  registerSite()
-  showCorner()
+  refresh()
   if (wanted())
     turn(true)
 }
@@ -236,7 +233,7 @@ export default defineEventHandler(async (event) => {
 // @name         Furifont
 // @namespace    ${SITE}
 // @version      ${VERSION}
-// @description  Furigana on any page: Furifont turns on by itself on Japanese pages, and the menu switches family, turns it off, keeps it on or off for a site, or turns okurigana readings (来る, 来ない) off, as does a button in the page's corner. Each site remembers its own settings.
+// @description  Furigana on any page: Furifont turns on by itself on Japanese pages, and the menu switches family, turns it off, keeps it on or off for a site, or turns okurigana readings (来る, 来ない) off, as does a floating button on Japanese pages. Each site remembers its own settings.
 // @homepageURL  ${SITE}
 // @downloadURL  ${SITE}/furifont.user.js
 // @match        *://*/*
