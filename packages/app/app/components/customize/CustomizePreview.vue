@@ -1,15 +1,16 @@
 <script setup lang="ts">
-const { text, preview } = useCustomize()
+const { text, preview, config } = useCustomize()
+const vertical = computed(() => config.value.orientation === 'vertical')
 const size = ref(32)
 const weight = ref(400)
 </script>
 
 <template>
   <div>
-    <div class="relative min-h-56 px-6 py-8">
+    <div class="relative min-h-56 px-6 py-8" :class="vertical && 'h-[28rem] overflow-x-auto'">
       <UiButton variant="ghost" icon="i-ph-shuffle" class="absolute right-3 top-3 w-9 px-0" :aria-label="$t('shuffle')" :title="$t('shuffle')" @click="text = otherSample(text).text" />
       <!-- Until the first preview font loads, the text shows in the prebuilt one. -->
-      <FuriText v-model:text="text" :family="preview.family" :size :weight :class="preview.loading && 'opacity-60'" />
+      <FuriText v-model:text="text" :family="preview.family" :vertical :size :weight :class="[preview.loading && 'opacity-60', vertical && 'ml-auto h-full']" />
       <p v-if="preview.error" class="mt-4 font-mono text-xs">
         {{ preview.error }}
       </p>

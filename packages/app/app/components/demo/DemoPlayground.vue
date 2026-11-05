@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const text = ref('今日は日本語の勉強をします。\n明日は東京の大学へ行きます。\n私は毎朝新聞を読みます。桜が咲きました。')
-const { face, script, ruby, okurigana, family, faces, scripts } = useFontSettings()
+const { face, script, ruby, okurigana, orientation, family, faces, scripts, orientations } = useFontSettings()
+const vertical = computed(() => orientation.value === 'vertical')
 const { reader } = useOkurigana(family)
 const size = ref(30)
 const weight = ref(400)
@@ -15,6 +16,9 @@ const { copied, copy } = useCopy()
       </UiField>
       <UiField :label="$t('playground.face')">
         <UiSegmented v-model="face" :label="$t('playground.face')" :options="faces" />
+      </UiField>
+      <UiField :label="$t('playground.orientation')">
+        <UiSegmented v-model="orientation" :label="$t('playground.orientation')" :options="orientations" />
       </UiField>
       <UiField :label="$t('playground.size', { size })">
         <UiSlider v-model="size" :min="16" :max="64" />
@@ -35,8 +39,9 @@ const { copied, copy } = useCopy()
       </div>
     </div>
     <div class="flex min-w-0 flex-col">
-      <div class="min-h-72 flex-1 px-6 py-8">
-        <FuriText v-model:text="text" :family="family.family" :ruby :size :weight :okurigana="okurigana ? reader : undefined" />
+      <!-- Vertical lines run right to left in a box of fixed height, scrolling sideways past its width. -->
+      <div class="min-h-72 flex-1 px-6 py-8" :class="vertical && 'h-[28rem] overflow-x-auto'">
+        <FuriText v-model:text="text" :family="familyName(family, orientation)" :vertical :ruby :size :weight :okurigana="okurigana ? reader : undefined" :class="vertical && 'ml-auto h-full'" />
       </div>
       <div class="flex items-center gap-3 border-t border-base px-6 py-3">
         <div class="text-xs color-muted">

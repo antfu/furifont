@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { OkuriganaReader } from '@furifont/helper-web'
 
-const { family = FAMILIES[0]!.family, ruby = true, size = 32, weight = 400, okurigana, editable = true } = defineProps<{
+const { family = FAMILIES[0]!.family, vertical = false, ruby = true, size = 32, weight = 400, okurigana, editable = true } = defineProps<{
   family?: string
+  /** Sets the text in vertical lines, right to left: `family` must be a vertical font, which puts the ruby right of the kanji. */
+  vertical?: boolean
   /** Off turns on `ss01`, the font's own switch back to plain glyphs. */
   ruby?: boolean
   size?: number
@@ -20,8 +22,10 @@ const style = computed(() => ({
   fontFamily: `"${family}", sans-serif`,
   fontSize: `${size}px`,
   fontWeight: weight,
-  lineHeight: LINE_HEIGHT,
+  // Browsers centre a vertical line on its kanji, so the ruby on its right needs as much room on the left.
+  lineHeight: vertical ? VERTICAL_LINE_HEIGHT : LINE_HEIGHT,
   fontFeatureSettings: ruby ? 'normal' : '"ss01"',
+  writingMode: vertical ? 'vertical-rl' as const : undefined,
 }))
 
 interface Drawn {
