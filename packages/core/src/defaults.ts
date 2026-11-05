@@ -10,6 +10,7 @@ export const DEFAULTS = {
   plan: {
     family: 'Furifont Sans',
     furiganaScript: 'hiragana',
+    orientation: 'horizontal',
     /** No word is left bare for being common; every word of every source gets ruby. */
     skip: 0,
     isolated: true,
@@ -54,12 +55,20 @@ export const PREBUILT = {
     style: 'VF',
     weights: [250, 900],
   },
+  /**
+   * Each family again for vertical text (`orientation: 'vertical'`), named
+   * `<family> Vertical`, as the variable font only: `<family> Vertical VF`.
+   */
+  vertical: {
+    suffix: 'Vertical',
+  },
   /** Options set on every prebuilt font over the defaults above, such as `{ take: 20000 }`. */
   options: { take: 'max' },
 } as const satisfies {
   fonts: readonly { family: string, base: string, face: 'sans' | 'serif', furiganaScript: 'hiragana' | 'hepburn' }[]
   weights: readonly { style: string, weight: number }[]
   variable: { style: string, weights: readonly [number, number] }
+  vertical: { suffix: string }
   options: Omit<PlanOptionsInput, 'family' | 'furiganaScript'>
 }
 

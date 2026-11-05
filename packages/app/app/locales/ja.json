@@ -30,6 +30,10 @@
     "hiragana": "ひらがな",
     "hepburn": "ローマ字"
   },
+  "orientations": {
+    "horizontal": "横書き",
+    "vertical": "縦書き"
+  },
   "faces": {
     "sans": "ゴシック",
     "serif": "明朝"
@@ -52,6 +56,7 @@
   "playground": {
     "script": "ふりがなの文字",
     "face": "フォントの種類",
+    "orientation": "書字方向",
     "size": "サイズ / {size}px",
     "weight": "太さ / {weight}",
     "ruby": "ふりがな",
@@ -233,6 +238,8 @@
       "hiragana": "ひらがな",
       "katakanaOn": "カタカナ",
       "hepburn": "ローマ字",
+      "orientation": "書字方向",
+      "orientationHint": "縦書きでは、ふりがなを漢字の右に付けます。ふりがなは縦書きの文章でだけ表示され、横書きでは漢字だけが表示されます。",
       "skip": "よく出る言葉を除く",
       "skipHint": "残った言葉のうち、よく使うものにはふりがなを付けません。読む人がすでに知っているからです。言葉と漢字一文字をよく使う順に並べ、500 ずつ数えます。",
       "words": "続けてふりがなを付ける言葉の数",

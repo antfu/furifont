@@ -30,6 +30,10 @@
     "hiragana": "平假名",
     "hepburn": "罗马字"
   },
+  "orientations": {
+    "horizontal": "横排",
+    "vertical": "竖排"
+  },
   "faces": {
     "sans": "黑体",
     "serif": "宋体"
@@ -52,6 +56,7 @@
   "playground": {
     "script": "振假名所用文字",
     "face": "字体样式",
+    "orientation": "排版方向",
     "size": "字号 / {size}px",
     "weight": "字重 / {weight}",
     "ruby": "振假名",
@@ -233,6 +238,8 @@
       "hiragana": "平假名",
       "katakanaOn": "片假名",
       "hepburn": "罗马字",
+      "orientation": "排版方向",
+      "orientationHint": "竖排时，振假名加在汉字右侧，只在竖排文字中显示；在横排文字中，字体只显示汉字。",
       "skip": "跳过最常见的词",
       "skipHint": "在剩下的词中，最常见的不加振假名，因为读者已经认识。词语和单个汉字按常用程度排序，每 500 个一档。",
       "words": "接着加振假名的词数",

@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { VERSION_PROBE } from '@furifont/core'
 import { expect, test } from '@playwright/test'
-import { TEST_FONT, TEST_OTF, TEST_READINGS, TEST_ROMAJI_FONT, TEST_VARIABLE_FONT, WOFF2_PAGE } from './setup'
+import { TEST_FONT, TEST_OTF, TEST_READINGS, TEST_ROMAJI_FONT, TEST_VARIABLE_FONT, TEST_VERTICAL_FONT, TEST_VERTICAL_ROMAJI_FONT, TEST_VERTICAL_VARIABLE_FONT, WOFF2_PAGE } from './setup'
 
 const ORIGIN = 'https://furifont.test'
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
@@ -22,6 +22,7 @@ async function show(page: Page, body: string, file = TEST_FONT): Promise<void> {
           body { margin: 16px; font: 40px/normal Furifont; }
           p { margin: 0 0 8px; width: fit-content; }
           .off { font-feature-settings: "ss01"; }
+          .v { writing-mode: vertical-rl; width: auto; height: fit-content; }
         </style>${body}`,
       }))
   await page.goto(`${ORIGIN}/`)
@@ -155,4 +156,57 @@ test('compresses a WOFF2 in the browser that draws like its OpenType font', asyn
   })
   expect(sizes.woff2).toBeLessThan(sizes.otf)
   expect(await shot(page, '#woff2')).toEqual(await shot(page, '#otf'))
+})
+
+test.describe('a vertical font', () => {
+  /** Part of a column across it, from its left: `[from, to]` in ems from its centre. */
+  async function across(page: Page, selector: string, [from, to]: [number, number]): Promise<Buffer> {
+    const box = (await page.locator(selector).boundingBox())!
+    const centre = box.x + box.width / 2
+    return page.screenshot({ clip: { x: centre + from * 40, y: box.y, width: (to - from) * 40, height: box.height } })
+  }
+
+  test('draws ruby right of the kanji in vertical text', async ({ page }) => {
+    await show(page, `
+      <p id="on" class="v">日本</p><p id="off" class="v off">日本</p>
+      <p id="word" class="v">今日</p><p id="word-off" class="v off">今日</p>`, TEST_VERTICAL_FONT)
+    expect(await shot(page, '#on')).not.toEqual(await shot(page, '#off'))
+    expect(await shot(page, '#word')).not.toEqual(await shot(page, '#word-off'))
+    // The ruby is right of the column's em box, and nothing is left of it.
+    expect(await across(page, '#on', [0.55, 1.05])).not.toEqual(await across(page, '#off', [0.55, 1.05]))
+    expect(await across(page, '#on', [-1.05, -0.55])).toEqual(await across(page, '#off', [-1.05, -0.55]))
+  })
+
+  test('shows plain kanji in horizontal text', async ({ page }) => {
+    await show(page, '<p id="on">日本の今日</p><p id="off" class="off">日本の今日</p>', TEST_VERTICAL_FONT)
+    expect(await shot(page, '#on')).toEqual(await shot(page, '#off'))
+  })
+
+  test('picks a reading with a variation selector, or none', async ({ page }) => {
+    await show(page, `
+      <p id="default" class="v">市場</p><p id="second" class="v">市${VS(2)}場</p>
+      <p id="suppressed" class="v">日${VS(0)}本</p><p id="plain" class="v off">日本</p>`, TEST_VERTICAL_FONT)
+    expect(await shot(page, '#second')).not.toEqual(await shot(page, '#default'))
+    expect(await shot(page, '#suppressed')).toEqual(await shot(page, '#plain'))
+  })
+
+  test('draws a variable font\'s ruby at the weight of the text', async ({ page }) => {
+    await show(page, `
+      <p id="light" class="v" style="font-weight:250">日本</p><p id="heavy" class="v" style="font-weight:900">日本</p>`, TEST_VERTICAL_VARIABLE_FONT)
+    expect(await across(page, '#heavy', [0.55, 1.05])).not.toEqual(await across(page, '#light', [0.55, 1.05]))
+  })
+
+  test('puts romaji beside kana by the kana of its run, past the vertical forms of small kana', async ({ page }) => {
+    await show(page, `
+      <p id="kya" class="v">きゃ</p><p id="kia" class="v">きあ</p>
+      <p id="kk" class="v">っか</p><p id="ks" class="v">っさ</p>`, TEST_VERTICAL_ROMAJI_FONT)
+    /** The first em down the column, ruby included. */
+    const first = async (selector: string): Promise<Buffer> => {
+      const box = (await page.locator(selector).boundingBox())!
+      return page.screenshot({ clip: { x: box.x, y: box.y, width: box.width, height: 40 } })
+    }
+    // kya spans both kana, so き alone does not show ki; っ shows the consonant it doubles.
+    expect(await first('#kya')).not.toEqual(await first('#kia'))
+    expect(await first('#kk')).not.toEqual(await first('#ks'))
+  })
 })

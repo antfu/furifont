@@ -4,16 +4,26 @@ import { version } from '../../../../package.json'
 /** The release the site serves, which `/version.json` tells the bookmarklet and the userscript. */
 export const VERSION = version
 
+export type Orientation = 'horizontal' | 'vertical'
+
 export interface Family {
   family: string
   /** File name stem: `<stem>-Regular.otf`, and the variable font's `<stem>VF.woff2`. */
   stem: string
   face: 'sans' | 'serif'
   script: 'hiragana' | 'hepburn'
+  /** Its font for vertical text, which draws the ruby right of the kanji: a variable font only, `<stem>VF.woff2`. */
+  vertical: { family: string, stem: string }
 }
 
 /** The prebuilt fonts, as `PREBUILT` in core lists them. */
-export const FAMILIES: Family[] = PREBUILT.fonts.map(({ family, face, furiganaScript }) => ({ family, stem: family.replaceAll(' ', ''), face, script: furiganaScript }))
+export const FAMILIES: Family[] = PREBUILT.fonts.map(({ family, face, furiganaScript }) => {
+  const vertical = `${family} ${PREBUILT.vertical.suffix}`
+  return { family, stem: family.replaceAll(' ', ''), face, script: furiganaScript, vertical: { family: vertical, stem: vertical.replaceAll(' ', '') } }
+})
+
+/** The family name a page sets for text in `orientation`. */
+export const familyName = (family: Family, orientation: Orientation): string => orientation === 'vertical' ? family.vertical.family : family.family
 
 /** Static weights on the release, beside the variable font of every weight that the site serves. */
 export const WEIGHTS = PREBUILT.weights
@@ -38,8 +48,9 @@ export function releaseUrl(file: string): string {
  * what `salt` n picks), relative to the site. The version busts caches: the site
  * serves these immutable, so a font and its readings change together.
  */
-export function fontPath(family: Family, ext: 'woff2' | 'ivs.json'): string {
-  return `fonts/${family.stem}VF.${ext}?v=${VERSION}`
+export function fontPath(family: Family, ext: 'woff2' | 'ivs.json', orientation: Orientation = 'horizontal'): string {
+  const stem = orientation === 'vertical' ? family.vertical.stem : family.stem
+  return `fonts/${stem}VF.${ext}?v=${VERSION}`
 }
 
 export function siteFontUrl(family: Family): string {

@@ -19,6 +19,10 @@ export const TEST_VARIABLE_FONT = cache('Furifont-TestVF.woff2')
 export const TEST_OTF = cache('Furifont-Test.otf')
 /** The same in romaji, which puts romaji over kana too. */
 export const TEST_ROMAJI_FONT = cache('Furifont-TestRomaji.woff2')
+/** Vertical fonts, which draw ruby right of the kanji in vertical text: static, variable and romaji. */
+export const TEST_VERTICAL_FONT = cache('Furifont-TestVertical.woff2')
+export const TEST_VERTICAL_VARIABLE_FONT = cache('Furifont-TestVerticalVF.woff2')
+export const TEST_VERTICAL_ROMAJI_FONT = cache('Furifont-TestVerticalRomaji.woff2')
 /** The font's `.ivs.json`, which says what each `salt` value picks. */
 export const TEST_READINGS = cache('Furifont-Test.ivs.json')
 /** `woff2.ts` built for browsers as `woff2.js`, with its assets: it puts `toWoff2`, with the browser's Brotli, on `window`. */
@@ -32,13 +36,22 @@ export default async function setup(): Promise<void> {
     const { plan, report } = planFont(resolveOptions(options), new Set(readFontInfo(base).codepoints))
     return { font: (await compileFont({ plan, base, subsetWasm, version: '0.0.0', date: new Date(0) })).font, ivs: report.ivs }
   }
-  const [{ font, ivs }, variable, romaji] = await Promise.all([compile(FIXTURE_FONT), compile(fixture('SourceHanSansJP-VF-Subset.ttf')), compile(FIXTURE_FONT, { furiganaScript: 'hepburn' })])
+  const VF = fixture('SourceHanSansJP-VF-Subset.ttf')
+  const vertical = { orientation: 'vertical' } as const
+  const [{ font, ivs }, variable, romaji, verticals] = await Promise.all([
+    compile(FIXTURE_FONT),
+    compile(VF),
+    compile(FIXTURE_FONT, { furiganaScript: 'hepburn' }),
+    Promise.all([compile(FIXTURE_FONT, vertical), compile(VF, vertical), compile(FIXTURE_FONT, { ...vertical, furiganaScript: 'hepburn' })]),
+  ])
   await mkdir(cache(''), { recursive: true })
   await writeFile(TEST_OTF, font)
   await writeFile(TEST_FONT, await toWoff2(font, brotli))
   await writeFile(TEST_VARIABLE_FONT, await toWoff2(variable.font, brotli))
   await writeFile(TEST_ROMAJI_FONT, await toWoff2(romaji.font, brotli))
   await writeFile(TEST_READINGS, JSON.stringify(ivs))
+  for (const [path, built] of [[TEST_VERTICAL_FONT, verticals[0]], [TEST_VERTICAL_VARIABLE_FONT, verticals[1]], [TEST_VERTICAL_ROMAJI_FONT, verticals[2]]] as const)
+    await writeFile(path, await toWoff2(built.font, brotli))
   await build({
     configFile: false,
     root: fileURLToPath(new URL('.', import.meta.url)),

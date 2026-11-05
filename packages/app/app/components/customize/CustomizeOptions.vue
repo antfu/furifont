@@ -50,6 +50,11 @@ const metricRanges = [
   { key: 'compressionFloor', label: 'squeeze', min: 0.3, max: 1, step: 0.05, digits: 2 },
   { key: 'maxRubyWidth', label: 'maxWidth', min: 1, max: 3, step: 0.1, digits: 1 },
 ] as const
+const orientation = computed({
+  get: () => config.value.orientation ?? DEFAULTS.plan.orientation,
+  set: value => config.value.orientation = value,
+})
+const orientations = computed(() => (['horizontal', 'vertical'] as const).map(value => ({ value, label: t(`orientations.${value}`) })))
 const furiganaScript = computed({
   get: () => config.value.furiganaScript ?? 'hiragana',
   set: value => config.value.furiganaScript = value,
@@ -80,6 +85,9 @@ function toggle(source: WordSource): void {
     <UiToggle v-if="furiganaScript === 'hepburn'" v-model="kanaRomaji">
       {{ $t('customize.options.kanaRomaji') }}
     </UiToggle>
+    <UiField :label="$t('customize.options.orientation')" :hint="$t('customize.options.orientationHint')">
+      <UiSegmented v-model="orientation" :label="$t('customize.options.orientation')" :options="orientations" />
+    </UiField>
     <div class="h-px bg-[var(--ff-line)]" />
     <!-- In the planner's order: the sources' words, those filtered out, then skip and take by score. -->
     <fieldset class="flex flex-col gap-2">

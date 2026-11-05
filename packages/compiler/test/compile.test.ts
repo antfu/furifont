@@ -6,7 +6,9 @@ import { createFontPlanner, formatNotation, fuseDictionary, resolveOptions, WORD
 import * as hb from 'harfbuzzjs'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { compileFont, createRubyReader, readFontInfo, toWoff2 } from '../src'
+import { readMetrics } from '../src/metrics'
 import { brotli, subsetWasm } from '../src/node'
+import { readSfnt } from '../src/sfnt'
 
 const fixture = (name: string): Promise<Buffer> => readFile(new URL(`./fixtures/${name}`, import.meta.url))
 const VS = (n: number): string => String.fromCodePoint(0xE01E0 + n)
@@ -64,13 +66,15 @@ async function build(file: string, previewText?: string, options?: PlanOptionsIn
  * Shapes `text` and describes each glyph as `bases:ruby`, or the bare character.
  * Selectors are left out: HarfBuzz hides them as zero-width glyphs once shaping is done.
  */
-function read({ plan, names, font }: Built, text: string, features: hb.Feature[] = []): string[] {
+function read({ plan, names, font }: Built, text: string, features: hb.Feature[] = [], vertical = false): string[] {
   const buffer = new hb.Buffer()
   buffer.addText(text)
+  if (vertical)
+    buffer.setDirection(hb.Direction.TTB)
   buffer.guessSegmentProperties()
   hb.shape(font, buffer, features)
   const positions = buffer.getGlyphPositions()
-  const visible = buffer.getGlyphInfos().filter((_, i) => positions[i]!.xAdvance > 0)
+  const visible = buffer.getGlyphInfos().filter((_, i) => positions[i]!.xAdvance > 0 || positions[i]!.yAdvance < 0)
   return visible.map(({ codepoint }) => {
     const name = names[codepoint]!
     const glyph = plan.glyphs.find(g => g.name === name)
@@ -85,6 +89,8 @@ function read({ plan, names, font }: Built, text: string, features: hb.Feature[]
 function shapedNotation({ plan, names, font }: Built, text: string): string {
   const buffer = new hb.Buffer()
   buffer.addText(text)
+  if (plan.orientation === 'vertical')
+    buffer.setDirection(hb.Direction.TTB)
   buffer.guessSegmentProperties()
   hb.shape(font, buffer)
   let at = 0
@@ -271,6 +277,89 @@ describe.each(['SourceHanSansJP-Subset.otf', 'SourceHanSansJP-VF-Subset.ttf'])('
 
   it('leaves the kanji\'s rules alone', () => {
     expect(read(built, '今日')).toEqual(['今日:kyō'])
+  })
+})
+
+describe.each(['SourceHanSansJP-Subset.otf', 'SourceHanSansJP-VF-Subset.ttf'])('a vertical font on %s', (file) => {
+  const vertical = (built: Built, text: string, features: hb.Feature[] = []): string[] => read(built, text, features, true)
+  const glyphOf = ({ plan, names }: Built, ruby: string): number => names.indexOf(plan.glyphs.find(g => g.ruby[0]?.text === ruby)!.name)
+  let built: Built
+  let romaji: Built
+
+  beforeAll(async () => {
+    built = await build(file, undefined, { orientation: 'vertical' })
+    romaji = await build(file, undefined, { orientation: 'vertical', furiganaScript: 'hepburn' })
+  })
+
+  it('annotates words in vertical text only', () => {
+    expect(vertical(built, '日本')).toEqual(['日:に', '本:ほん'])
+    expect(vertical(built, '今日')).toEqual(['今日:きょう'])
+    expect(vertical(built, '大人気')).toEqual(['大:だい', '人:にん', '気:き'])
+    expect(vertical(built, '桜')).toEqual(['桜:さくら'])
+    expect(read(built, '日本')).toEqual(['日', '本'])
+    expect(read(built, '今日')).toEqual(['今', '日'])
+  })
+
+  it('keeps selectors, salt and ss01', () => {
+    expect(vertical(built, `今${VS(2)}日`)).toEqual(['今:こん', '日:にち'])
+    expect(vertical(built, `日${VS(0)}本`)).toEqual(['日', '本'])
+    expect(vertical(built, '今日', [new hb.Feature('salt', 2)])).toEqual(['今:こん', '日:にち'])
+    expect(vertical(built, '今日', [new hb.Feature('ss01')])).toEqual(['今', '日'])
+  })
+
+  it('shapes runs as the ruby reader predicts', () => {
+    const reader = createRubyReader(built.plan)
+    const texts = ['日本', '日本語', '今日', '大人', '大人気', '桜', '大学語', '大学気桜']
+    expect(texts.map(t => formatNotation(t, reader(t)))).toEqual(texts.map(t => shapedNotation(built, t)))
+  })
+
+  it('stacks a word\'s kanji down the column, with its ruby on the right', () => {
+    const { font, otf, names } = built
+    const kyou = glyphOf(built, 'きょう')
+    const kanji = font.nominalGlyph('今'.codePointAt(0)!)!
+    // HarfBuzz's WebAssembly build reads no vmtx: read it here. Every top sits at the vertical origin, the em box's.
+    const { tables } = readSfnt(otf)
+    const vmtx = readMetrics(tables.get('vmtx')!, tables.get('vhea')!, names.length)
+    const origin = (glyph: number): number => vmtx[glyph]![1] + font.glyphExtents(glyph)!.yBearing
+    expect(vmtx[kyou]![0]).toBe(2 * vmtx[kanji]![0])
+    expect(origin(kyou)).toBe(origin(kanji))
+    expect(origin(kanji)).toBe(880)
+    expect(font.glyphHAdvance(kyou)).toBe(font.glyphHAdvance(kanji))
+    const ink = font.glyphExtents(kyou)!
+    // Two kanji tall, and wider than one by the ruby on its right.
+    expect(-ink.height).toBeGreaterThan(1000)
+    expect(ink.xBearing + ink.width).toBeGreaterThan(1000 + built.plan.metrics.rubyGap * 1000)
+    const sakura = font.glyphExtents(glyphOf(built, 'さくら'))!
+    expect(sakura.xBearing + sakura.width).toBeLessThanOrEqual(Math.ceil(1000 + (built.plan.metrics.rubyGap + built.plan.metrics.rubyScale) * 1000))
+    // vhea's ascender, right of the column's centre, makes room for it.
+    expect(new DataView(tables.get('vhea')!.buffer, tables.get('vhea')!.byteOffset).getInt16(4)).toBeGreaterThanOrEqual(sakura.xBearing + sakura.width - 500)
+  })
+
+  it('turns romaji sideways down the column', () => {
+    const { font } = romaji
+    const sakura = font.glyphExtents(glyphOf(romaji, 'sakura'))!
+    const kanji = font.glyphExtents(font.nominalGlyph('桜'.codePointAt(0)!)!)!
+    // The ruby's ink right of the kanji runs down, taller than it is wide.
+    const right = sakura.xBearing + sakura.width
+    expect(right).toBeGreaterThan(kanji.xBearing + kanji.width + 100)
+    expect(vertical(romaji, '今日')).toEqual(['今日:kyō'])
+  })
+
+  it('sees kana past the base font\'s vertical forms, and gives the forms back', () => {
+    expect(vertical(romaji, 'きょう')).toEqual(['きょ:kyo', 'う:u'])
+    expect(vertical(romaji, 'がっこう')).toEqual(['が:ga', 'っ:k', 'こ:ko', 'う:u'])
+    // Kana the rules leave keep the base font's vertical forms.
+    const shaped = (font: hb.Font): number[] => {
+      const buffer = new hb.Buffer()
+      buffer.addText('きょう')
+      buffer.setDirection(hb.Direction.TTB)
+      buffer.guessSegmentProperties()
+      hb.shape(font, buffer)
+      return buffer.getGlyphInfos().map(g => g.codepoint)
+    }
+    return fixture(file).then((base) => {
+      expect(shaped(built.font)).toEqual(shaped(new hb.Font(new hb.Face(new hb.Blob(base)))))
+    })
   })
 })
 

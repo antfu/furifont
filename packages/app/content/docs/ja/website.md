@@ -64,6 +64,26 @@ body {
 }
 ```
 
+## 縦書き
+
+縦書きには縦書き用のフォント `FurifontSansVerticalVF.woff2` を使います。ほかのファミリーも同じです。ふりがなを漢字の右に付け、縦書きの文章でだけ表示します。横書きでは漢字だけが表示されるので、縦書きの部分にだけ指定します。
+
+```css
+@font-face {
+  font-family: 'Furifont Sans Vertical';
+  src: url('/fonts/FurifontSansVerticalVF.woff2') format('woff2');
+  font-weight: 250 900;
+}
+
+.tategaki {
+  writing-mode: vertical-rl;
+  font-family: 'Furifont Sans Vertical', sans-serif;
+  line-height: 2.2;
+}
+```
+
+**行の間をあける。** ブラウザは各行の漢字を行の中央に置くので、右のふりがなと同じだけの幅が左にも必要です。`line-height` が 2.2 より小さいと、ふりがなが隣の行に触れます。
+
 ## CSS での設定
 
 ### ふりがなを消す

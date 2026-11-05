@@ -84,7 +84,7 @@ function compile(lookup: Lookup, nested: (name: string) => Apply): Apply {
 /**
  * Reads text the way a font built from `plan` shows it with its default
  * readings: each Han run apart, as browsers shape them, through the `rclt`
- * lookups in lookup order. Returns the ruby over the text's characters. It
+ * lookups (a vertical font's `vert`) in lookup order. Returns the ruby over the text's characters. It
  * leaves out variation selectors, `salt`, and the base font's own lookups.
  */
 export function createRubyReader(plan: Plan): (text: string) => RubySpan[] {
@@ -96,7 +96,9 @@ export function createRubyReader(plan: Plan): (text: string) => RubySpan[] {
     return found
   }
   const { lookups, features } = parseFeatures(plan.fea, id)
-  const rclt = new Set(features.filter(f => f.tag === 'rclt').flatMap(f => f.lookups))
+  // A vertical font chooses its readings in `vert`, which `vrt2` repeats.
+  const tag = plan.orientation === 'vertical' ? 'vert' : 'rclt'
+  const rclt = new Set(features.filter(f => f.tag === tag).flatMap(f => f.lookups))
   // Compiled on first use: only what `rclt` reaches needs to be supported.
   const compiled = new Map<string, Apply>()
   const byName = new Map(lookups.map(l => [l.name, l]))

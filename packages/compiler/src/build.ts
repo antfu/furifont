@@ -1,7 +1,7 @@
 import type { Plan } from '@furifont/core'
 import type { Metric } from './metrics'
 import type { FontNames } from './names'
-import type { Outline } from './outline'
+import type { DrawContext, Outline } from './outline'
 import type { Sfnt } from './sfnt'
 import type { SubsetWasm } from './subset'
 import { GLYPH_LIMIT, VERSION_PROBE } from '@furifont/core'
@@ -11,7 +11,7 @@ import { Cff } from './cff'
 import { addVariationSequences } from './cmap'
 import { Glyf } from './glyf'
 import { buildGsub } from './gsub'
-import { appendMetrics } from './metrics'
+import { appendMetrics, readMetrics } from './metrics'
 import { fontNames, instancePostScriptNames, renameFont } from './names'
 import { drawGlyph, emptyOutline } from './outline'
 import { appendGlyphNames, postGlyphNames } from './post'
@@ -58,28 +58,110 @@ export interface BuiltFont {
 
 const logicalName = (cp: number): string => cp > 0xFFFF ? `u${cp.toString(16).toUpperCase()}` : `uni${cp.toString(16).toUpperCase().padStart(4, '0')}`
 
+/**
+ * The ideographic em box along one axis of the BASE table, from its `ideo`
+ * baseline: bottom and top on the horizontal axis, left and right on the
+ * vertical one, which runs across a column. None when the table has no such baseline.
+ */
+function baseEmBox(base: Uint8Array, axisOffset: 4 | 6, upm: number): [number, number] | undefined {
+  const d = view(base)
+  const axis = d.getUint16(axisOffset)
+  const tagList = axis && d.getUint16(axis) && axis + d.getUint16(axis)
+  const tags = tagList ? Array.from({ length: d.getUint16(tagList) }, (_, i) => tagAt(base, tagList + 2 + i * 4)) : []
+  const index = tags.indexOf('ideo')
+  const scriptList = axis + d.getUint16(axis + 2)
+  const scripts = new Map(Array.from({ length: index < 0 ? 0 : d.getUint16(scriptList) }, (_, i) => [tagAt(base, scriptList + 2 + i * 6), scriptList + d.getUint16(scriptList + 6 + i * 6)]))
+  const script = scripts.get('hani') ?? scripts.get('kana') ?? scripts.get('DFLT')
+  const values = script && d.getUint16(script) && script + d.getUint16(script)
+  if (!values || index >= d.getUint16(values + 2))
+    return undefined
+  const bottom = d.getInt16(values + d.getUint16(values + 4 + index * 2) + 2)
+  return [bottom, bottom + upm]
+}
+
 /** Bottom and top of the ideographic em box: the BASE table's `ideo` baseline, else the typographic metrics. */
 function emBox(tables: Map<string, Uint8Array>, upm: number): [number, number] {
   const base = tables.get('BASE')
-  if (base) {
-    const d = view(base)
-    const axis = d.getUint16(4)
-    const tagList = axis && d.getUint16(axis) && axis + d.getUint16(axis)
-    const tags = tagList ? Array.from({ length: d.getUint16(tagList) }, (_, i) => tagAt(base, tagList + 2 + i * 4)) : []
-    const index = tags.indexOf('ideo')
-    const scriptList = axis + d.getUint16(axis + 2)
-    const scripts = new Map(Array.from({ length: index < 0 ? 0 : d.getUint16(scriptList) }, (_, i) => [tagAt(base, scriptList + 2 + i * 6), scriptList + d.getUint16(scriptList + 6 + i * 6)]))
-    const script = scripts.get('hani') ?? scripts.get('kana') ?? scripts.get('DFLT')
-    const values = script && d.getUint16(script) && script + d.getUint16(script)
-    if (values && index < d.getUint16(values + 2)) {
-      const bottom = d.getInt16(values + d.getUint16(values + 4 + index * 2) + 2)
-      return [bottom, bottom + upm]
-    }
-  }
+  const box = base && baseEmBox(base, 4, upm)
+  if (box)
+    return box
   const os2 = view(tables.get('OS/2')!)
   const ascender = os2.getInt16(68)
   const descender = os2.getInt16(70)
   return ascender - descender === upm ? [descender, ascender] : [-0.12 * upm, 0.88 * upm]
+}
+
+/** Left and right of the ideographic em box across a vertical column: the BASE table's, else the em from the left. */
+function columnBox(tables: Map<string, Uint8Array>, upm: number): [number, number] {
+  const base = tables.get('BASE')
+  return (base && baseEmBox(base, 6, upm)) ?? [0, upm]
+}
+
+/**
+ * How a vertical font's glyphs stand in a column: each character's glyph in
+ * vertical text, which HarfBuzz shapes as browsers do, and each glyph's
+ * vertical origin, from its top side bearing in vmtx; the em box's top without one.
+ */
+function verticalLayout(tables: Map<string, Uint8Array>, font: hb.Font, glyphCount: number, em: [number, number]): Pick<NonNullable<DrawContext['vertical']>, 'uprightOf' | 'originOf'> {
+  const vmtx = tables.get('vmtx')
+  const bearings = vmtx ? readMetrics(vmtx, tables.get('vhea')!, glyphCount).map(([, bearing]) => bearing) : []
+  const buffer = new hb.Buffer()
+  const forms = new Map<number, number | undefined>()
+  return {
+    uprightOf: (cp) => {
+      if (!forms.has(cp)) {
+        const nominal = font.nominalGlyph(cp)
+        buffer.reset()
+        buffer.addCodePoints([cp])
+        buffer.setDirection(hb.Direction.TTB)
+        buffer.guessSegmentProperties()
+        hb.shape(font, buffer)
+        const shaped = buffer.getGlyphInfos()
+        forms.set(cp, nominal === undefined || shaped.length !== 1 ? nominal : shaped[0]!.codepoint)
+      }
+      return forms.get(cp)
+    },
+    originOf: (glyph) => {
+      const bearing = bearings[glyph]
+      return bearing === undefined ? em[1] : bearing + (font.glyphExtents(glyph)?.yBearing ?? 0)
+    },
+  }
+}
+
+const VERTICAL_UNDO = 'vertical_forms_off'
+const VERTICAL_REDO = 'vertical_forms'
+const VERTICAL_FEATURES = /^(feature (?:vert|vrt2) \{\n)([\s\S]*?)(\n\} (?:vert|vrt2);)$/gm
+
+/**
+ * The lookups that let a vertical font's rules see the characters it names:
+ * the base font's own `vert`, which runs before them, turns some into
+ * vertical forms (small kana, ー), so `undo` takes those back first and `redo`
+ * gives what the rules left them again last.
+ */
+function verticalForms(plan: Plan, uprightOf: (cp: number) => number | undefined, glyphOf: (cp: number) => number | undefined): { undo: string, redo: string } | undefined {
+  const pairs = plan.codepoints.flatMap((cp) => {
+    const form = uprightOf(cp)
+    return form === undefined || form === glyphOf(cp) ? [] : [{ name: logicalName(cp), form: `gid${form}` }]
+  })
+  // A form two characters share cannot be taken back to one of them.
+  const shared = new Set(pairs.filter((p, i) => pairs.findIndex(q => q.form === p.form) !== i).map(p => p.form))
+  const kept = pairs.filter(p => !shared.has(p.form))
+  if (!kept.length)
+    return undefined
+  const lookup = (name: string, subs: string[]): string => `lookup ${name} useExtension {\n${subs.map(l => `  ${l}`).join('\n')}\n} ${name};\n`
+  return {
+    undo: lookup(VERTICAL_UNDO, kept.map(p => `sub ${p.form} by ${p.name};`)),
+    redo: lookup(VERTICAL_REDO, kept.map(p => `sub ${p.name} by ${p.form};`)),
+  }
+}
+
+/** The plan's feature file with {@link verticalForms} around the lookups of `vert` and `vrt2`: defined first and last, so they run first and last. */
+function withVerticalForms(fea: string, forms: { undo: string, redo: string }): string {
+  const first = fea.search(/^lookup /m)
+  const body = first < 0 ? fea : `${fea.slice(0, first)}${forms.undo}\n${fea.slice(first)}`
+  const features = body.search(/^feature /m)
+  const ordered = features < 0 ? `${body}\n${forms.redo}` : `${body.slice(0, features)}${forms.redo}\n${body.slice(features)}`
+  return ordered.replace(VERTICAL_FEATURES, (_, open: string, lookups: string, close: string) => `${open}  lookup ${VERTICAL_UNDO};\n${lookups}\n  lookup ${VERTICAL_REDO};${close}`)
 }
 
 /**
@@ -138,7 +220,9 @@ function nameGlyphs(plan: Plan, font: hb.Font, baseCount: number, taken: Set<str
   }
   const resolve = (name: string): number => {
     const cp = /^u(?:ni)?([0-9A-F]{4,6})$/.exec(name)?.[1]
-    const glyph = ids.get(name) ?? (cp === undefined ? undefined : font.nominalGlyph(Number.parseInt(cp, 16)))
+    // `gidN`, a base glyph by its ID, only the compiler's own lookups name.
+    const id = /^gid(\d+)$/.exec(name)?.[1]
+    const glyph = ids.get(name) ?? (cp !== undefined ? font.nominalGlyph(Number.parseInt(cp, 16)) : id !== undefined && Number(id) < baseCount ? Number(id) : undefined)
     if (glyph === undefined)
       throw new Error(`the feature file names an unknown glyph ${name}`)
     return glyph
@@ -158,16 +242,17 @@ class NewGlyphs {
   private readonly deltas: Outline['deltas'][] = []
   private readonly likes: number[] = []
   readonly head: Uint8Array
-  /** Where vertical metrics measure from: VORG's default origin, else the ascender. */
+  /** Where vertical metrics measure from: VORG's default origin, else the em box's top. */
   private readonly origin: number
 
-  constructor(private readonly tables: Map<string, Uint8Array>, private readonly baseCount: number, private readonly upm: number) {
+  constructor(private readonly tables: Map<string, Uint8Array>, private readonly baseCount: number, private readonly upm: number, em: [number, number]) {
     this.head = tables.get('head')!.slice()
     if (tables.has('CFF '))
       this.cff = new Cff(tables.get('CFF ')!)
     else
       this.glyf = new Glyf(tables.get('glyf')!, tables.get('loca')!, view(this.head).getInt16(50) === 1, baseCount)
-    this.origin = view(tables.get('VORG') ?? tables.get('hhea')!).getInt16(4)
+    const vorg = tables.get('VORG')
+    this.origin = vorg ? view(vorg).getInt16(4) : em[1]
   }
 
   /** Glyph names the font spells out, which new ones must not repeat. */
@@ -188,7 +273,8 @@ class NewGlyphs {
     const bounds = outline.bounds
     const [xMin, yMin, xMax, yMax] = bounds ?? [0, 0, 0, 0]
     this.horizontal.push({ advance: outline.advance, bearing: xMin, extent: bounds && [xMin, xMax] })
-    this.vertical.push({ advance: outline.advance ? this.upm : 0, bearing: this.origin - yMax, extent: bounds && [yMin, yMax] })
+    const { advance, origin } = outline.vertical ?? { advance: outline.advance ? this.upm : 0, origin: this.origin }
+    this.vertical.push({ advance, bearing: origin - yMax, extent: bounds && [yMin, yMax] })
     if (!bounds)
       return
     this.cff?.include(bounds)
@@ -263,6 +349,16 @@ class NewGlyphs {
   }
 }
 
+/** Raises vhea's ascender, right of a column's centre, to cover a vertical font's ruby. */
+function widenColumn(tables: Map<string, Uint8Array>, right: number): void {
+  const vhea = tables.get('vhea')
+  if (!vhea)
+    return
+  const widened = vhea.slice()
+  extend(view(widened), 4, right, Math.max)
+  tables.set('vhea', widened)
+}
+
 /** Raises the ascender to cover the ruby, so lines and clipping make room for it. */
 function raiseAscender(tables: Map<string, Uint8Array>, top: number): void {
   const hhea = tables.get('hhea')!.slice()
@@ -295,12 +391,14 @@ export async function buildFont(options: CompileOptions): Promise<BuiltFont> {
   const font = new hb.Font(face)
   const masters = mastersOf(face)
   const { tables } = sfnt
-  const glyphs = new NewGlyphs(tables, baseCount, upm)
+  const em = emBox(tables, upm)
+  const glyphs = new NewGlyphs(tables, baseCount, upm, em)
   const { names, resolve } = nameGlyphs(plan, font, baseCount, glyphs.takenNames())
 
-  const em = emBox(tables, upm)
   const glyphOf = (cp: number): number | undefined => font.nominalGlyph(cp)
-  const ctx = { font, masters: masters.map(m => m.font), unitsPerEm: upm, metrics: plan.metrics, em, glyphOf }
+  const column = columnBox(tables, upm)
+  const vertical = plan.orientation === 'vertical' ? { column, ...verticalLayout(tables, font, baseCount, em) } : undefined
+  const ctx: DrawContext = { font, masters: masters.map(m => m.font), unitsPerEm: upm, metrics: plan.metrics, em, glyphOf, vertical }
   for (const [i, spec] of plan.glyphs.entries()) {
     if (i % 500 === 0)
       await progress('draw', i, plan.glyphs.length)
@@ -318,26 +416,34 @@ export async function buildFont(options: CompileOptions): Promise<BuiltFont> {
   tables.set('cmap', addVariationSequences(tables.get('cmap')!, sequences.map(v => ({ ...v, glyph: resolve(v.name) }))))
 
   await progress('features')
-  tables.set('GSUB', buildGsub(plan.fea, tables.get('GSUB'), resolve))
+  const forms = vertical && verticalForms(plan, vertical.uprightOf, glyphOf)
+  tables.set('GSUB', buildGsub(forms ? withVerticalForms(plan.fea, forms) : plan.fea, tables.get('GSUB'), resolve))
 
   const fontName = fontNames(tables.get('name')!, plan.names.family)
   const fvar = tables.get('fvar')
   tables.set('name', renameFont(tables.get('name')!, fontName, revision, plan.names.description, fvar ? instancePostScriptNames(fvar, tables.get('name')!, fontName) : []))
   glyphs.write(fontName, names, masters.map(m => m.peak), revision, options.date)
-  raiseAscender(tables, Math.ceil(em[1] + (plan.metrics.rubyGap + plan.metrics.rubyScale) * upm))
+  const reach = (plan.metrics.rubyGap + plan.metrics.rubyScale) * upm
+  if (vertical)
+    widenColumn(tables, Math.ceil(column[1] + reach - (column[0] + column[1]) / 2))
+  else
+    raiseAscender(tables, Math.ceil(em[1] + reach))
 
   await progress('save')
   const built = writeSfnt(sfnt)
-  checkShaping(built, plan.smoke, resolve)
+  checkShaping(built, plan, resolve)
   return { font: built, glyphNames: names, style: fontName.style, variable: masters.length > 0, outlines: tables.has('glyf') ? 'truetype' : 'cff' }
 }
 
-function checkShaping(font: Uint8Array, smoke: Plan['smoke'], resolve: (name: string) => number): void {
+/** Shapes each of the plan's smoke checks as browsers would, down a column for a vertical font. */
+function checkShaping(font: Uint8Array, { smoke, orientation }: Plan, resolve: (name: string) => number): void {
   const shaper = new hb.Font(new hb.Face(new hb.Blob(font)))
   const buffer = new hb.Buffer()
   for (const { text, glyphs } of smoke) {
     buffer.reset()
     buffer.addText(text)
+    if (orientation === 'vertical')
+      buffer.setDirection(hb.Direction.TTB)
     buffer.guessSegmentProperties()
     hb.shape(shaper, buffer)
     const got = buffer.getGlyphInfos().map(g => g.codepoint)

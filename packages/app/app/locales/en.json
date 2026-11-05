@@ -30,6 +30,10 @@
     "hiragana": "Hiragana",
     "hepburn": "Romaji"
   },
+  "orientations": {
+    "horizontal": "Horizontal",
+    "vertical": "Vertical"
+  },
   "faces": {
     "sans": "Sans",
     "serif": "Serif"
@@ -52,6 +56,7 @@
   "playground": {
     "script": "Furigana letters",
     "face": "Font style",
+    "orientation": "Writing direction",
     "size": "Size / {size}px",
     "weight": "Weight / {weight}",
     "ruby": "Furigana",
@@ -233,6 +238,8 @@
       "hiragana": "Hiragana",
       "katakanaOn": "Kata on",
       "hepburn": "Romaji",
+      "orientation": "Writing direction",
+      "orientationHint": "Vertical puts the furigana to the right of the kanji, and only vertical text shows it. In horizontal text, the font shows the kanji with no furigana.",
       "skip": "Skip the most common words",
       "skipHint": "Of the words left, the most common get no furigana, because a reader already knows them. Words and single kanji are sorted by how common they are, in steps of 500.",
       "words": "Then add furigana to",

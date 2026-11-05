@@ -8,18 +8,23 @@ export interface Metric {
   extent?: [number, number]
 }
 
+/** Every glyph's advance and side bearing in hmtx or vmtx, whose header (hhea or vhea) says how many are long. */
+export function readMetrics(table: Uint8Array, header: Uint8Array, glyphCount: number): [advance: number, bearing: number][] {
+  const d = view(table)
+  const longCount = view(header).getUint16(34)
+  return Array.from({ length: glyphCount }, (_, g) => [
+    d.getUint16(Math.min(g, longCount - 1) * 4),
+    g < longCount ? d.getInt16(g * 4 + 2) : d.getInt16(longCount * 4 + (g - longCount) * 2),
+  ])
+}
+
 /**
  * Appends metrics to hmtx or vmtx and refreshes its header (hhea or vhea):
  * the long-metric count, the largest advance and the side-bearing extremes.
  */
 export function appendMetrics(table: Uint8Array, header: Uint8Array, glyphCount: number, added: Metric[]): { table: Uint8Array, header: Uint8Array } {
-  const d = view(table)
-  const longCount = view(header).getUint16(34)
-  const metrics = Array.from({ length: glyphCount }, (_, g) => [
-    d.getUint16(Math.min(g, longCount - 1) * 4),
-    g < longCount ? d.getInt16(g * 4 + 2) : d.getInt16(longCount * 4 + (g - longCount) * 2),
-  ])
-  metrics.push(...added.map(m => [m.advance, m.bearing]))
+  const metrics = readMetrics(table, header, glyphCount)
+  metrics.push(...added.map((m): [number, number] => [m.advance, m.bearing]))
   // Trailing glyphs that share the last advance need not repeat it.
   let long = metrics.length
   while (long > 1 && metrics[long - 1]![0] === metrics[long - 2]![0])
