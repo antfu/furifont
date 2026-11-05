@@ -40,7 +40,10 @@ const { copied, copy } = useCopy()
     </div>
     <div class="flex min-w-0 flex-col">
       <!-- Vertical lines run right to left in a box of fixed height, scrolling sideways past its width. -->
-      <div class="min-h-72 flex-1 px-6 py-8" :class="vertical && 'h-[28rem] overflow-x-auto'">
+      <div
+        class="min-h-72 flex-1 px-6 py-8"
+        :class="vertical && 'h-[32rem] overflow-x-auto'"
+      >
         <FuriText v-model:text="text" :family="familyName(family, orientation)" :vertical :ruby :size :weight :okurigana="okurigana ? reader : undefined" :class="vertical && 'ml-auto h-full'" />
       </div>
       <div class="flex items-center gap-3 border-t border-base px-6 py-3">
