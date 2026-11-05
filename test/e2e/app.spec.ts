@@ -161,7 +161,7 @@ async function serveRelease(page: Page, version: string): Promise<void> {
 }
 
 /** Opens a page on another site, in `lang`, with tight lines, code, an icon font and maybe a CSP; the demo site's fonts are the test font, and its release is that font's, 0.0.0. */
-async function openElsewhere(page: Page, lang: string, csp?: string): Promise<void> {
+async function openElsewhere(page: Page, lang: string, csp?: string, host = 'elsewhere.test'): Promise<void> {
   const font = await readFile(TEST_FONT)
   const readings = await readFile(TEST_READINGS)
   const pairs = await (await page.request.get(new URL('/okurigana.json', url).href)).body()
@@ -171,7 +171,7 @@ async function openElsewhere(page: Page, lang: string, csp?: string): Promise<vo
     : route.fulfill({ body: font, contentType: 'font/otf', headers: cors }))
   await page.route('https://furifont.antfu.me/okurigana.json', route => route.fulfill({ body: pairs, contentType: 'application/json', headers: cors }))
   await serveRelease(page, '0.0.0')
-  await page.route('https://elsewhere.test/**', route => route.fulfill({
+  await page.route(`https://${host}/**`, route => route.fulfill({
     contentType: 'text/html; charset=utf-8',
     headers: csp ? { 'content-security-policy': csp } : {},
     body: `<!doctype html><html lang="${lang}"><meta charset="utf-8">
@@ -179,14 +179,20 @@ async function openElsewhere(page: Page, lang: string, csp?: string): Promise<vo
       <p id="mixed">日本 Market <span id="icon" style="font-family: 'Google Symbols'">search</span></p><pre id="code">日本</pre>
       <p><ruby id="ruby">来ない<rt>こない</rt></ruby></p>`,
   }))
-  await page.goto('https://elsewhere.test/')
+  await page.goto(`https://${host}/`)
 }
 
-/** A userscript manager: its menu commands are buttons, its values outlive a reload. */
+/** A userscript manager: its menu commands are buttons, its values outlive a reload and, as cookies of elsewhere.test, its subdomains. */
 async function addUserscriptManager(page: Page): Promise<void> {
   await page.addInitScript(() => Object.assign(window, {
-    GM_getValue: (key: string, fallback: string) => localStorage.getItem(key) ?? fallback,
-    GM_setValue: (key: string, value: string) => localStorage.setItem(key, value),
+    GM_getValue: (key: string, fallback: string) => {
+      const name = `${encodeURIComponent(key)}=`
+      const cookie = document.cookie.split('; ').find(c => c.startsWith(name))
+      return cookie ? decodeURIComponent(cookie.slice(name.length)) : fallback
+    },
+    GM_setValue: (key: string, value: string) => {
+      document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; domain=${location.hostname.split('.').slice(-2).join('.')}; path=/`
+    },
     // With an id, a command replaces the one before it.
     GM_registerMenuCommand: (caption: string, onClick: () => void, options?: { id: string }) => {
       const button = document.createElement('button')
@@ -346,6 +352,50 @@ test('turns the userscript on by itself on Japanese pages, and its menu switches
 
   await page.getByRole('button', { name: 'Furifont Serif Romaji' }).click()
   expect((await styleOf(page, 'kanji')).fontFamily).toBe(PAGE_FONT)
+})
+
+test('keeps the userscript on or off, and its family and okurigana, for each site', async ({ page }) => {
+  const userscript = await fetchUserscript(page)
+  await addUserscriptManager(page)
+
+  // An English page is off until the reader keeps the site on.
+  await openElsewhere(page, 'en')
+  await page.evaluate(userscript)
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(PAGE_FONT)
+  await page.getByRole('button', { name: 'This site: on for Japanese pages' }).click()
+  await expect(page.getByRole('button', { name: 'This site: always on' })).toBeVisible()
+  await expect.poll(async () => (await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Sans", ${PAGE_FONT}`)
+  await page.getByRole('button', { name: 'Furifont Serif Romaji' }).click()
+  await page.getByRole('button', { name: 'Okurigana readings: on' }).click()
+
+  await page.reload()
+  await page.evaluate(userscript)
+  await expect(page.getByRole('button', { name: 'This site: always on' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Okurigana readings: off' })).toBeVisible()
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
+
+  // A Japanese page the reader keeps off stays off.
+  await openElsewhere(page, 'ja-JP', undefined, 'other.elsewhere.test')
+  await page.evaluate(userscript)
+  await expect(page.getByRole('button', { name: 'This site: on for Japanese pages' })).toBeVisible()
+  // The last choices are the default for a site with none of its own.
+  await expect(page.getByRole('button', { name: 'Okurigana readings: off' })).toBeVisible()
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
+  await page.getByRole('button', { name: 'Okurigana readings: off' }).click()
+  await page.getByRole('button', { name: 'Furifont Sans', exact: true }).click()
+  await page.getByRole('button', { name: 'This site: on for Japanese pages' }).click()
+  await page.getByRole('button', { name: 'This site: always on' }).click()
+  await expect(page.getByRole('button', { name: 'This site: always off' })).toBeVisible()
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(PAGE_FONT)
+  await page.reload()
+  await page.evaluate(userscript)
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(PAGE_FONT)
+
+  // The first site keeps its own.
+  await openElsewhere(page, 'en')
+  await page.evaluate(userscript)
+  await expect(page.getByRole('button', { name: 'Okurigana readings: off' })).toBeVisible()
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
 })
 
 test('turns the userscript back off with a toast in the browser\'s language when the font fails to download', async ({ browser }) => {

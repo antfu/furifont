@@ -105,7 +105,7 @@
     "okuriganaHint": "为送假名前的汉字选出正确的读音，例如「来る」「来ない」中的「来」。",
     "userscript": "用户脚本",
     "install": "安装用户脚本",
-    "userscriptHint": "适用于 Tampermonkey 或 Violentmonkey（运行小脚本的浏览器扩展）。它会在日语页面自动打开 Furifont，在不允许加载其他网站字体的网站上也能用。你可以在它的菜单里切换到另一款 Furifont 字体，或将其关闭。",
+    "userscriptHint": "适用于 Tampermonkey 或 Violentmonkey（运行小脚本的浏览器扩展）。它会在日语页面自动打开 Furifont，在不允许加载其他网站字体的网站上也能用。你可以在它的菜单里切换到另一款 Furifont 字体、将其关闭，或让某个网站始终开启或关闭。每个网站会记住自己的字体和送假名设置，你最后的选择会成为其他网站的默认设置。",
     "toast": {
       "message": "Furifont 无法在此页面加载字体。有些网站（如 X 和 GitHub）不允许加载其他网站的字体。在这些网站上，需要在电脑上安装 Furifont。",
       "download": "下载字体",
@@ -116,7 +116,10 @@
     },
     "menu": {
       "okuriganaOn": "送假名读音：开",
-      "okuriganaOff": "送假名读音：关"
+      "okuriganaOff": "送假名读音：关",
+      "siteAuto": "此网站：日语页面自动开启",
+      "siteOn": "此网站：始终开启",
+      "siteOff": "此网站：始终关闭"
     }
   },
   "reference": {

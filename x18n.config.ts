@@ -13,7 +13,7 @@ export default defineConfig({
   keyStyle: 'nested',
   usage: {
     // The userscript route reads these as whole objects from the locale files.
-    keysInUse: ['anyPage.toast.userscript', 'anyPage.menu.okuriganaOn', 'anyPage.menu.okuriganaOff'],
+    keysInUse: ['anyPage.toast.userscript', 'anyPage.menu.okuriganaOn', 'anyPage.menu.okuriganaOff', 'anyPage.menu.siteAuto', 'anyPage.menu.siteOn', 'anyPage.menu.siteOff'],
   },
   glossary: [
     { term: 'Furifont', doNotTranslate: true },
