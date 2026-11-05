@@ -398,6 +398,52 @@ test('keeps the userscript on or off, and its family and okurigana, for each sit
   expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
 })
 
+test('sets the userscript for the page and the site from its corner button, which the menu hides and shows', async ({ page }) => {
+  const userscript = await fetchUserscript(page)
+  await addUserscriptManager(page)
+
+  await openElsewhere(page, 'en')
+  await page.evaluate(userscript)
+  const panel = page.getByRole('dialog', { name: 'Furifont settings' })
+  await expect(panel).toBeHidden()
+  await page.getByRole('button', { name: 'Furifont settings' }).click()
+  await expect(panel.getByLabel('On this page')).not.toBeChecked()
+  await expect(panel.getByLabel('This site')).toHaveValue('auto')
+
+  await panel.getByLabel('On this page').check()
+  await expect.poll(async () => (await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Sans", ${PAGE_FONT}`)
+  await panel.getByLabel('Font').selectOption('Furifont Serif Romaji')
+  await expect.poll(async () => (await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
+  await panel.getByLabel('Okurigana readings').uncheck()
+  await expect(page.getByRole('button', { name: 'Okurigana readings: off' })).toBeVisible()
+  await panel.getByLabel('This site').selectOption('on')
+  // The menu follows the panel.
+  await expect(page.getByRole('button', { name: 'This site: always on' })).toBeVisible()
+
+  await page.reload()
+  await page.evaluate(userscript)
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
+  await page.getByRole('button', { name: 'Furifont settings' }).click()
+  await expect(panel.getByLabel('On this page')).toBeChecked()
+  await expect(panel.getByLabel('Okurigana readings')).not.toBeChecked()
+  // And the panel follows the menu.
+  await page.getByRole('button', { name: 'Furifont Serif Romaji' }).click()
+  await expect(panel.getByLabel('On this page')).not.toBeChecked()
+  await panel.getByLabel('This site').selectOption('off')
+  await panel.getByLabel('On this page').check()
+  await expect.poll(async () => (await styleOf(page, 'kanji')).fontFamily).toBe(`"Furifont Serif Romaji", ${PAGE_FONT}`)
+
+  await panel.getByRole('button', { name: /^Hide this button/ }).click()
+  await expect(page.getByRole('button', { name: 'Furifont settings' })).toHaveCount(0)
+  await page.reload()
+  await page.evaluate(userscript)
+  expect((await styleOf(page, 'kanji')).fontFamily).toBe(PAGE_FONT)
+  await expect(page.getByRole('button', { name: 'Furifont settings' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Settings button: hidden' }).click()
+  await expect(page.getByRole('button', { name: 'Furifont settings' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Settings button: shown' })).toBeVisible()
+})
+
 test('turns the userscript back off with a toast in the browser\'s language when the font fails to download', async ({ browser }) => {
   const context = await browser.newContext({ locale: 'ja-JP' })
   const page = await context.newPage()

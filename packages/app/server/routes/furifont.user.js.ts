@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 // The userscript runs `start` in pages; the server types have no DOM.
-import type { FurifontOptions, Toast, toggleFurifont, Update } from '@furifont/helper-web'
+import type { FurifontOptions, PanelLabels, PanelState, showPanel, SiteMode, Toast, toggleFurifont, Update } from '@furifont/helper-web'
 import en from '../../app/locales/en.json'
 import ja from '../../app/locales/ja.json'
 import zhHans from '../../app/locales/zh-Hans.json'
@@ -20,6 +20,13 @@ const MENUS = {
   'zh-Hant': zhHant.anyPage.menu,
 } satisfies Record<Locale, Menu>
 
+const PANELS = {
+  'en': en.anyPage.panel,
+  'ja': ja.anyPage.panel,
+  'zh-Hans': zhHans.anyPage.panel,
+  'zh-Hant': zhHant.anyPage.panel,
+} satisfies Record<Locale, PanelLabels>
+
 /** The captions of the menu commands that hold a setting, one for each state it can be in. */
 interface Menu {
   okuriganaOn: string
@@ -27,6 +34,8 @@ interface Menu {
   siteAuto: string
   siteOn: string
   siteOff: string
+  buttonOn: string
+  buttonOff: string
 }
 
 /** The userscript manager's functions, handed in so {@link start} can ship as source. */
@@ -49,7 +58,7 @@ interface Manager {
  */
 interface Site {
   /** `auto`, or nothing, turns Furifont on for Japanese pages only. */
-  mode?: 'auto' | 'on' | 'off'
+  mode?: SiteMode
   family?: string
   okurigana?: boolean
 }
@@ -58,11 +67,13 @@ interface Site {
 function start(
   manager: Manager,
   toggle: typeof toggleFurifont,
+  panel: typeof showPanel,
   fonts: { family: string, url: string, readings: string }[],
   pairs: string,
   script: Pick<Update, 'version' | 'href'>,
   toasts: typeof TOASTS,
   menus: Record<Locale, Menu>,
+  panels: Record<Locale, PanelLabels>,
   detect: typeof detectLocale,
 ): void {
   const locale = detect(navigator.languages)
@@ -107,41 +118,111 @@ function start(
   const options = ({ family, url, readings }: typeof fonts[number]): FurifontOptions => ({ family, url, toast, fetchFont, okurigana: okurigana ? { readings, pairs, fetchText } : undefined })
   const saved = (): typeof fonts[number] => fonts.find(f => f.family === (site.family ?? manager.getValue('family', ''))) ?? fonts[0]!
   const isOn = (): boolean => !!window.furifont?.family && !window.furifont.sheet.disabled
-  /** Turns Furifont on in the saved family, or off: `toggle` flips the family on the page. */
+  const onPage = (): typeof fonts[number] | undefined => fonts.find(f => f.family === window.furifont?.family)
+
+  // The corner button, unless the reader hid it; every change shows on it.
+  let corner: ReturnType<typeof showPanel> | undefined
+  const state = (): PanelState => ({ on: isOn(), mode: site.mode ?? 'auto', family: (isOn() ? onPage() : undefined)?.family ?? saved().family, okurigana })
+  const refresh = (): void => {
+    corner?.update(state())
+    registerOkurigana()
+    registerSite()
+  }
+  // `toggle` flips the family on the page; a font that fails to load turns back off after it.
+  const run = (font: typeof fonts[number], check = false): void => {
+    void toggle({ ...options(font), update: check ? update() : undefined }).then(refresh)
+    refresh()
+  }
+  /** Turns Furifont on in the saved family, or off. */
   const turn = (on: boolean): void => {
     if (on === isOn())
       return
-    const font = on ? saved() : fonts.find(f => f.family === window.furifont?.family)
+    const font = on ? saved() : onPage()
     if (font)
-      toggle({ ...options(font), update: on ? update() : undefined })
+      run(font, on)
   }
   const isJapanese = (): boolean => /^ja(?:-|$)/i.test(document.documentElement.lang)
   const wanted = (): boolean => site.mode === 'on' || (site.mode !== 'off' && isJapanese())
+  const setOkurigana = (value: boolean): void => {
+    okurigana = value
+    save({ okurigana })
+    // The family on the page, if Furifont is on: otherwise the setting waits for it.
+    const font = onPage()
+    if (font)
+      window.furifont?.okurigana(options(font).okurigana)
+    refresh()
+  }
+  const setMode = (mode: SiteMode): void => {
+    save({ mode })
+    turn(wanted())
+    refresh()
+  }
+  /** Saves `family`, and switches to it if Furifont is on in another. */
+  const setFamily = (family: string): void => {
+    const font = fonts.find(f => f.family === family)
+    if (!font)
+      return
+    save({ family })
+    if (isOn() && onPage() !== font)
+      run(font)
+    refresh()
+  }
 
   for (const font of fonts) {
     manager.registerMenuCommand(font.family, () => {
       save({ family: font.family })
-      toggle({ ...options(font), update: update() })
+      run(font, true)
     })
   }
-  const registerOkurigana = (): void => manager.registerMenuCommand(okurigana ? menu.okuriganaOn : menu.okuriganaOff, () => {
-    okurigana = !okurigana
-    save({ okurigana })
-    // The family on the page, if Furifont is on: otherwise the setting waits for it.
-    const font = fonts.find(f => f.family === window.furifont?.family)
-    if (font)
-      window.furifont?.okurigana(options(font).okurigana)
-    registerOkurigana()
-  }, { id: 'okurigana', autoClose: false })
-  registerOkurigana()
+  function registerOkurigana(): void {
+    manager.registerMenuCommand(okurigana ? menu.okuriganaOn : menu.okuriganaOff, () => setOkurigana(!okurigana), { id: 'okurigana', autoClose: false })
+  }
   const modes = { auto: menu.siteAuto, on: menu.siteOn, off: menu.siteOff }
-  const registerSite = (): void => manager.registerMenuCommand(modes[site.mode ?? 'auto'], () => {
-    // Auto, then always on, then always off.
-    save({ mode: site.mode === 'on' ? 'off' : site.mode === 'off' ? 'auto' : 'on' })
-    turn(wanted())
-    registerSite()
-  }, { id: 'site', autoClose: false })
+  // Auto, then always on, then always off.
+  function registerSite(): void {
+    manager.registerMenuCommand(modes[site.mode ?? 'auto'], () => setMode(site.mode === 'on' ? 'off' : site.mode === 'off' ? 'auto' : 'on'), { id: 'site', autoClose: false })
+  }
+  const showCorner = (): void => {
+    corner = manager.getValue('button', 'on') === 'off'
+      ? undefined
+      : panel({
+          labels: panels[locale],
+          families: fonts.map(f => f.family),
+          state: state(),
+          onChange: (change) => {
+            if (change.on !== undefined)
+              turn(change.on)
+            if (change.mode)
+              setMode(change.mode)
+            if (change.family)
+              setFamily(change.family)
+            if (change.okurigana !== undefined)
+              setOkurigana(change.okurigana)
+          },
+          onHide: () => {
+            manager.setValue('button', 'off')
+            hideCorner()
+          },
+        })
+    registerButton()
+  }
+  function hideCorner(): void {
+    corner?.remove()
+    corner = undefined
+    registerButton()
+  }
+  function registerButton(): void {
+    manager.registerMenuCommand(corner ? menu.buttonOn : menu.buttonOff, () => {
+      manager.setValue('button', corner ? 'off' : 'on')
+      if (corner)
+        hideCorner()
+      else
+        showCorner()
+    }, { id: 'button', autoClose: false })
+  }
+  registerOkurigana()
   registerSite()
+  showCorner()
   if (wanted())
     turn(true)
 }
@@ -155,7 +236,7 @@ export default defineEventHandler(async (event) => {
 // @name         Furifont
 // @namespace    ${SITE}
 // @version      ${VERSION}
-// @description  Furigana on any page: Furifont turns on by itself on Japanese pages, and the menu switches family, turns it off, keeps it on or off for a site, or turns okurigana readings (来る, 来ない) off. Each site remembers its own settings.
+// @description  Furigana on any page: Furifont turns on by itself on Japanese pages, and the menu switches family, turns it off, keeps it on or off for a site, or turns okurigana readings (来る, 来ない) off, as does a button in the page's corner. Each site remembers its own settings.
 // @homepageURL  ${SITE}
 // @downloadURL  ${SITE}/furifont.user.js
 // @match        *://*/*
@@ -171,7 +252,7 @@ export default defineEventHandler(async (event) => {
 /* eslint-disable */
 (() => {
 ${engine}
-;(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, Furifont.toggleFurifont, ${JSON.stringify(fonts)}, ${JSON.stringify(SITE_PAIRS_URL)}, ${JSON.stringify({ version: VERSION, href: `${SITE}/furifont.user.js` })}, ${JSON.stringify(TOASTS)}, ${JSON.stringify(MENUS)}, ${detectLocale})
+;(${start})({ getValue: GM_getValue, setValue: GM_setValue, registerMenuCommand: GM_registerMenuCommand, xmlHttpRequest: GM_xmlhttpRequest }, Furifont.toggleFurifont, Furifont.showPanel, ${JSON.stringify(fonts)}, ${JSON.stringify(SITE_PAIRS_URL)}, ${JSON.stringify({ version: VERSION, href: `${SITE}/furifont.user.js` })}, ${JSON.stringify(TOASTS)}, ${JSON.stringify(MENUS)}, ${JSON.stringify(PANELS)}, ${detectLocale})
 })()
 `
 })
