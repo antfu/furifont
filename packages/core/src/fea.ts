@@ -1,5 +1,6 @@
 import type { Rule } from './planner'
 import type { KanaRomaji } from './romaji'
+import type { Orientation } from './schema'
 
 interface Substitution {
   input: string
@@ -23,7 +24,15 @@ export interface FeaInput {
   variantsOff: Substitution[]
   rubyOff: { glyph: string, bases: string[] }[]
   kana: Omit<KanaRomaji, 'glyphs' | 'codepoints'>
+  orientation: Orientation
 }
+
+/**
+ * The features the rules choose readings in. Browsers apply `rclt` in any
+ * direction and `vert` in vertical text only, which is what a vertical font
+ * needs: its glyphs would be wrong in horizontal text, which keeps plain kanji.
+ */
+const READING_FEATURES: Record<Orientation, string[]> = { horizontal: ['rclt'], vertical: ['vert', 'vrt2'] }
 
 /**
  * Rules per subtable of the main lookup. Breaking it up lets the compiler pack
@@ -99,6 +108,7 @@ function mainRules(input: FeaInput): string[] {
  * Writes the feature file. Nested lookups come first so the main one can call
  * them; the fallbacks come after it, in lookup order, so they only see what it
  * left: `ccmp` turns unclaimed variant glyphs back into kanji, `ss01` undoes ruby.
+ * The readings are chosen in `rclt`, or in `vert` and `vrt2` for a vertical font.
  */
 export function emitFea(input: FeaInput): string {
   const out = ['languagesystem DFLT dflt;\n']
@@ -145,7 +155,7 @@ export function emitFea(input: FeaInput): string {
   }
   const rclt = [main.length && 'lookup furigana;', input.variantReadings.length && 'lookup variant_readings;', ...kana.rclt].filter(l => typeof l === 'string')
   if (rclt.length)
-    out.push(block('feature', 'rclt', rclt))
+    out.push(...READING_FEATURES[input.orientation].map(tag => block('feature', tag, rclt)))
   if (input.variantsOff.length)
     out.push(block('feature', 'ccmp', ['lookup variants_off;']))
   if (off.length)

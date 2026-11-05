@@ -740,6 +740,7 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
       variantsOff: keptVariants.map(v => ({ input: v.name, output: glyphName(v.base) })),
       rubyOff: allGlyphs.map(g => ({ glyph: g.name, bases: g.bases.map(glyphName) })),
       kana,
+      orientation: options.orientation,
     })
     const named = new Set([...han, ...keptVariants.map(v => v.base), ...keptGlyphs.flatMap(g => g.bases), ...kanaCodepoints])
 
@@ -750,6 +751,7 @@ export function createFontPlanner(dictionary: Dictionary): FontPlanner {
           family: options.family,
           description: `Furigana rules compiled from ${sources} (CC BY-SA 4.0: EDRDG, JmdictFurigana, stephenmk after Jonathan Waller; CC BY 2.0 FR: Tatoeba).`,
         },
+        orientation: options.orientation,
         metrics: options.metrics,
         codepoints: [...named].sort((a, b) => a - b),
         variants: keptVariants,

@@ -2,6 +2,9 @@ import * as v from 'valibot'
 import { DEFAULTS } from './defaults'
 
 export const FURIGANA_SCRIPTS = ['hiragana', 'katakanaOn', 'hepburn'] as const
+/** The writing direction a font's ruby is drawn for: above horizontal lines, or right of vertical ones. */
+export const ORIENTATIONS = ['horizontal', 'vertical'] as const
+export type Orientation = typeof ORIENTATIONS[number]
 /** The dictionary's manually maintained sources. */
 export const MANUAL_SOURCES = ['mahjong-yaku', 'jr-stations', 'yojijukugo', 'japan-post'] as const
 export type ManualSource = typeof MANUAL_SOURCES[number]
@@ -31,9 +34,9 @@ export type FuriganaScript = typeof FURIGANA_SCRIPTS[number]
 const RubyMetricsSchema = v.object({
   /** Ruby size relative to the base characters. */
   rubyScale: v.optional(v.pipe(v.number(), v.minValue(0.2), v.maxValue(0.8)), DEFAULTS.plan.metrics.rubyScale),
-  /** Space between the top of the em box and the bottom of the ruby. */
+  /** Space between the em box and the ruby: its top, or its right side in vertical text. */
   rubyGap: v.optional(v.pipe(v.number(), v.minValue(0), v.maxValue(0.5)), DEFAULTS.plan.metrics.rubyGap),
-  /** Ruby is squeezed horizontally down to this scale before it may overhang. */
+  /** Ruby is squeezed along the line down to this scale before it may overhang. */
   compressionFloor: v.optional(v.pipe(v.number(), v.minValue(0.3), v.maxValue(1)), DEFAULTS.plan.metrics.compressionFloor),
   /** Widest a ruby may get, overhanging its base symmetrically. */
   maxRubyWidth: v.optional(v.pipe(v.number(), v.minValue(1), v.maxValue(3)), DEFAULTS.plan.metrics.maxRubyWidth),
@@ -45,6 +48,11 @@ const Count = v.pipe(v.number(), v.integer(), v.minValue(0))
 export const PlanOptionsSchema = v.object({
   family: v.optional(v.pipe(v.string(), v.trim(), v.nonEmpty(), v.check(name => !/source/i.test(name), 'Source is a reserved font name of the base font')), DEFAULTS.plan.family),
   furiganaScript: v.optional(v.picklist(FURIGANA_SCRIPTS), DEFAULTS.plan.furiganaScript),
+  /**
+   * `vertical` draws ruby right of the kanji, under `vert` and `vrt2`: the
+   * font shows it in vertical text only, and plain kanji in horizontal text.
+   */
+  orientation: v.optional(v.picklist(ORIENTATIONS), DEFAULTS.plan.orientation),
   /** The sources whose words get ruby. */
   sources: v.optional(v.array(v.picklist(WORD_SOURCES)), () => [...WORD_SOURCES]),
   /** The most common words left bare, by score: a reader knows them. Lone kanji count too. */
@@ -86,6 +94,8 @@ const Codepoint = v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(0x10
 export const PlanSchema = v.object({
   version: v.literal(1),
   names: v.object({ family: v.string(), description: v.string() }),
+  /** The text the glyphs are drawn for; `fea` puts a vertical font's rules under `vert` and `vrt2`. */
+  orientation: v.picklist(ORIENTATIONS),
   metrics: v.object({
     rubyScale: v.number(),
     rubyGap: v.number(),
@@ -101,15 +111,15 @@ export const PlanSchema = v.object({
   variants: v.array(v.object({ name: v.pipe(v.string(), v.regex(/^[A-Z_][\w.]{0,62}$/i)), base: Codepoint, selector: Codepoint })),
   glyphs: v.array(v.object({
     name: v.pipe(v.string(), v.regex(/^[A-Z_][\w.]{0,62}$/i)),
-    /** The base characters drawn side by side; more than one makes a ligature. */
+    /** The base characters drawn side by side, or one below another; more than one makes a ligature. */
     bases: v.pipe(v.array(Codepoint), v.minLength(1)),
-    /** Ruby text drawn above characters `[start, end)` of `bases`. */
+    /** Ruby text drawn above characters `[start, end)` of `bases`, or right of them. */
     ruby: v.array(v.object({ start: v.number(), end: v.number(), text: v.pipe(v.string(), v.nonEmpty()) })),
   })),
   fea: v.string(),
   /** Subset the base font to these codepoints before building (live previews). */
   subset: v.optional(v.array(Codepoint)),
-  /** Shaping checks the compiler runs on its output: `text` must shape to `glyphs`. */
+  /** Shaping checks the compiler runs on its output, in the plan's orientation: `text` must shape to `glyphs`. */
   smoke: v.array(v.object({ text: v.string(), glyphs: v.array(v.string()) })),
 })
 export type Plan = v.InferOutput<typeof PlanSchema>
