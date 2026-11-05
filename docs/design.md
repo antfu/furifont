@@ -10,7 +10,7 @@ Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-fo
 
 ## Goals
 
-- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and a variable font of every weight, from Source Han Sans JP and Source Han Serif JP, with hiragana or Hepburn romaji furigana; the romaji fonts put romaji over kana too. Katakana for on'yomi is a build option, and so is turning the romaji over kana off.
+- Prebuilt fonts: **Furifont Sans** and **Furifont Serif**, Regular and a variable font of every weight, and a variable font for [vertical text](#vertical-text), from Source Han Sans JP and Source Han Serif JP, with hiragana or Hepburn romaji furigana; the romaji fonts put romaji over kana too. Katakana for on'yomi is a build option, and so is turning the romaji over kana off.
 - A build anyone can run with another base font, word list or options.
 - A local studio, served by Devframe, to tune, preview and build.
 - A static demo site that loads the prebuilt fonts.
@@ -19,7 +19,6 @@ Reference: [Mengshen-pinyin-font](https://github.com/MaruTama/Mengshen-pinyin-fo
 ## Out of scope
 
 - Personal names. From JMnedict, only stations and places are read.
-- Vertical writing. The base font's `vert` feature is kept, but furigana glyphs are drawn for horizontal text only.
 - Latin, digits, Chinese and Korean text, which are left as they are.
 
 ## Architecture
@@ -202,6 +201,8 @@ Each glyph is keyed by what it draws: one or more base characters plus furigana 
 | `kana_digraphs`, `kana_context`, `kana` | `rclt` | Romaji over kana: digraphs, then っ, ん and ー by the kana after them, then single kana (nested `kana_*` hold the contextual glyphs) |
 | `ruby_off`, `ruby_off_ligatures` | `ss01` | Furigana glyphs back to their bases |
 
+A vertical font lists the `rclt` lookups under `vert` and `vrt2` instead; see [Vertical text](#vertical-text).
+
 The order of these lookups matters more than their features. Shapers apply lookups in lookup-list order, so the fallbacks only see what `furigana` left.
 
 The main lookup has a `subtable;` break every 600 rules, plus one before the class rules. That lets the compiler pack it into a dozen glyph-keyed format 1 subtables, instead of thousands of format 3 ones that overflow 16-bit offsets. All lookups are Extension lookups.
@@ -265,6 +266,18 @@ The em box comes from the BASE table's `ideo` baseline, and falls back to the ty
 Advance widths do not change, so line breaking and justification match the base font. The default line height grows to about 1.6. A smaller `line-height` clips the furigana. This is documented, not worked around.
 
 Kana furigana uses the base font's own kana. Romaji uses its Latin glyphs. Source Han Sans' `ruby` feature only covers five glyphs, so it is not used.
+
+## Vertical text
+
+`orientation: 'vertical'` builds a font for vertical text, a family apart (`Furifont Sans Vertical VF`). The planner chooses the same readings; only the drawing and the features change.
+
+- **Features.** The rules that `rclt` lists go under `vert` and `vrt2`. Browsers apply `vert` in vertical text only, so in horizontal text the font shows plain kanji, as the base font does, instead of glyphs drawn for the other direction. `ccmp`, `ss01` and `salt` stay as they are.
+- **Layout.** A glyph's bases stand one below another, so a word over two kanji is two ems tall. Its furigana is right of the column's em box, the BASE table's `ideo` baseline on its vertical axis, and centred down its span, squeezed and overhanging by the same metrics as across a line. Kana stand upright in the base font's vertical forms (small kana, ー), which HarfBuzz shapes as browsers do. Romaji is turned a quarter clockwise, as browsers set Latin in vertical text, which TrueType composites write as a 2×2 matrix.
+- **Metrics.** The horizontal advance is the first base's, so browsers centre the kanji in the column; the vertical advance is the bases' together. Every glyph's top sits at its first base's vertical origin, from `vmtx` (Source Han's VF has no `VORG`). `vhea`'s ascender grows to cover the furigana; `hhea` is left alone.
+- **The base font's forms.** The base font's own `vert` lookups run before ours, and turn kana such as ょ into vertical forms that the romaji-over-kana rules do not name. In a vertical font, the compiler adds a lookup before ours that takes those forms back, and one after them, the last of all, that gives them again to what the rules left.
+- **Line height.** Browsers centre a vertical line on its em box, so the line box makes room on both sides or neither. The furigana fits in a `line-height` of 2.2: the em, and twice its reach of 0.55 em. Below that it reaches into the next column's space.
+
+The release has the variable font only. The site serves it, and its playground and studio switch to it in vertical text.
 
 ## Furigana scripts
 
@@ -344,7 +357,7 @@ On the static demo site the studio page finds no server and explains how to star
 
 ### Furigana reader and audit
 
-`createRubyReader(plan)` in `@furifont/compiler` reads text the way a font built from the plan shows it, without a font. It splits the text into Han runs, as browsers do. It then applies the `rclt` lookups of `plan.fea` in lookup order, and returns the furigana over the text. It leaves out variation selectors, `salt` and the base font's own lookups. On a full Source Han Sans JP, it gave the same furigana as HarfBuzz for all 411,579 texts tried: every run of the dictionary, and runs joined in twos and threes.
+`createRubyReader(plan)` in `@furifont/compiler` reads text the way a font built from the plan shows it, without a font. It splits the text into Han runs, as browsers do. It then applies the `rclt` lookups of `plan.fea` (a vertical font's `vert`) in lookup order, and returns the furigana over the text. It leaves out variation selectors, `salt` and the base font's own lookups. On a full Source Han Sans JP, it gave the same furigana as HarfBuzz for all 411,579 texts tried: every run of the dictionary, and runs joined in twos and threes.
 
 The dictionary's sample test reads the site's sample texts through it. `pnpm dict:audit` reads every run of the dictionary through a font with every kanji and lists the runs it shows wrong:
 

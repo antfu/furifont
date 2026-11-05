@@ -64,6 +64,26 @@ body {
 }
 ```
 
+## Vertical text
+
+For vertical text, use the vertical font: `FurifontSansVerticalVF.woff2`, and the same for the other families. It draws the furigana to the right of the kanji, and only vertical text shows it. In horizontal text it shows the kanji with no furigana, so set it only on your vertical text:
+
+```css
+@font-face {
+  font-family: 'Furifont Sans Vertical';
+  src: url('/fonts/FurifontSansVerticalVF.woff2') format('woff2');
+  font-weight: 250 900;
+}
+
+.tategaki {
+  writing-mode: vertical-rl;
+  font-family: 'Furifont Sans Vertical', sans-serif;
+  line-height: 2.2;
+}
+```
+
+**Give the columns room.** The browser puts each column's kanji in its middle, so the column needs as much space on the left as the furigana takes on the right. With a `line-height` under 2.2, the furigana of one column touches the next.
+
 ## CSS controls
 
 ### Turn the furigana off

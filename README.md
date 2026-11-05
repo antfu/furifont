@@ -32,6 +32,8 @@ Furifont is compiled from Source Han Sans JP or Source Han Serif JP. A build ste
 
 Each [release](https://github.com/antfu/furifont/releases/latest) has Sans and Serif, in Hiragana and Romaji, Regular as OpenType and WOFF2, and a variable font of every weight from ExtraLight to Heavy (`Furifont Sans VF`), as TrueType and WOFF2, whose furigana follows the weight of the text. Set `line-height` to 1.6 or more so the furigana is not clipped.
 
+For vertical text (`writing-mode: vertical-rl`), each family also comes as a variable font with the furigana right of the kanji (`Furifont Sans Vertical VF`). It shows furigana in vertical text only. Set `line-height` to 2.2 or more so the furigana stays in its column.
+
 ## Use on websites
 
 The [website](https://furifont.antfu.me) has a bookmarklet and a [userscript](https://furifont.antfu.me/furifont.user.js) that set any page in Furifont, with optional okurigana readings.
@@ -43,6 +45,7 @@ Choose another base font, word list, furigana letters or sizes. Needs Node 22.18
 ```sh
 npx furifont dev     # Customize: live preview in your browser
 npx furifont build --base "Source Han Serif JP Bold" --script hepburn --family "My Furigana"
+npx furifont build --orientation vertical --family "My Furigana Vertical"
 ```
 
 Settings live in `furifont.config.json`; their defaults are in [`packages/core/src/defaults.ts`](packages/core/src/defaults.ts).

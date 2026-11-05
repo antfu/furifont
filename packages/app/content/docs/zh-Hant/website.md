@@ -64,6 +64,26 @@ body {
 }
 ```
 
+## 直排
+
+直排文字請使用直排字型 `FurifontSansVerticalVF.woff2`，其他字型家族同理。它把振假名加在漢字右側，只在直排文字中顯示。在橫排文字中只顯示漢字，所以只把它設定在直排文字上：
+
+```css
+@font-face {
+  font-family: 'Furifont Sans Vertical';
+  src: url('/fonts/FurifontSansVerticalVF.woff2') format('woff2');
+  font-weight: 250 900;
+}
+
+.tategaki {
+  writing-mode: vertical-rl;
+  font-family: 'Furifont Sans Vertical', sans-serif;
+  line-height: 2.2;
+}
+```
+
+**給欄留出空間。** 瀏覽器把每欄的漢字放在欄的中間，所以左側需要和右側振假名一樣寬的空間。`line-height` 小於 2.2 時，一欄的振假名會碰到下一欄。
+
 ## CSS 控制
 
 ### 關閉振假名
