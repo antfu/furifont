@@ -105,7 +105,7 @@
     "okuriganaHint": "Picks the right reading of a kanji before its okurigana, such as 来 in 来る and 来ない.",
     "userscript": "Userscript",
     "install": "Install the userscript",
-    "userscriptHint": "This works with Tampermonkey or Violentmonkey (browser add-ons that run small scripts). It turns Furifont on by itself on Japanese pages. It also works on sites that do not let fonts load from other sites. Its menu lets you switch to another Furifont font or turn it off.",
+    "userscriptHint": "This works with Tampermonkey or Violentmonkey (browser add-ons that run small scripts). It turns Furifont on by itself on Japanese pages. It also works on sites that do not let fonts load from other sites. Its menu, and a floating button on Japanese pages, let you switch to another Furifont font, turn it off, or keep it on or off for a site. Each site remembers its own font and okurigana setting, and your last choice becomes the default for other sites.",
     "toast": {
       "message": "Furifont could not load its font on this page. Some sites, such as X and GitHub, do not let fonts load from other sites. On those sites, you must install Furifont on your computer.",
       "download": "Download the fonts",
@@ -116,7 +116,23 @@
     },
     "menu": {
       "okuriganaOn": "Okurigana readings: on",
-      "okuriganaOff": "Okurigana readings: off"
+      "okuriganaOff": "Okurigana readings: off",
+      "siteAuto": "This site: on for Japanese pages",
+      "siteOn": "This site: always on",
+      "siteOff": "This site: always off",
+      "buttonOn": "Floating button: shown",
+      "buttonOff": "Floating button: hidden"
+    },
+    "panel": {
+      "open": "Furifont settings",
+      "page": "On this page",
+      "site": "This site",
+      "siteAuto": "On for Japanese pages",
+      "siteOn": "Always on",
+      "siteOff": "Always off",
+      "family": "Font",
+      "okurigana": "Okurigana readings",
+      "hide": "Hide this button (the userscript menu shows it again)"
     }
   },
   "reference": {
