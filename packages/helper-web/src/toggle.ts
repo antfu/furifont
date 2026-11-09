@@ -17,6 +17,8 @@ declare global {
       family: string
       /** Writes the sheet again for `family`. */
       restyle: () => void
+      /** Turns Furifont on the page on, or off with the page as it was before; `sheet.disabled` says which. */
+      turn: (on: boolean) => void
       /** Reads kanji before okurigana as the pairs say, or stops doing so with no `config`. */
       okurigana: (config?: Okurigana) => void
       /** Stops watching the page and takes Furifont off it, as it was before. */
@@ -65,29 +67,85 @@ function holdersIn(roots: Node[]): Set<Element> {
   return elements
 }
 
+/** How long the page's changes gather before Furifont marks them: a page that streams text, as a chat does, changes many times a second. */
+const MARK_DELAY = 100
+/** How long text must stay still before its kanji get their okurigana reading, so text a page is still writing is left alone. */
+const ANNOTATE_DELAY = 500
+/** The longest a page that never stops changing holds the readings back. */
+const ANNOTATE_MAX_DELAY = 3000
+
+/** The roots of `nodes` that are on the page and inside none of the others. */
+function outermost(nodes: Set<Node>): Node[] {
+  return [...nodes].filter((node) => {
+    if (!node.isConnected)
+      return false
+    for (let parent = node.parentNode; parent; parent = parent.parentNode) {
+      if (nodes.has(parent))
+        return false
+    }
+    return true
+  })
+}
+
 /**
  * Sets the page's Japanese text in Furifont from now on, as elements come and
  * go. Each element keeps its own font stack behind Furifont, and Furifont draws
  * only Japanese, so Latin text and icon fonts stay as they were. Code keeps its
  * monospaced font.
+ *
+ * Off, it leaves the page as it was: it stops watching, and takes off its
+ * attributes and spans.
  */
 function install(family: string): State {
   const sheet = new CSSStyleSheet()
+  sheet.disabled = true
   // The page's font stacks: an element's `data-furifont` is the index of its own.
   const stacks: string[] = []
+  // The elements already looked at, marked or not, so a change inside one does not read its style again.
+  let seen = new WeakSet<Element>()
   // What the pairs and the font's readings made, or nothing while they are off or loading.
   let reader: OkuriganaReader | undefined
   // The newest request wins when families or settings change while files load.
   let latest = 0
 
-  // Spans keep the reading, so a family with another list, or a later switch back on, can set the value again.
-  const refresh = (): void => {
-    for (const span of document.querySelectorAll<HTMLElement>('[data-furifont-reading]')) {
-      const salt = reader ? reader.saltOf(span.textContent ?? '', span.dataset.furifontReading!) : 0
-      if (salt)
-        span.dataset.furifontSalt = String(salt)
-      else
-        delete span.dataset.furifontSalt
+  const state: State = {
+    sheet,
+    family,
+    restyle: (): void => {
+      // `salt` n is the nth reading: the font counts up to 15 of them.
+      const salts = Array.from({ length: 15 }, (_, i) => `[data-furifont-salt="${i + 1}"]{font-feature-settings:"salt" ${i + 1}!important}`).join('')
+      const fonts = stacks.map((stack, i) => `[data-furifont="${i}"]{font-family:"${state.family}",${stack}!important}`).join('')
+      // Ruby needs a line height of about 1.6. Text the page already sets in ruby gets the plain kanji of `ss01`.
+      sheet.replaceSync(`${fonts}[data-furifont-tight]{line-height:normal!important}ruby,ruby *{font-feature-settings:"ss01"!important}${salts}`)
+    },
+    turn: () => {},
+    okurigana: () => {},
+    dispose: () => {},
+  }
+
+  // The text Furifont split off the page's own text nodes, to put back on them.
+  const pieces = new WeakSet<Node>()
+
+  /**
+   * Takes the okurigana spans off, and joins the text they split, so 来ない is
+   * one text node again for the next reader. Only Furifont's pieces join: the
+   * page's own nodes, which a framework can hold, stay as they were.
+   */
+  const unwrap = (): void => {
+    const parents = new Set<Node>()
+    for (const span of document.querySelectorAll('[data-furifont-reading]')) {
+      if (span.parentNode)
+        parents.add(span.parentNode)
+      span.replaceWith(...span.childNodes)
+    }
+    for (const parent of parents) {
+      for (const node of [...parent.childNodes]) {
+        const before = node.previousSibling
+        if (pieces.has(node) && before?.nodeType === Node.TEXT_NODE) {
+          (before as Text).appendData(node.nodeValue ?? '')
+          node.remove()
+        }
+      }
     }
   }
 
@@ -100,8 +158,10 @@ function install(family: string): State {
       // From the end, so the offsets before stay true.
       for (const { at, length, reading, salt } of reader.find(text.nodeValue ?? '').reverse()) {
         const run = at ? text.splitText(at) : text
+        if (at)
+          pieces.add(run)
         if (run.length > length)
-          run.splitText(length)
+          pieces.add(run.splitText(length))
         const span = document.createElement('span')
         span.dataset.furifontReading = reading
         span.dataset.furifontSalt = String(salt)
@@ -111,38 +171,11 @@ function install(family: string): State {
     }
   }
 
-  const state: State = {
-    dispose: () => {},
-    sheet,
-    family,
-    restyle: (): void => {
-      // `salt` n is the nth reading: the font counts up to 15 of them.
-      const salts = Array.from({ length: 15 }, (_, i) => `[data-furifont-salt="${i + 1}"]{font-feature-settings:"salt" ${i + 1}!important}`).join('')
-      const fonts = stacks.map((stack, i) => `[data-furifont="${i}"]{font-family:"${state.family}",${stack}!important}`).join('')
-      // Ruby needs a line height of about 1.6. Text the page already sets in ruby gets the plain kanji of `ss01`.
-      sheet.replaceSync(`${fonts}[data-furifont-tight]{line-height:normal!important}ruby,ruby *{font-feature-settings:"ss01"!important}${salts}`)
-    },
-    okurigana: (config?: Okurigana): void => {
-      const request = ++latest
-      reader = undefined
-      refresh()
-      // Off, the spans stay but say nothing; a page that is off gets them when it is on.
-      if (!config || sheet.disabled)
-        return
-      loadOkuriganaReader(config).then((loaded) => {
-        if (request !== latest || !loaded)
-          return
-        reader = loaded
-        refresh()
-        annotate([document.body])
-      })
-    },
-  }
-
   /** Puts Furifont in front of the font stack of each element under `roots` that holds Japanese. */
   const mark = (roots: Node[]): void => {
     // Every read before any write, or each write forces another style pass.
-    const found = [...holdersIn(roots)].filter(e => !e.hasAttribute('data-furifont')).map((element) => {
+    const found = [...holdersIn(roots)].filter(e => !seen.has(e) && !e.hasAttribute('data-furifont')).map((element) => {
+      seen.add(element)
       const { fontFamily, lineHeight, fontSize } = getComputedStyle(element)
       const stack = parseFontStack(fontFamily)
       // Inside an element Furifont sets, a stack starts with Furifont, and the page's comes after it.
@@ -162,33 +195,113 @@ function install(family: string): State {
       state.restyle()
   }
 
-  const observer = new MutationObserver((records) => {
-    const roots = records.flatMap(r => r.type === 'characterData' ? [r.target] : [...r.addedNodes])
-    mark(roots)
-    annotate(roots)
-  })
+  // The page's changes wait in these, so a burst of them costs one pass.
+  const toMark = new Set<Node>()
+  const toAnnotate = new Set<Node>()
+  let markTimer: ReturnType<typeof setTimeout> | undefined
+  let annotateTimer: ReturnType<typeof setTimeout> | undefined
+  let annotateSince = 0
 
-  state.dispose = (): void => {
+  const queue = (records: MutationRecord[]): void => {
+    if (sheet.disabled)
+      return
+    for (const record of records) {
+      for (const node of record.type === 'characterData' ? [record.target] : record.addedNodes) {
+        toMark.add(node)
+        if (reader)
+          toAnnotate.add(node)
+      }
+    }
+    if (toMark.size)
+      markTimer ??= setTimeout(flushMark, MARK_DELAY)
+    if (toAnnotate.size) {
+      // Each change puts the readings off again, up to a limit.
+      annotateSince ||= Date.now()
+      clearTimeout(annotateTimer)
+      annotateTimer = setTimeout(flushAnnotate, Math.max(0, Math.min(ANNOTATE_DELAY, annotateSince + ANNOTATE_MAX_DELAY - Date.now())))
+    }
+  }
+
+  const observer = new MutationObserver(queue)
+
+  /** Runs `work`, and forgets the changes it made, so Furifont never answers its own spans. */
+  const quietly = (work: () => void): void => {
+    queue(observer.takeRecords())
+    work()
+    observer.takeRecords()
+  }
+
+  function flushMark(): void {
+    markTimer = undefined
+    const roots = outermost(toMark)
+    toMark.clear()
+    quietly(() => mark(roots))
+  }
+
+  function flushAnnotate(): void {
+    annotateTimer = undefined
+    annotateSince = 0
+    const roots = outermost(toAnnotate)
+    toAnnotate.clear()
+    quietly(() => annotate(roots))
+  }
+
+  /** Drops the changes still waiting. */
+  const cancel = (): void => {
+    clearTimeout(markTimer)
+    clearTimeout(annotateTimer)
+    markTimer = annotateTimer = undefined
+    annotateSince = 0
+    toMark.clear()
+    toAnnotate.clear()
+  }
+
+  state.turn = (on: boolean): void => {
+    if (on === !sheet.disabled)
+      return
+    sheet.disabled = !on
+    if (on) {
+      mark([document.body])
+      observer.observe(document.body, { childList: true, characterData: true, subtree: true })
+      return
+    }
     observer.disconnect()
+    cancel()
     // Settings that are still loading must not apply.
     latest++
     reader = undefined
-    document.adoptedStyleSheets = document.adoptedStyleSheets.filter(s => s !== sheet)
+    unwrap()
     for (const element of document.querySelectorAll('[data-furifont],[data-furifont-tight]')) {
       element.removeAttribute('data-furifont')
       element.removeAttribute('data-furifont-tight')
     }
-    // Each span holds the text it wrapped.
-    for (const span of document.querySelectorAll('[data-furifont-reading]'))
-      span.replaceWith(...span.childNodes)
+    seen = new WeakSet()
+  }
+  state.okurigana = (config?: Okurigana): void => {
+    const request = ++latest
+    reader = undefined
+    toAnnotate.clear()
+    // Another family counts its readings its own way, so the spans start over.
+    quietly(unwrap)
+    // A page that is off gets them when it is on.
+    if (!config || sheet.disabled)
+      return
+    loadOkuriganaReader(config).then((loaded) => {
+      if (request !== latest || !loaded)
+        return
+      reader = loaded
+      quietly(() => annotate([document.body]))
+    })
+  }
+  state.dispose = (): void => {
+    state.turn(false)
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter(s => s !== sheet)
     if (window.furifont === state)
       delete window.furifont
   }
 
   window.furifont = state
   document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]
-  mark([document.body])
-  observer.observe(document.body, { childList: true, characterData: true, subtree: true })
   return state
 }
 
@@ -208,7 +321,7 @@ export async function toggleFurifont(options: FurifontOptions): Promise<void> {
   const { family, url, toast, okurigana, update } = options
   let state = window.furifont
   if (state?.family === family) {
-    state.sheet.disabled = !state.sheet.disabled
+    state.turn(state.sheet.disabled)
     if (!state.sheet.disabled)
       state.okurigana(okurigana)
     return
@@ -216,14 +329,14 @@ export async function toggleFurifont(options: FurifontOptions): Promise<void> {
   state ??= install(family)
   state.family = family
   state.restyle()
-  state.sheet.disabled = false
+  state.turn(true)
   if (await loadFurifont(options)) {
     state.okurigana(okurigana)
     if (update)
       await showUpdates(options, update)
     return
   }
-  state.sheet.disabled = true
+  state.turn(false)
   // So the next click tries again.
   state.family = ''
   showToast(toast.message, [downloadLink(url, toast)], toast.close)

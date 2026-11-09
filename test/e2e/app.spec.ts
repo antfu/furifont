@@ -261,6 +261,16 @@ test('sets another site in Furifont from the bookmarklet, and a second click tur
 
   await click()
   expect(await styleOf(page, 'kanji')).toEqual({ fontFamily: PAGE_FONT, lineHeight: '24px' })
+  // Off, Furifont takes its attributes and spans off, and stops watching the page.
+  expect(await page.locator('[data-furifont],[data-furifont-tight],[data-furifont-reading]').count()).toBe(0)
+  expect((await readVerbs(page)).text).toBe('来ない、来ます、来る、今日では、出入り')
+  await page.evaluate(() => document.body.insertAdjacentHTML('beforeend', '<p id="after">来ない</p>'))
+  await page.waitForTimeout(800)
+  expect(await page.locator('[data-furifont],[data-furifont-reading]').count()).toBe(0)
+
+  await click()
+  await expect.poll(async () => (await readVerbs(page)).salts).toEqual(await verbSalts())
+  await expect.poll(() => page.evaluate(() => document.querySelector('#after span')?.getAttribute('data-furifont-salt'))).toBe((await verbSalts())[0])
 })
 
 test('asks to install Furifont where a CSP blocks fonts from other sites, and links to the downloads', async ({ page }) => {
